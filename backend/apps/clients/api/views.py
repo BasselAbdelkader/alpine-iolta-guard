@@ -318,7 +318,6 @@ class ClientViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_204_NO_CONTENT)
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class CaseViewSet(viewsets.ModelViewSet):
     """
     Enhanced ViewSet for Case CRUD operations with security hardening
