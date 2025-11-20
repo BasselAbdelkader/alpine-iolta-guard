@@ -34,6 +34,13 @@ def csv_preview(request):
 
     csv_file = serializer.validated_data['csv_file']
 
+    # File size validation (max 10MB to prevent DoS)
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+    if csv_file.size > MAX_FILE_SIZE:
+        return Response({
+            'error': f'File too large. Maximum size is 10MB, your file is {csv_file.size / (1024*1024):.2f}MB'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
     try:
         # Read CSV file
         csv_content = csv_file.read().decode('utf-8')
@@ -244,6 +251,14 @@ def csv_import_confirm(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     csv_file = serializer.validated_data['csv_file']
+
+    # File size validation (max 10MB to prevent DoS)
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+    if csv_file.size > MAX_FILE_SIZE:
+        return Response({
+            'error': f'File too large. Maximum size is 10MB, your file is {csv_file.size / (1024*1024):.2f}MB'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
     username = request.user.username if hasattr(request.user, 'username') else 'system'
 
     # Create ImportAudit record

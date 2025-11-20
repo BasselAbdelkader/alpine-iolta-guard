@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_protect, csrf_exempt
+from django.views.decorators.csrf import csrf_protect
 
 from ..models import Client, Case
 from .serializers import ClientSerializer, ClientListSerializer, CaseSerializer, CaseListSerializer
@@ -17,7 +17,6 @@ from trust_account_project.api_hardening import (
 )
 
 
-@method_decorator(csrf_exempt, name='dispatch')
 class ClientViewSet(viewsets.ModelViewSet):
     """
     Enhanced ViewSet for Client CRUD operations with security hardening

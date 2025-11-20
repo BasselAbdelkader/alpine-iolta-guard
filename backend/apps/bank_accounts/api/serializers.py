@@ -211,11 +211,20 @@ class BankTransactionSerializer(serializers.ModelSerializer):
             new_client_balance = client_balance - withdrawal_amount
             new_case_balance = case_balance - withdrawal_amount
 
+            # Enhanced validation: prevent any negative balance scenario
             if new_client_balance < 0:
-                errors['amount'] = f'Insufficient funds. Client balance: ${client_balance:,.2f}. Cannot withdraw ${withdrawal_amount:,.2f}.'
+                errors['amount'] = f'Transaction blocked: Would create negative client balance. Current balance: ${client_balance:,.2f}. Withdrawal amount: ${withdrawal_amount:,.2f}. Resulting balance would be: ${new_client_balance:,.2f}'
+                # Log attempted negative balance for audit trail
+                import logging
+                logger = logging.getLogger('trust_accounting')
+                logger.warning(f'Attempted negative balance: Client {client.id}, Amount ${withdrawal_amount}, Would result in ${new_client_balance}')
 
             if new_case_balance < 0:
-                errors['amount'] = f'Insufficient funds. Case balance: ${case_balance:,.2f}. Cannot withdraw ${withdrawal_amount:,.2f}.'
+                errors['amount'] = f'Transaction blocked: Would create negative case balance. Current balance: ${case_balance:,.2f}. Withdrawal amount: ${withdrawal_amount:,.2f}. Resulting balance would be: ${new_case_balance:,.2f}'
+                # Log attempted negative balance for audit trail
+                import logging
+                logger = logging.getLogger('trust_accounting')
+                logger.warning(f'Attempted negative balance: Case {case.id}, Amount ${withdrawal_amount}, Would result in ${new_case_balance}')
 
         if errors:
             raise serializers.ValidationError(errors)

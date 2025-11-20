@@ -182,16 +182,21 @@ class Client(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.client_number:
-            # Auto-generate client number
-            last_client = Client.objects.order_by('-id').first()
-            if last_client and last_client.client_number:
-                try:
-                    last_num = int(last_client.client_number.split('-')[1])
-                    self.client_number = f"CL-{last_num + 1:03d}"
-                except (ValueError, IndexError):
-                    self.client_number = f"CL-{Client.objects.count() + 1:03d}"
-            else:
-                self.client_number = "CL-001"
+            # Auto-generate client number with atomic operation
+            from django.db import transaction
+            with transaction.atomic():
+                # Lock the table to prevent race conditions
+                last_client = Client.objects.select_for_update().order_by('-id').first()
+                if last_client and last_client.client_number:
+                    try:
+                        last_num = int(last_client.client_number.split('-')[1])
+                        self.client_number = f"CL-{last_num + 1:03d}"
+                    except (ValueError, IndexError):
+                        # Fallback to count if parsing fails
+                        count = Client.objects.select_for_update().count()
+                        self.client_number = f"CL-{count + 1:03d}"
+                else:
+                    self.client_number = "CL-001"
         super().save(*args, **kwargs)
 
 
@@ -303,34 +308,37 @@ class Case(models.Model):
             self._update_case_deposit(old_case_amount)
     
     def _generate_case_number(self):
-        """BUG #16 FIX: Generate auto-incremental case number - never reuse deleted numbers"""
-        from django.db import connection
+        """Generate auto-incremental case number atomically - never reuse deleted numbers"""
+        from django.db import transaction, connection
 
-        # Query the database directly to get the highest case number ever used
-        # This includes deleted cases to prevent number reuse
-        with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT case_number
-                FROM cases
-                WHERE case_number LIKE 'CASE-%%'
-                ORDER BY CAST(SUBSTRING(case_number FROM 6) AS INTEGER) DESC
-                LIMIT 1
-            """)
-            row = cursor.fetchone()
+        # Use atomic transaction to prevent race conditions
+        with transaction.atomic():
+            # Query the database with proper parameterization to prevent SQL injection
+            with connection.cursor() as cursor:
+                # Use parameterized query to prevent SQL injection
+                cursor.execute("""
+                    SELECT case_number
+                    FROM cases
+                    WHERE case_number LIKE %s
+                    ORDER BY CAST(SUBSTRING(case_number FROM 6) AS INTEGER) DESC
+                    LIMIT 1
+                    FOR UPDATE
+                """, ['CASE-%'])  # Parameterized to prevent SQL injection
+                row = cursor.fetchone()
 
-            if row and row[0]:
-                try:
-                    # Extract the numeric part (CASE-000001 -> 000001 -> 1)
-                    numeric_part = row[0].split('-')[1]
-                    highest_num = int(numeric_part)
-                except (ValueError, IndexError):
+                if row and row[0]:
+                    try:
+                        # Extract the numeric part (CASE-000001 -> 000001 -> 1)
+                        numeric_part = row[0].split('-')[1]
+                        highest_num = int(numeric_part)
+                    except (ValueError, IndexError):
+                        highest_num = 0
+                else:
                     highest_num = 0
-            else:
-                highest_num = 0
 
-        # Generate next number (start from 1 if no existing CASE- numbers)
-        next_num = highest_num + 1
-        return f"CASE-{next_num:06d}"  # 6-digit zero-padded
+            # Generate next number (start from 1 if no existing CASE- numbers)
+            next_num = highest_num + 1
+            return f"CASE-{next_num:06d}"  # 6-digit zero-padded
     
     def _create_case_deposit(self):
         """Create automatic deposit transaction for this case"""
