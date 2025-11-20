@@ -1,0 +1,176 @@
+================================================================================
+DEPLOYMENT FIXES APPLIED - ALPINE VERSION
+================================================================================
+
+DATE: November 12, 2025
+STATUS: ✅ DEPLOYMENT SUCCESSFUL
+
+================================================================================
+ISSUES ENCOUNTERED AND FIXED:
+================================================================================
+
+ISSUE #1: Resource Limits Too High
+-----------------------------------
+ERROR MESSAGE:
+  "range of CPUs is from 0.01 to 1.00, as there are only 1 CPUs available"
+
+ROOT CAUSE:
+  docker-compose.alpine.yml had resource limits configured for production servers:
+  - Database: reservations.cpus: '0.5' (needs at least 1 CPU available)
+  - Backend: reservations.cpus: '0.5'
+  - Frontend: reservations.cpus: '0.25'
+  
+  Development machine only has 1 CPU, so reserving 0.5 fails.
+
+FIX APPLIED:
+  Commented out all resource limits in docker-compose.alpine.yml:
+  - Lines 47-54 (database)
+  - Lines 111-118 (backend)
+  - Lines 153-160 (frontend)
+
+BACKUP CREATED:
+  docker-compose.alpine.yml.backup_before_resource_fix
+
+---
+
+ISSUE #2: Frontend Permission Denied
+-------------------------------------
+ERROR MESSAGE:
+  nginx: [emerg] open() "/run/nginx.pid" failed (13: Permission denied)
+
+ROOT CAUSE:
+  Dockerfile.alpine.frontend runs nginx as non-root user (nginx)
+  But /run directory was owned by root
+  nginx user couldn't create pid file
+
+FIX APPLIED:
+  Added to Dockerfile.alpine.frontend (lines 50-52):
+  RUN mkdir -p /var/run /run && \
+      chown -R nginx:nginx /var/run /run
+
+RESULT:
+  Frontend now starts successfully as nginx user (secure)
+
+================================================================================
+FINAL STATUS:
+================================================================================
+
+✅ All 3 containers running successfully:
+   - iolta_db_alpine         (postgres:16-alpine3.20)    HEALTHY
+   - iolta_backend_alpine    (Python 3.12 Alpine)        HEALTHY  
+   - iolta_frontend_alpine   (nginx:alpine)              HEALTHY
+
+✅ Database imported successfully:
+   - 79 Clients
+   - 81 Cases
+   - 100 Transactions
+   - 406 Vendors
+
+✅ Application accessible at:
+   http://localhost:80
+
+================================================================================
+FILES MODIFIED:
+================================================================================
+
+1. docker-compose.alpine.yml
+   - Commented out resource limits (3 locations)
+   - Ready for both development AND production
+
+2. Dockerfile.alpine.frontend
+   - Added /run directory permissions for nginx user
+   - Maintains security (non-root execution)
+
+BACKUPS CREATED:
+----------------
+✓ docker-compose.alpine.yml.backup_before_resource_fix
+✓ (Dockerfile.alpine.frontend - no backup needed, simple addition)
+
+================================================================================
+DEPLOYMENT SCRIPT PERFORMANCE:
+================================================================================
+
+✅ Cleanup:
+   - Stopped and removed all containers
+   - Cleaned dangling images
+
+✅ Build:
+   - Database: Pulled postgres:16-alpine3.20
+   - Backend: Built in ~1 minute (some layers cached)
+   - Frontend: Built in ~5 seconds (mostly cached)
+
+✅ Import:
+   - Database created successfully
+   - 246 KB SQL dump imported
+   - Data verified
+
+✅ Health Checks:
+   - Backend: Responding
+   - Database: 1 connection active
+   - Frontend: Serving pages
+
+Total Time: ~6 minutes (including build)
+
+================================================================================
+FOR PRODUCTION DEPLOYMENT:
+================================================================================
+
+RESOURCE LIMITS:
+----------------
+The resource limits are currently COMMENTED OUT for development compatibility.
+
+For production deployment on a server with 2+ CPUs:
+1. Edit docker-compose.alpine.yml
+2. Uncomment the resource limit sections:
+   - Lines 47-54 (database)
+   - Lines 111-118 (backend)
+   - Lines 153-160 (frontend)
+
+This will:
+- Prevent resource exhaustion
+- Improve multi-tenant isolation
+- Set memory limits
+
+RECOMMENDATIONS:
+----------------
+For production servers:
+- Minimum 2 CPUs (to use resource reservations)
+- Minimum 4GB RAM
+- Uncomment resource limits
+- Adjust limits based on your server capacity
+
+For development/testing:
+- Keep resource limits commented out
+- Works on 1 CPU systems
+- Lower memory requirements
+
+================================================================================
+NEXT STEPS:
+================================================================================
+
+1. ✅ Alpine deployment working locally
+2. Create tar file for test server
+3. Transfer to test server (138.68.109.92)
+4. Run deployment script on test server
+5. Uncomment resource limits on production (if server has 2+ CPUs)
+
+================================================================================
+COMMANDS FOR PRODUCTION:
+================================================================================
+
+View logs:
+  docker-compose -f docker-compose.alpine.yml logs -f
+
+Check status:
+  docker-compose -f docker-compose.alpine.yml ps
+
+Restart services:
+  docker-compose -f docker-compose.alpine.yml restart
+
+Stop all:
+  docker-compose -f docker-compose.alpine.yml down
+
+Access database:
+  docker exec -it iolta_db_alpine psql -U iolta_user -d iolta_guard_db
+
+================================================================================

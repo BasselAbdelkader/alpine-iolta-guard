@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load accounting_filters %}
+
+{% block title %}{{ transaction.transaction_number }} - Transaction Details{% endblock %}
+
+{% block page_title %}{% if global_law_firm %}{{ global_law_firm.firm_name }}{% else %}Transaction Details{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Transaction Details: {{ transaction.transaction_number|default:"New Transaction" }}</h4>
+                    <div class="btn-group">
+                        <a href="{% url 'transactions:index' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Transactions
+                        </a>
+                        <a href="{% url 'transactions:edit' transaction.pk %}" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit Transaction
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Transaction Information</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Transaction Number:</strong></td>
+                                    <td>{{ transaction.transaction_number|default:'-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Transaction Type:</strong></td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if transaction.transaction_type == 'DEPOSIT' %}bg-success
+                                            {% elif transaction.transaction_type == 'WITHDRAWAL' %}bg-danger
+                                            {% elif transaction.transaction_type == 'TRANSFER' %}bg-info
+                                            {% endif %}">
+                                            {{ transaction.get_transaction_type_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Transaction Date:</strong></td>
+                                    <td>{{ transaction.transaction_date|date:"m/d/Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Amount:</strong></td>
+                                    <td>
+                                        <span class="{% if transaction.transaction_type == 'DEPOSIT' %}text-success{% else %}text-dark{% endif %} fs-5">
+                                            {% if transaction.transaction_type == 'DEPOSIT' %}{{ transaction.amount|format_amount_accounting }}{% else %}{{ transaction.amount|format_withdrawal }}{% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Reference Number:</strong></td>
+                                    <td>{{ transaction.reference_number|default:'-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        {% if transaction.is_cleared %}
+                                            <span class="badge bg-success">Cleared</span>
+                                            {% if transaction.cleared_date %}
+                                                <br><small class="text-muted">Cleared on {{ transaction.cleared_date|date:"m/d/Y" }}</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Bank Account Information</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Bank Name:</strong></td>
+                                    <td>{{ transaction.bank_account.bank_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Account Name:</strong></td>
+                                    <td>{{ transaction.bank_account.account_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Account Number:</strong></td>
+                                    <td>{{ transaction.bank_account.account_number }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Account Type:</strong></td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if transaction.bank_account.account_type == 'Trust Account' %}bg-primary
+                                            {% elif transaction.bank_account.account_type == 'Operating Account' %}bg-success
+                                            {% elif transaction.bank_account.account_type == 'Escrow Account' %}bg-info
+                                            {% endif %}">
+                                            {{ transaction.bank_account.account_type }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Description:</strong></td>
+                                    <td>{{ transaction.description|default:'-'|linebreaks }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5>Transaction Items</h5>
+                                <span class="badge bg-secondary">{{ transaction_items.count }} item{{ transaction_items.count|pluralize }}</span>
+                            </div>
+                            {% if transaction_items %}
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Item Type</th>
+                                                <th>Client</th>
+                                                <th>Case</th>
+                                                <th>Vendor</th>
+                                                <th>Amount</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in transaction_items %}
+                                            <tr>
+                                                <td>
+                                                    <span class="badge bg-secondary">{{ item.get_item_type_display }}</span>
+                                                </td>
+                                                <td>
+                                                    {% if item.client %}
+                                                        <a href="{% url 'clients:detail' item.client.pk %}" class="text-decoration-none">
+                                                            {{ item.client.full_name }}
+                                                        </a>
+                                                        <br><small class="text-muted">{{ item.client.client_number }}</small>
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if item.case %}
+                                                        {{ item.case.case_number }}
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if item.vendor %}
+                                                        <a href="{% url 'vendors:detail' item.vendor.pk %}" class="text-decoration-none">
+                                                            {{ item.vendor.vendor_name }}
+                                                        </a>
+                                                        <br><small class="text-muted">{{ item.vendor.vendor_number }}</small>
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <span class="text-success">
+                                                        {{ item.amount|format_amount_accounting }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ item.description|default:'-' }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="table-info">
+                                                <th colspan="4" class="text-end">Total Items:</th>
+                                                <th>
+                                                    ${{ transaction.amount|floatformat:2 }}
+                                                </th>
+                                                <th></th>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                                
+                                {% comment %}
+                                <!-- Transaction Items Total Calculation -->
+                                {% with total_items=0.00 %}
+                                    {% for item in transaction_items %}
+                                        {% widthratio item.amount 1 1 as item_amount %}
+                                        {% widthratio total_items 1 1 as current_total %}
+                                        {% widthratio current_total item_amount '+' as new_total %}
+                                        {% widthratio new_total 1 1 as total_items %}
+                                    {% endfor %}
+                                    <div class="alert alert-info">
+                                        <strong>Items Total: ${{ total_items|floatformat:2 }}</strong>
+                                        <br>Transaction Amount: ${{ transaction.amount|floatformat:2 }}
+                                        {% if total_items != transaction.amount %}
+                                            <br><span class="text-warning">⚠️ Items total does not match transaction amount</span>
+                                        {% endif %}
+                                    </div>
+                                {% endwith %}
+                                {% endcomment %}
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    No transaction items have been added to this transaction.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted">
+                                <strong>Created:</strong> {{ transaction.created_at|date:"m/d/Y g:i A" }}
+                                {% if transaction.created_by %}
+                                    by {{ transaction.created_by }}
+                                {% endif %}
+                            </small>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">
+                                <strong>Last Updated:</strong> {{ transaction.updated_at|date:"m/d/Y g:i A" }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

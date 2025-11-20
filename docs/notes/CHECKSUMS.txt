@@ -1,0 +1,3 @@
+462c2e495de7c18b9ae02d2cc9610a8d  iolta_alpine_images_FIXED.tar
+09c041f6b128b8a14d1db31e1baa5ec3  deploy_from_tar.sh
+7c5129d7440eac9a673296e7266c371f  DEPLOYMENT_INSTRUCTIONS_FOR_CUSTOMER.md

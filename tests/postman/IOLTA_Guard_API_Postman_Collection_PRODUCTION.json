@@ -1,0 +1,1020 @@
+{
+	"info": {
+		"_postman_id": "iolta-guard-api-collection",
+		"name": "IOLTA Guard - Trust Account Management API",
+		"description": "Complete API collection for IOLTA Guard Trust Account Management System.\n\n**Authentication:** Session-based authentication using Django session cookies.\n\n**Base URL:** http://localhost:3000/api\n\n**Getting Started:**\n1. Import this collection into Postman\n2. Import the environment file\n3. Run the 'Login' request first to authenticate\n4. All subsequent requests will use the session cookie automatically\n\n**Important Notes:**\n- All API endpoints require authentication in production\n- Session cookies are HttpOnly and handled automatically\n- CSRF tokens are included in responses and headers\n- All amounts should be positive decimals (e.g., 1000.00)\n- Dates should be in YYYY-MM-DD format",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "iolta-guard-api"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Save session cookie for future requests",
+									"if (pm.response.code === 200) {",
+									"    pm.environment.set('authenticated', 'true');",
+									"    console.log('✓ Login successful - session cookie saved');",
+									"} else {",
+									"    pm.environment.set('authenticated', 'false');",
+									"    console.log('✗ Login failed');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login/",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login", ""]
+						},
+						"description": "Login to the system using username and password. Returns session cookie for subsequent requests."
+					},
+					"response": []
+				},
+				{
+					"name": "Check Authentication",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    console.log('✓ Authenticated as: ' + jsonData.username);",
+									"} else {",
+									"    console.log('✗ Not authenticated');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/check/",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "check", ""]
+						},
+						"description": "Check if current session is authenticated. Returns user info if authenticated."
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.environment.set('authenticated', 'false');",
+									"    console.log('✓ Logout successful');",
+									"} else {",
+									"    console.log('✗ Logout failed');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/logout/",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "logout", ""]
+						},
+						"description": "Logout from the system. Clears session cookie."
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication endpoints for session-based login/logout"
+		},
+		{
+			"name": "Dashboard",
+			"item": [
+				{
+					"name": "Get Dashboard Data",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/dashboard/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "dashboard", ""]
+						},
+						"description": "Get complete dashboard data including trust balance, bank register, active clients, reconciliation info, health assessment, top clients, stale clients, and outstanding checks."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Law Firm Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/dashboard/law-firm/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "dashboard", "law-firm", ""]
+						},
+						"description": "Get law firm information (name, address, phone, email)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Uncleared Transactions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/dashboard/uncleared-transactions/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "dashboard", "uncleared-transactions", ""]
+						},
+						"description": "Get all uncleared (pending) transactions for reconciliation."
+					},
+					"response": []
+				}
+			],
+			"description": "Dashboard endpoints for overview data"
+		},
+		{
+			"name": "Clients",
+			"item": [
+				{
+					"name": "List All Clients",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/clients/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "clients", ""]
+						},
+						"description": "Get list of all clients with balance and case information."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Client Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/clients/{{client_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "clients", "{{client_id}}", ""]
+						},
+						"description": "Get detailed information for a specific client."
+					},
+					"response": []
+				},
+				{
+					"name": "Create New Client",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"Jane\",\n    \"last_name\": \"Smith\",\n    \"email\": \"jane.smith@example.com\",\n    \"phone\": \"(555) 234-5678\",\n    \"address\": \"456 Oak Avenue\",\n    \"city\": \"Los Angeles\",\n    \"state\": \"CA\",\n    \"zip_code\": \"90001\",\n    \"trust_account_status\": \"ACTIVE\",\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/clients/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "clients", ""]
+						},
+						"description": "Create a new client. Client number is auto-generated starting from 1001."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Client",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"Jane\",\n    \"last_name\": \"Smith\",\n    \"email\": \"jane.smith.updated@example.com\",\n    \"phone\": \"(555) 234-5678\",\n    \"address\": \"789 New Street\",\n    \"city\": \"Los Angeles\",\n    \"state\": \"CA\",\n    \"zip_code\": \"90002\",\n    \"trust_account_status\": \"ACTIVE\",\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/clients/{{client_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "clients", "{{client_id}}", ""]
+						},
+						"description": "Update an existing client. All fields required for PUT."
+					},
+					"response": []
+				},
+				{
+					"name": "Partial Update Client",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"newemail@example.com\",\n    \"phone\": \"(555) 999-8888\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/clients/{{client_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "clients", "{{client_id}}", ""]
+						},
+						"description": "Partially update a client. Only include fields you want to change."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Client",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/clients/{{client_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "clients", "{{client_id}}", ""]
+						},
+						"description": "Delete a client. WARNING: This cannot be undone."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Client Cases",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/clients/{{client_id}}/cases/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "clients", "{{client_id}}", "cases", ""]
+						},
+						"description": "Get all cases for a specific client."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Client Balance History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/clients/{{client_id}}/balance_history/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "clients", "{{client_id}}", "balance_history", ""]
+						},
+						"description": "Get balance breakdown by case for a specific client."
+					},
+					"response": []
+				},
+				{
+					"name": "Search Clients",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/clients/search/?q=john",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "clients", "search", ""],
+							"query": [
+								{
+									"key": "q",
+									"value": "john",
+									"description": "Search query (name, email, phone, client number)"
+								}
+							]
+						},
+						"description": "Search clients by name, email, phone, or client number."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Trust Summary",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/clients/trust_summary/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "clients", "trust_summary", ""]
+						},
+						"description": "Get trust account summary with total balance and client count."
+					},
+					"response": []
+				}
+			],
+			"description": "Client management endpoints"
+		},
+		{
+			"name": "Cases",
+			"item": [
+				{
+					"name": "List All Cases",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/cases/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "cases", ""]
+						},
+						"description": "Get list of all cases."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Case Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/cases/{{case_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "cases", "{{case_id}}", ""]
+						},
+						"description": "Get detailed information for a specific case."
+					},
+					"response": []
+				},
+				{
+					"name": "Create New Case",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"case_title\": \"Personal Injury Settlement\",\n    \"client\": 1,\n    \"case_description\": \"Vehicle accident settlement case\",\n    \"case_amount\": \"50000.00\",\n    \"case_status\": \"Open\",\n    \"opened_date\": \"2025-01-15\",\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/cases/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "cases", ""]
+						},
+						"description": "Create a new case for a client. Case number is auto-generated."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Case",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"case_title\": \"Personal Injury Settlement - Updated\",\n    \"client\": 1,\n    \"case_description\": \"Vehicle accident settlement case - updated description\",\n    \"case_amount\": \"55000.00\",\n    \"case_status\": \"Open\",\n    \"opened_date\": \"2025-01-15\",\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/cases/{{case_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "cases", "{{case_id}}", ""]
+						},
+						"description": "Update an existing case."
+					},
+					"response": []
+				},
+				{
+					"name": "Partial Update Case",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"case_status\": \"Closed\",\n    \"closed_date\": \"2025-10-12\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/cases/{{case_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "cases", "{{case_id}}", ""]
+						},
+						"description": "Partially update a case. Only include fields you want to change."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Case",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/cases/{{case_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "cases", "{{case_id}}", ""]
+						},
+						"description": "Delete a case. WARNING: This cannot be undone."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Case Balance",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/cases/{{case_id}}/balance/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "cases", "{{case_id}}", "balance", ""]
+						},
+						"description": "Get current balance for a specific case."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Case Transactions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/cases/{{case_id}}/transactions/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "cases", "{{case_id}}", "transactions", ""]
+						},
+						"description": "Get all transactions for a specific case."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Cases by Client",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/cases/by_client/?client_id=1",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "cases", "by_client", ""],
+							"query": [
+								{
+									"key": "client_id",
+									"value": "1",
+									"description": "Client ID to filter by"
+								}
+							]
+						},
+						"description": "Get all cases for a specific client ID."
+					},
+					"response": []
+				}
+			],
+			"description": "Case management endpoints"
+		},
+		{
+			"name": "Bank Accounts",
+			"item": [
+				{
+					"name": "List All Bank Accounts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/bank-accounts/accounts/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "bank-accounts", "accounts", ""]
+						},
+						"description": "Get list of all bank accounts with balances."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Bank Account Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/bank-accounts/accounts/{{account_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "bank-accounts", "accounts", "{{account_id}}", ""]
+						},
+						"description": "Get detailed information for a specific bank account."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Bank Account",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"account_number\": \"987654321\",\n    \"bank_name\": \"Second National Bank\",\n    \"bank_address\": \"456 Finance Blvd, New York, NY 10002\",\n    \"account_name\": \"IOLTA Trust Account - Branch 2\",\n    \"routing_number\": \"021000089\",\n    \"account_type\": \"CHECKING\",\n    \"opening_balance\": \"5000.00\",\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/bank-accounts/accounts/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "bank-accounts", "accounts", ""]
+						},
+						"description": "Create a new bank account."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Bank Account",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"account_number\": \"987654321\",\n    \"bank_name\": \"Second National Bank - Updated\",\n    \"bank_address\": \"456 Finance Blvd, New York, NY 10002\",\n    \"account_name\": \"IOLTA Trust Account - Branch 2 Updated\",\n    \"routing_number\": \"021000089\",\n    \"account_type\": \"CHECKING\",\n    \"opening_balance\": \"5000.00\",\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/bank-accounts/accounts/{{account_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "bank-accounts", "accounts", "{{account_id}}", ""]
+						},
+						"description": "Update an existing bank account."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Account Transactions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/bank-accounts/accounts/{{account_id}}/transactions/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "bank-accounts", "accounts", "{{account_id}}", "transactions", ""]
+						},
+						"description": "Get all transactions for a specific bank account."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Account Balance History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/bank-accounts/accounts/{{account_id}}/balance_history/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "bank-accounts", "accounts", "{{account_id}}", "balance_history", ""]
+						},
+						"description": "Get balance history over time for a specific account."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Accounts Summary",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/bank-accounts/accounts/summary/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "bank-accounts", "accounts", "summary", ""]
+						},
+						"description": "Get summary of all bank accounts with total balances."
+					},
+					"response": []
+				}
+			],
+			"description": "Bank account management endpoints"
+		},
+		{
+			"name": "Bank Transactions",
+			"item": [
+				{
+					"name": "List All Transactions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/bank-accounts/bank-transactions/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "bank-accounts", "bank-transactions", ""]
+						},
+						"description": "Get list of all bank transactions."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Deposit Transaction",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"bank_account\": 1,\n    \"client\": 1,\n    \"case\": 1,\n    \"transaction_type\": \"DEPOSIT\",\n    \"transaction_date\": \"2025-10-12\",\n    \"amount\": \"5000.00\",\n    \"description\": \"Initial retainer deposit\",\n    \"status\": \"CLEARED\",\n    \"reference_number\": \"DEP-2025-001\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/bank-accounts/bank-transactions/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "bank-accounts", "bank-transactions", ""]
+						},
+						"description": "Create a new deposit transaction. Transaction number is auto-generated."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Withdrawal Transaction",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"bank_account\": 1,\n    \"client\": 1,\n    \"case\": 1,\n    \"transaction_type\": \"WITHDRAWAL\",\n    \"transaction_date\": \"2025-10-12\",\n    \"amount\": \"1500.00\",\n    \"description\": \"Legal fees payment\",\n    \"status\": \"CLEARED\",\n    \"check_number\": \"1001\",\n    \"reference_number\": \"CHK-2025-001\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/bank-accounts/bank-transactions/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "bank-accounts", "bank-transactions", ""]
+						},
+						"description": "Create a new withdrawal transaction."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Payment to Vendor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"bank_account\": 1,\n    \"client\": 1,\n    \"case\": 1,\n    \"vendor\": 1,\n    \"transaction_type\": \"WITHDRAWAL\",\n    \"transaction_date\": \"2025-10-12\",\n    \"amount\": \"850.00\",\n    \"description\": \"Payment to expert witness\",\n    \"payee\": \"Dr. John Expert\",\n    \"check_memo\": \"Expert witness consultation - Case #1001\",\n    \"status\": \"PENDING\",\n    \"check_number\": \"1002\",\n    \"reference_number\": \"VEN-2025-001\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/bank-accounts/bank-transactions/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "bank-accounts", "bank-transactions", ""]
+						},
+						"description": "Create a payment transaction to a vendor."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Unmatched Transactions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/bank-accounts/bank-transactions/unmatched/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "bank-accounts", "bank-transactions", "unmatched", ""]
+						},
+						"description": "Get all unmatched transactions for reconciliation (pending status)."
+					},
+					"response": []
+				}
+			],
+			"description": "Bank transaction management endpoints"
+		},
+		{
+			"name": "Vendors",
+			"item": [
+				{
+					"name": "List All Vendors",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/vendors/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "vendors", ""]
+						},
+						"description": "Get list of all vendors."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vendor Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/vendors/{{vendor_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "vendors", "{{vendor_id}}", ""]
+						},
+						"description": "Get detailed information for a specific vendor."
+					},
+					"response": []
+				},
+				{
+					"name": "Create New Vendor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vendor_name\": \"ABC Court Reporting Services\",\n    \"contact_person\": \"Mike Johnson\",\n    \"email\": \"contact@abccourt.com\",\n    \"phone\": \"(555) 777-8888\",\n    \"address\": \"123 Court Street\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zip_code\": \"10001\",\n    \"tax_id\": \"12-3456789\",\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/vendors/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "vendors", ""]
+						},
+						"description": "Create a new vendor. Vendor number is auto-generated."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Vendor",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"vendor_name\": \"ABC Court Reporting Services - Updated\",\n    \"contact_person\": \"Mike Johnson\",\n    \"email\": \"contact@abccourt.com\",\n    \"phone\": \"(555) 777-9999\",\n    \"address\": \"123 Court Street\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zip_code\": \"10001\",\n    \"tax_id\": \"12-3456789\",\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/vendors/{{vendor_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "vendors", "{{vendor_id}}", ""]
+						},
+						"description": "Update an existing vendor."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Vendor",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/vendors/{{vendor_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "vendors", "{{vendor_id}}", ""]
+						},
+						"description": "Delete a vendor. WARNING: This cannot be undone."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vendor Payments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/vendors/{{vendor_id}}/payments/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "vendors", "{{vendor_id}}", "payments", ""]
+						},
+						"description": "Get all payment transactions for a specific vendor."
+					},
+					"response": []
+				},
+				{
+					"name": "Search Vendors",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/vendors/search/?q=court",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "vendors", "search", ""],
+							"query": [
+								{
+									"key": "q",
+									"value": "court",
+									"description": "Search query (name, contact, email, phone)"
+								}
+							]
+						},
+						"description": "Search vendors by name, contact person, email, or phone."
+					},
+					"response": []
+				}
+			],
+			"description": "Vendor management endpoints"
+		},
+		{
+			"name": "Vendor Types",
+			"item": [
+				{
+					"name": "List All Vendor Types",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/vendors/types/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "vendors", "types", ""]
+						},
+						"description": "Get list of all vendor types."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Vendor Type",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Medical Providers\",\n    \"description\": \"Doctors, hospitals, and medical service providers\",\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/vendors/types/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "vendors", "types", ""]
+						},
+						"description": "Create a new vendor type category."
+					},
+					"response": []
+				}
+			],
+			"description": "Vendor type category management"
+		},
+		{
+			"name": "Checks",
+			"item": [
+				{
+					"name": "List All Checks",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/checks/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "checks", ""]
+						},
+						"description": "Get list of all check transactions."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Check Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/checks/{{check_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "checks", "{{check_id}}", ""]
+						},
+						"description": "Get detailed information for a specific check."
+					},
+					"response": []
+				}
+			],
+			"description": "Check printing and management endpoints"
+		},
+		{
+			"name": "Reconciliations",
+			"item": [
+				{
+					"name": "List All Reconciliations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/bank-accounts/reconciliations/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "bank-accounts", "reconciliations", ""]
+						},
+						"description": "Get list of all bank reconciliations."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Reconciliation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"bank_account\": 1,\n    \"reconciliation_date\": \"2025-10-31\",\n    \"statement_balance\": \"45678.90\",\n    \"book_balance\": \"45678.90\",\n    \"is_reconciled\": true,\n    \"reconciled_by\": \"admin\",\n    \"notes\": \"October 2025 reconciliation - all transactions matched\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/bank-accounts/reconciliations/",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "bank-accounts", "reconciliations", ""]
+						},
+						"description": "Create a new bank reconciliation record."
+					},
+					"response": []
+				}
+			],
+			"description": "Bank reconciliation endpoints"
+		}
+	],
+	"auth": {
+		"type": "inherit"
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Pre-request script runs before each request",
+					"// Session cookies are automatically handled by Postman"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Test script runs after each request",
+					"if (pm.response.code === 401) {",
+					"    console.log('⚠️ Authentication required - please run Login request first');",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000/api",
+			"type": "string"
+		}
+	]
+}

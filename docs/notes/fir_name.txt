@@ -1,0 +1,22 @@
+So the question is: Do you want to change this firm information?
+
+  If you want to update the law firm details, you have two options:
+
+  Option 1: Update via SQL
+
+  UPDATE law_firm SET
+      firm_name = 'Your Law Firm Name',
+      address_line1 = 'Your Address',
+      city = 'Your City',
+      state = 'Your State',
+      zip_code = 'Your Zip',
+      phone = 'Your Phone',
+      email = 'your@email.com'
+  WHERE id = 1;
+
+  Option 2: Use the Settings Page
+
+  The settings page (/settings) should have a form to edit law firm information.
+
+  ---
+  Do you want to change the law firm information? If so, what should it be?

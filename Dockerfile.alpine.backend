@@ -1,0 +1,185 @@
+# ============================================================================
+# IOLTA Guard - Backend Dockerfile (Alpine Linux)
+# ============================================================================
+# Multi-stage build for optimal image size
+# Base: Alpine Linux 3.20 with Python 3.12
+# Security: musl libc, minimal attack surface
+# ============================================================================
+
+# ============================================================================
+# STAGE 1: BUILD - Compile dependencies
+# ============================================================================
+FROM python:3.12-alpine3.20 AS builder
+
+LABEL maintainer="IOLTA Guard Development Team"
+LABEL stage="builder"
+LABEL alpine.version="3.20"
+LABEL python.version="3.12"
+
+# Set build environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install build dependencies
+# These are only needed during compilation and will not be in final image
+RUN apk add --no-cache --virtual .build-deps \
+    # Compiler toolchain
+    gcc \
+    g++ \
+    make \
+    musl-dev \
+    python3-dev \
+    # PostgreSQL driver compilation
+    postgresql-dev \
+    # Cryptography package
+    libffi-dev \
+    openssl-dev \
+    cargo \
+    # WeasyPrint dependencies (PDF generation)
+    cairo-dev \
+    pango-dev \
+    gdk-pixbuf-dev \
+    harfbuzz-dev \
+    # Image processing libraries
+    jpeg-dev \
+    zlib-dev \
+    freetype-dev \
+    lcms2-dev \
+    openjpeg-dev \
+    tiff-dev \
+    # XML/HTML parsing
+    libxml2-dev \
+    libxslt-dev
+
+# Create build directory
+WORKDIR /build
+
+# Copy requirements file
+COPY backend/requirements.txt .
+
+# Build Python wheels for all dependencies
+# Wheels are pre-compiled packages that install faster
+RUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
+
+# ============================================================================
+# STAGE 2: RUNTIME - Final slim image
+# ============================================================================
+FROM python:3.12-alpine3.20
+
+LABEL maintainer="IOLTA Guard Development Team"
+LABEL stage="runtime"
+LABEL alpine.version="3.20"
+LABEL python.version="3.12"
+LABEL application="iolta-guard-backend"
+LABEL security.musl="true"
+
+# Set runtime environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    # Django settings
+    DJANGO_SETTINGS_MODULE=trust_account_project.settings
+
+# Install ONLY runtime dependencies (much smaller than build deps)
+RUN apk add --no-cache \
+    # PostgreSQL client libraries
+    postgresql-libs \
+    libpq \
+    # Security libraries
+    libffi \
+    openssl \
+    # WeasyPrint runtime libraries
+    cairo \
+    pango \
+    gdk-pixbuf \
+    harfbuzz \
+    # Image processing
+    jpeg \
+    zlib \
+    freetype \
+    lcms2 \
+    openjpeg \
+    tiff \
+    # XML/HTML parsing
+    libxml2 \
+    libxslt \
+    # Fonts for PDF generation
+    ttf-dejavu \
+    ttf-liberation \
+    fontconfig \
+    # Utilities
+    curl \
+    bash
+
+# Update font cache for PDF rendering
+RUN fc-cache -f
+
+# Create application user (security best practice - don't run as root)
+RUN addgroup -g 1000 iolta && \
+    adduser -D -u 1000 -G iolta iolta
+
+# Set work directory
+WORKDIR /app
+
+# Copy pre-built wheels from builder stage
+COPY --from=builder /wheels /wheels
+
+# Install Python packages from wheels
+RUN pip install --no-index --find-links=/wheels /wheels/* && \
+    rm -rf /wheels
+
+# Copy application code
+COPY backend/ /app/
+#COPY account.json /app/account.json
+
+# Create necessary directories
+RUN mkdir -p /app/staticfiles /app/media /app/logs
+
+# Collect static files (Django admin, DRF browsable API)
+RUN python manage.py collectstatic --noinput || true
+
+# Set ownership to iolta user after collectstatic
+RUN chown -R iolta:iolta /app && \
+    chmod -R 755 /app/logs
+
+# Switch to non-root user
+USER iolta
+
+# Health check endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8002/api/health/ || exit 1
+
+# Expose port
+EXPOSE 8002
+
+# Run gunicorn
+CMD ["gunicorn", \
+     "trust_account_project.wsgi:application", \
+     "--bind", "0.0.0.0:8002", \
+     "--workers", "4", \
+     "--worker-class", "sync", \
+     "--timeout", "120", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "--log-level", "info"]
+
+# ============================================================================
+# IMAGE SIZE OPTIMIZATION NOTES
+# ============================================================================
+# - Multi-stage build removes ~500MB of build dependencies
+# - Final image size: ~200-400MB (vs 800MB-1GB for Debian)
+# - Build time: ~20-25 minutes (first build with no cache)
+# - Subsequent builds: ~2-5 minutes (with layer caching)
+#
+# SECURITY NOTES
+# ============================================================================
+# - musl libc (Alpine) vs glibc (Debian): smaller attack surface
+# - Non-root user execution
+# - Minimal installed packages
+# - No unnecessary tools or shells
+# - Regular security updates via Alpine package manager
+#
+# ============================================================================

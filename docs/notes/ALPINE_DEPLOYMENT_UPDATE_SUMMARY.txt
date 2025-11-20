@@ -1,0 +1,208 @@
+================================================================================
+DEPLOYMENT SCRIPT UPDATED - ALPINE VERSION
+================================================================================
+
+✅ CHANGES COMPLETED:
+
+1. deploy_with_database.sh
+   - Now uses docker-compose.alpine.yml (100% Alpine Linux)
+   - Added verification for Alpine Dockerfiles
+   - Updated all container names (iolta_*_alpine)
+   - Enhanced progress visibility with:
+     * Color-coded output (6 colors for different message types)
+     * Detailed step-by-step progress
+     * Build output filtering (shows important steps only)
+     * Progress bar for database wait time
+     * Retry logic with visible attempts
+     * Image size display after build
+     * Database connection verification
+     * Health checks with retry logic
+     * Final status summary with emojis
+
+2. DEPLOYMENT_CHECKLIST.txt
+   - Updated for Alpine configuration
+   - Lists all required Alpine files
+   - Shows Alpine container names
+   - Provides Alpine-specific commands
+
+3. DOCKER_COMPOSE_COMPARISON.md (NEW)
+   - Compares all 5 docker-compose configurations
+   - Shows which uses Alpine vs Debian
+   - Recommends Alpine for production
+
+================================================================================
+WHAT THE SCRIPT DOES NOW:
+================================================================================
+
+Step 1: Cleanup
+---------------
+✓ Stops docker-compose services
+✓ Lists and stops all running containers
+✓ Removes all containers (fixes ContainerConfig error)
+✓ Cleans dangling images
+
+Step 2: Build (with visible progress)
+--------------------------------------
+✓ Pulls postgres:16-alpine3.20
+✓ Builds backend (shows Stage 1 & 2 progress)
+✓ Builds frontend
+✓ Displays final image sizes
+
+Step 3: Start Services
+----------------------
+✓ Starts all Alpine containers
+✓ Shows container status
+
+Step 4: Database Wait (with progress bar)
+------------------------------------------
+✓ 15-second countdown with visual bar
+✓ Connection verification with retries
+✓ Shows attempt numbers if retries needed
+
+Step 5: Database Import (with filtering)
+-----------------------------------------
+✓ Shows dump file size
+✓ Drops old database
+✓ Creates fresh database
+✓ Imports dump with filtered output
+✓ Verifies import with row counts
+
+Step 6: Static Files
+--------------------
+✓ Collects Django static files
+✓ Shows copy operations
+
+Step 7: Health Checks
+---------------------
+✓ Container status
+✓ Backend health check (3 retries)
+✓ Frontend check
+✓ Active database connections count
+
+Step 8: Final Summary
+---------------------
+✓ Success banner
+✓ Image configuration
+✓ Access URL
+✓ Container names
+✓ Useful commands reference
+
+================================================================================
+CONTAINER NAMES CHANGED:
+================================================================================
+
+OLD (docker-compose.yml):     NEW (docker-compose.alpine.yml):
+- iolta_db                     - iolta_db_alpine
+- iolta_backend                - iolta_backend_alpine
+- iolta_frontend               - iolta_frontend_alpine
+
+================================================================================
+PROGRESS VISIBILITY FEATURES:
+================================================================================
+
+✅ Color-Coded Output:
+   🔵 Blue    - Headers and info
+   🟡 Yellow  - Current step
+   🟢 Green   - Success
+   🔴 Red     - Errors
+   🔵 Cyan    - Information
+   🟣 Magenta - Warnings
+
+✅ Real-Time Feedback:
+   - Every command's output is shown
+   - Build steps visible
+   - Container names when stopping/removing
+   - Database import progress
+   - Health check attempts
+
+✅ Progress Indicators:
+   - Countdown timers
+   - Retry counters
+   - File sizes
+   - Row counts
+   - Connection counts
+
+✅ Smart Filtering:
+   - Build output shows only important steps
+   - Import shows CREATE/ALTER/COPY statements
+   - Errors always highlighted in red
+
+================================================================================
+EXAMPLE OUTPUT:
+================================================================================
+
+==========================================
+IOLTA Guard - Alpine Linux Deployment
+==========================================
+
+ℹ Using configuration: docker-compose.alpine.yml
+ℹ All services will run on Alpine Linux (optimized)
+
+>>> Verifying deployment directory...
+✓ Found docker-compose.alpine.yml
+
+>>> Verifying Alpine Dockerfiles...
+✓ All Alpine Dockerfiles found
+
+==========================================
+Step 1: Cleaning Up Old Containers
+==========================================
+
+>>> Stopping Docker Compose services...
+  Stopping iolta_backend_alpine ... done
+  Stopping iolta_frontend_alpine ... done
+✓ Docker Compose services stopped
+
+... (continues with detailed progress)
+
+==========================================
+🎉 Alpine Deployment Complete! 🎉
+==========================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Application is deployed and ready!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📦 Image Configuration:
+  ✓ Database:  postgres:16-alpine3.20
+  ✓ Backend:   Python 3.12 on Alpine 3.20
+  ✓ Frontend:  Nginx on Alpine
+
+🌐 Access the application at:
+  http://138.68.109.92
+
+================================================================================
+FILES READY FOR DEPLOYMENT:
+================================================================================
+
+All files in: /home/amin/Projects/ve_demo/
+
+✓ docker-compose.alpine.yml
+✓ Dockerfile.alpine.backend
+✓ Dockerfile.alpine.frontend
+✓ deploy_with_database.sh (UPDATED - Alpine version)
+✓ backups/iolta_production_dump.sql
+✓ DEPLOYMENT_CHECKLIST.txt (UPDATED)
+✓ DOCKER_COMPOSE_COMPARISON.md (NEW)
+✓ ALPINE_DEPLOYMENT_UPDATE_SUMMARY.txt (this file)
+
+================================================================================
+NEXT STEPS:
+================================================================================
+
+1. Create tar file:
+   $ cd /home/amin/Projects
+   $ tar -czf ve_demo_alpine.tar.gz ve_demo/
+
+2. Transfer to test server:
+   $ scp ve_demo_alpine.tar.gz root@138.68.109.92:/root/
+
+3. On test server:
+   $ tar -xzf ve_demo_alpine.tar.gz
+   $ cd ve_demo
+   $ chmod +x deploy_with_database.sh
+   $ ./deploy_with_database.sh
+
+4. Watch the detailed progress output!
+
+================================================================================

@@ -1,0 +1,58 @@
+IOLTA GUARD - CUSTOMER DEPLOYMENT INSTRUCTIONS
+==============================================
+
+** 10 STEPS TO DEPLOY **
+
+1. Extract project files to target directory
+
+2. Navigate to project directory:
+   cd /path/to/ve_demo
+
+3. Start all containers:
+   docker-compose -f docker-compose.alpine.yml up -d
+
+4. Wait 30 seconds for containers to start
+
+5. Restore database backup:
+   docker exec -i iolta_db_alpine psql -U iolta_user -d iolta_guard_db < backup_sample_data.sql
+
+6. Verify database restored:
+   docker exec iolta_db_alpine psql -U iolta_user -d iolta_guard_db -c "SELECT COUNT(*) FROM clients;"
+
+7. Run Django migrations (syncs migration table, no schema changes):
+   docker exec iolta_backend_alpine python manage.py migrate --fake-initial
+
+8. Access application:
+   http://localhost
+
+9. Login credentials:
+   Username: admin
+   Password: admin123
+
+10. Done! System ready with sample data.
+
+** TROUBLESHOOTING **
+
+If migrations error:
+   docker exec iolta_backend_alpine python manage.py migrate --fake
+
+If port 80 already in use:
+   Edit docker-compose.alpine.yml, change "80:80" to "8080:80"
+   Access via http://localhost:8080
+
+If database connection fails:
+   docker-compose -f docker-compose.alpine.yml restart backend
+
+** INCLUDED SAMPLE DATA **
+- 166 Clients
+- 194 Cases
+- 1,263 Transactions
+- 9 Vendors
+- 1 Bank Account
+- 1 Admin User (managing_attorney role)
+
+** SYSTEM REQUIREMENTS **
+- Docker Engine 20.10+
+- Docker Compose 1.29+
+- 2GB RAM minimum
+- Port 80 available (or use 8080)

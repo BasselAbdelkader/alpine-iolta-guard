@@ -1,0 +1,547 @@
+Summary,Issue key,Issue id,Issue Type,Status,Project key,Project name,Project type,Project lead,Project lead id,Project description,Priority,Resolution,Assignee,Assignee Id,Reporter,Reporter Id,Creator,Creator Id,Created,Updated,Last Viewed,Resolved,Due date,Votes,Description,Environment,Watchers,Watchers Id,Original estimate,Remaining Estimate,Time Spent,Work Ratio,Σ Original Estimate,Σ Remaining Estimate,Σ Time Spent,Security Level,Attachment,Attachment,Custom field (Development),Custom field (Issue color),Custom field (Rank),Custom field (Start date),Custom field (Team),Custom field (Vulnerability),Status Category,Status Category Changed,Fixed Date,Fixed Date
+[Front-End] Client Data Not Saved When Editing Existing Client,MFLP-44,10309,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Highest,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,08/Nov/25 12:00 AM,08/Nov/25 12:00 AM,08/Nov/25 12:00 AM,,,0,"When editing an existing client from the client detail page, changes to client data (address, city, zip_code, etc.) are not being saved to the database. The Edit Client modal opens correctly after MFLP-14 fix, but clicking ""Update Client"" button does not persist the changes.
+
+h3. *Root Cause:*
+
+The clientModal HTML was added to client-detail.html in MFLP-14 fix, but the form submit event handler was not added to client-detail.js. Without the submit handler, the form has no way to send the updated data to the backend API.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Click on any *Client* name to view client details.
+# Click on the *Edit Client* button.
+# Modify any field (e.g., address, city, zip_code).
+# Click *Update Client* button.
+
+h3. *Expected Result:*
+
+The client data should be updated in the database and the client detail page should refresh showing the new values.
+
+h3. *Actual Result:*
+
+The modal closes but the changes are not saved. Refreshing the page shows the old values.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0007zz:,,,,To Do,08/Nov/25 12:00 AM,2025-11-08,2025-11-08
+[Back-End] System Allows Withdrawal from Zero-Balance Case,MFLP-43,10308,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Highest,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,01/Nov/25 11:15 PM,01/Nov/25 11:48 PM,01/Nov/25 11:48 PM,,,0,"In the Trust Account Management System, when a withdrawal transaction is made (via API) for a case with a *zero amount*, the system incorrectly allows the transaction to proceed. As a result, the client’s balance becomes *negative (-7,000)*, which violates system rules that should prevent withdrawals exceeding the available balance.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Select a *Client* who has *no existing cases*.
+# Click on the *Case icon* to create a new case with *Amount = 0*.
+# Using *Postman* (or a similar API testing tool), make a *Withdrawal transaction* for this case with an amount of *$7,000*.
+
+h3. *Expected Result:*
+
+The system should prevent the withdrawal and return an appropriate error message, such as:
+
+“Withdrawal not allowed. Insufficient balance.”
+
+The client’s balance should remain *0*.
+
+h3. *Actual Result:*
+
+The withdrawal is processed successfully, and the client’s total balance becomes *-7,000*, which should not be possible in the system.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0007z:,,,,To Do,01/Nov/25 11:15 PM,2025-11-05,2025-11-05
+[Back-End] Client Total Balance Does Not Match Sum of Associated Case Balances,MFLP-42,10307,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,High,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,01/Nov/25 10:13 PM,01/Nov/25 10:13 PM,01/Nov/25 11:39 PM,,,0,"In the Trust Account Management System, the *Total Balance* displayed for a client does not accurately match the *sum of all associated case balances*. For example, the client _“Abdelrahman Salah Abdelrazak”_ shows a *Total Balance* of *99,701.00*, while the sum of all associated case balances equals *99,904.00*.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Locate the client *“Abdelrahman Salah Abdelrazak.”*
+# Observe the *Total Balance* displayed (e.g., {{99,701.00}}).
+# Click on the *arrow button* to expand and view all associated cases.
+# Calculate the *sum of all case balances*.
+
+h3. *Expected Result:*
+
+The *Total Balance* displayed at the client level should exactly equal the *sum of all associated case balances*.
+
+h3. *Actual Result:*
+
+The *sum of case balances* equals *99,904.00*, while the *Total Balance* equals *99,701.00*, showing a mismatch.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0007r:,,,,To Do,2025-11-08,2025-11-09,2025-11-09
+[Front-End] UI issue when voided reason is long,MFLP-41,10274,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Medium,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,01/Nov/25 12:00 AM,01/Nov/25 12:00 AM,01/Nov/25 11:05 PM,,,0,,,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0007j:,,,,To Do,01/Nov/25 12:00 AM,2025-11-09,2025-11-09
+[Front-End] Incorrect Error Message Displayed When Updating Case Title with Empty Value,MFLP-39,10272,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Medium,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,31/Oct/25 11:19 PM,31/Oct/25 11:19 PM,01/Nov/25 10:05 PM,,,0,"n the Trust Account Management System, when editing a case and clearing the *Title* field (leaving it blank), the system displays a generic error message instead of a proper validation message. The bac-kend correctly validates the input and returns the expected error (“This field may not be blank”), but the front-end shows a misleading message: “Error saving case: Failed to update case.”
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Select a *Client* who has an existing *Case*.
+# Click on the *Case* to open its details.
+# Click on the *Edit* button.
+# Clear the *Title* field, leaving it empty.
+# Click on the *Save Case* button.
+
+h3. *Expected Result:*
+
+An appropriate validation error should appear, stating:
+
+“This field may not be blank.”
+
+h3. *Actual Result:*
+
+A generic error message appears:
+
+“Error saving case: Failed to update case.”",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0007b:,,,,To Do,31/Oct/25 11:19 PM,2025-11-09,2025-11-09
+[Front-End] Save Transaction Button Stuck on Loading When Adding Second Transaction to a Case,MFLP-38,10239,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Highest,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,29/Oct/25 12:09 AM,29/Oct/25 12:10 AM,29/Oct/25 12:13 AM,,,0,"In the Trust Account Management System, when a user performs a *Deposit* transaction within a case and then attempts to make another *Deposit* or *Withdrawal*, the *Save Transaction* button remains stuck in a loading state. The transaction is never completed, and the user cannot proceed.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Select a *Client* who has one or more *Cases*.
+# Click on any *Case* to open its details.
+# Create a *Deposit Transaction* and save it successfully.
+# Attempt to make another *Deposit* or *Withdrawal Transaction*.
+
+h3. *Expected Result:*
+
+The system should allow the user to successfully perform multiple transactions (Deposit or Withdrawal) for the same case.
+
+h3. *Actual Result:*
+
+The *Save Transaction* button becomes stuck in a *loading state*, preventing the user from saving the second transaction.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i00073:,,,,To Do,29/Oct/25 12:09 AM,2025-11-08,2025-11-08
+[Front-End] “All Cases” Button Redirects to Clients Page Instead of Client’s Case List,MFLP-37,10238,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Medium,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,28/Oct/25 11:52 PM,28/Oct/25 11:54 PM,29/Oct/25 12:03 AM,,,0,"In the Trust Account Management System, when a user views a case and clicks the *“All Cases”* button, the system incorrectly redirects to the *Clients* page instead of displaying all cases related to the selected client.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Select a *Client* who has one or more *Cases*.
+# Click on any *Case* to open its details.
+# Click on the *All Cases* button.
+
+h3. *Expected Result:*
+
+The user should be redirected to a list view showing *all cases related to the selected client*.
+
+h3. *Actual Result:*
+
+The user is redirected to the *Clients* page instead of the client’s case list.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0006v:,,,,To Do,28/Oct/25 11:52 PM,2025-11-09,2025-11-09
+[Front-End] Unable to Edit Closed Case Due to Missing Closing Date Key in API Request,MFLP-36,10237,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,High,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,28/Oct/25 11:03 PM,28/Oct/25 11:04 PM,01/Nov/25 11:06 PM,,,0,"In the Trust Account Management System, when attempting to edit a *Closed* case (e.g., changing its title), the system displays an error and fails to update the case. The back-end API returns an error because the {{closed_date}} *key* is not included in the request body, even though it is required for closed cases.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Select a *Client* who has a *Closed* case.
+# Click on the *Closed Case* to open its details.
+# Click on the *Edit* button.
+# Modify the *Title* of the case.
+# Click on *Save Case*.
+
+h3. *Expected Result:*
+
+The case should be updated successfully (e.g., title changed) without errors.
+
+h3. *Actual Result:*
+
+An error message appears:
+
+“Error saving case: Failed to update case.”
+
+The request fails because the {{closed_date}} *key* is missing in the API request body.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0006n:,,,,To Do,2025-11-08,2025-11-08,2025-11-08
+[Front-End] Closing Date Not Displayed for Closed Cases Despite Being Returned by API,MFLP-35,10236,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,High,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,28/Oct/25 10:32 PM,28/Oct/25 10:32 PM,28/Oct/25 11:48 PM,,,0,"In the Trust Account Management System, when viewing a case with a *Closed* status, the *Closing Date* field is not displayed in the case details view. The back-end API response includes the correct closing date value, but it is not rendered on the front-end.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Select a *Client* who has a *Closed* case.
+# Click on the *Closed Case* to open its details.
+
+h3. *Expected Result:*
+
+The *Closing Date* should be displayed in the case details view for all closed cases.
+
+h3. *Actual Result:*
+
+The *Closing Date* is not displayed in the UI, even though it is correctly included in the API response.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0006f:,,,,To Do,2025-11-08,2025-11-08,2025-11-08
+[Front-End] Fails to Display Error When Creating Case for Inactive Client,MFLP-34,10203,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,High,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,26/Oct/25 2:12 AM,26/Oct/25 2:12 AM,28/Oct/25 10:27 PM,,,0,"When attempting to create a new case for an inactive client in the Trust Account Management System, the back-end correctly returns an error preventing the case from being created. However, the front-end does not display this error message to the user. As a result, the user receives no feedback and may believe the action was unsuccessful for unknown reasons.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Select an *Inactive Client*.
+# Click on the *Case icon* to add a new case.
+# Enter a *Title* for the case.
+# Set the *Status* to *Open*.
+# Choose an *Opened Date* (e.g., {{26-10-2025}}).
+# Click on the *Save Case* button.
+
+h3. *Expected Result:*
+
+An error message should appear stating: “Cannot create case for inactive client.”
+
+h3. *Actual Result:*
+
+No error message appears on the front-end, even though the back-end correctly returns an error response.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i00067:,,,,To Do,26/Oct/25 2:12 AM,2025-11-09,2025-11-09
+[Back-End] System Allows Creating a Case with an Opened Date in the Future,MFLP-33,10202,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,High,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,26/Oct/25 1:57 AM,26/Oct/25 1:57 AM,31/Oct/25 11:50 PM,,,0,"When creating a new case in the Trust Account Management System, the system allows users to enter an *Opened Date* that is in the *future*. This behavior is incorrect, as the system should prevent users from setting future dates for case openings. Allowing such entries can lead to inaccurate data and inconsistencies in reporting or auditing.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Select a specific *Client*.
+# Click on the *Case icon* to add a new case.
+# Enter a *Title* for the case.
+# Set the *Status* to *Open*.
+# Choose an *Opened Date* set in the *future* (e.g., {{26-10-2027}}).
+# Click on the *Save Case* button.
+
+h3. *Expected Result:*
+
+An error message should appear stating:
+
+The system should prevent saving the case until a valid (past or present) date is selected.
+
+h3. *Actual Result:*
+
+The case is created successfully, even though the *Opened Date* is in the future.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0005z:,,,,To Do,26/Oct/25 1:57 AM,2025-11-09,2025-11-09
+[Front-End] System Does Not Display Validation Error When Closed Date Is Earlier Than Opened Date,MFLP-32,10201,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Medium,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,26/Oct/25 1:43 AM,26/Oct/25 1:43 AM,28/Oct/25 10:21 PM,,,0,"When creating a new case in the Trust Account Management System, if the *Closed Date* is earlier than the *Opened Date*, the system fails to display the validation error message returned by the backend. Instead, the user remains stuck on the *New Case* form without feedback, resulting in poor user experience and data validation inconsistency between the front-end and back-end.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Select a specific *Client*.
+# Click on the *Case icon* to add a new case.
+# Enter a *Title* for the case.
+# Set the *Status* to *Closed*.
+# Choose an *Opened Date* (e.g., {{26-10-2025}}).
+# Choose a *Closed Date* that is *earlier* than the opened date (e.g., {{26-09-2025}}).
+# Click on the *Save Case* button.
+
+h3. *Expected Result:*
+
+An error message should appear stating: “Closed date cannot be earlier than opened date.”
+
+h3. *Actual Result:*
+
+No error message appears on the front-end. The user remains stuck on the case form, even though the *back-end returns a validation error*.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0005r:,,,,To Do,26/Oct/25 1:43 AM,2025-11-09,2025-11-09
+[Front-End] System Does Not Display Validation Error When Saving a Closed Case Without a Closed Date,MFLP-31,10200,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,High,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,26/Oct/25 1:30 AM,26/Oct/25 1:31 AM,28/Oct/25 10:21 PM,,,0,"When creating a new case in the Trust Account Management System and setting the *status* to *Closed* without specifying a *Closed Date*, the system fails to display a validation error message, even though the back-end correctly returns an error. This inconsistency between the back-end and front-end leads to a poor user experience and potential data integrity issues.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Select a specific *Client*.
+# Click on the *Case icon* to add a new case.
+# Enter a *Title* for the case.
+# Set the *Status* to *Closed*.
+# Choose an *Opened Date* (e.g., {{01-10-2025}}).
+# Do *not* select a *Closed Date*.
+# Click on the *Save Case* button.
+
+h3. *Expected Result:*
+
+An error message should appear stating “Closed date is required when case status is ‘Closed’.
+
+h3. *Actual Result:*
+
+No error message appears, and the front-end does not notify the user, despite the back-end returning a validation error.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0005j:,,,,To Do,26/Oct/25 1:30 AM,2025-11-09,2025-11-09
+[Back-End] Deleted Case Number Reused When Creating a New Case,MFLP-30,10199,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Medium,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,26/Oct/25 12:32 AM,26/Oct/25 1:42 AM,28/Oct/25 10:22 PM,,,0,"When deleting a case from the Trust Account Management System and then creating a new case, the system incorrectly reuses the *case number* of the deleted case. Case numbers should be *unique and sequential*, even for deleted records, to maintain accurate historical tracking and prevent duplication issues.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Locate the most recently created case named *“Salah Case”* with *case number* {{CASE-002043}}.
+# Delete the case {{CASE-002043}}.
+# Create a new case for any client.
+
+h3. *Expected Result:*
+
+The newly created case should have the next sequential number — {{CASE-002044}}.
+Deleted case numbers should *not* be reused.
+
+h3. *Actual Result:*
+
+The new case is created with *case number* {{CASE-002043}}, reusing the deleted case’s number.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0005b:,,,,To Do,26/Oct/25 12:32 AM,2025-11-08,2025-11-08
+[Back-End] Automatic Deposit Payee Appears as Null After Creating a New Case,MFLP-29,10198,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,High,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,25/Oct/25 11:44 PM,25/Oct/25 11:44 PM,26/Oct/25 1:30 AM,,,0,"When adding a new case for a client in the Trust Account Management System, an automatic deposit transaction is correctly created in the *Bank Transaction* module. However, the *Payee* field for the automatic deposit appears as *null* instead of displaying the client’s name.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Select a specific *Client*.
+# Click on the *Case icon* to add a new case.
+# In the *Amount* field, enter {{2000}}.
+# Click on the *Save Case* button.
+# After the case is successfully added, navigate to the *Case Details* to review the automatic deposit.
+# Observe the *Payee* label — it should match the client’s name.
+# Then, navigate to the *Bank Transaction* tab to view the automatically created deposit.
+
+h3. *Expected Result:*
+
+The automatic deposit transaction should appear successfully, and the *Payee* should display the *client’s name*.
+
+h3. *Actual Result:*
+
+The transaction appears successfully, but the *Payee* field displays *null* instead of the client’s name.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i00053:,,,,To Do,25/Oct/25 11:44 PM,2025-11-08,2025-11-08
+[Back-End] System Allows Creating a Transaction with Zero Amount,MFLP-28,10165,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Highest,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,25/Oct/25 6:08 PM,25/Oct/25 6:09 PM,06/Nov/25 8:35 PM,,,0,"When adding a new transaction (either Deposit or Withdrawal) under a client’s case, the system currently allows saving a transaction even if the entered amount is *0*.
+This behavior is incorrect, as transactions with zero value should not be permitted. Allowing such entries may cause inconsistencies in financial records and reporting.
+
+*Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Select a *client* who has one or more *cases*.
+# Choose any *case* related to this client.
+# Click on the *Add Transaction* button.
+# Select the *Type* as *Deposit* or *Withdrawal*.
+# In the *Amount* field, enter *0*.
+# Enter any text in the *Description* field.
+# Click on the *Save Transaction* button.
+
+*Expected Result:*
+The system should display an *error message* indicating that a transaction with a *zero amount* is not allowed (e.g., _“Transaction amount must be greater than zero.”_).
+
+*Actual Result:*
+The system allows the transaction to be created *successfully* even when the amount is *0*.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0004v:,,,,To Do,25/Oct/25 6:08 PM,2025-11-08,2025-11-08
+[Front-End] Missing Required Field Indicator (*) for “Last Name” on Add New Client Form,MFLP-27,10132,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Medium,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,22/Oct/25 10:08 PM,22/Oct/25 10:08 PM,25/Oct/25 3:13 PM,,,0,"*Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Click on *Add New Client*.
+
+*Expected Result:*
+The *Last Name* field should display a *(*) indicator* to show that it is a required field.
+
+*Actual Result:*
+The *Last Name* field does *not* display a *(*) indicator*, even though it is a required field.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0004n:,,,,To Do,22/Oct/25 10:08 PM,2025-11-09,2025-11-09
+[Back-End] System Returns 500 Internal Server Error When Deleting Client with Existing Transactions,MFLP-26,10101,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,High,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,19/Oct/25 12:11 AM,19/Oct/25 12:11 AM,25/Oct/25 5:56 PM,,,0,"When attempting to delete a client who has existing transactions in the Trust Account Management System, the system responds with a *500 Internal Server Error* instead of properly updating the client’s status to *Inactive*.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Select a *client who has one or more transactions*.
+# Click on the *Delete* icon.
+# When the *warning pop-up* appears, click on *Delete* to confirm.
+
+h3. *Expected Result:*
+
+The client’s status should be updated to *Inactive*, and the client should no longer appear in the active client list.
+
+h3. *Actual Result:*
+
+The system returns a *500 Internal Server Error*, and the client’s status is not updated.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0004f:,,,,To Do,19/Oct/25 12:11 AM,2025-11-08,2025-11-08
+[Back-End] User Can Access System After Logout by Clicking Browser Back Button,MFLP-25,10100,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Highest,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,18/Oct/25 10:15 PM,18/Oct/25 10:15 PM,22/Oct/25 10:15 PM,,,0,"After logging out of the Trust Account Management System, clicking the browser’s *Back* button allows the user to return to the system interface without re-authentication.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Log in using a valid *username* and *password*.
+# After successful login, click the *Logout* button.
+# On the login screen, click the *Back* button on the browser.
+
+h3. *Expected Result:*
+
+The user should *not* be able to return to the system after logging out. The system should redirect to the *Login* page.
+
+h3. *Actual Result:*
+
+The user is able to return to the system interface after clicking the *Back* button, even though they are logged out.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i00047:,,,,To Do,18/Oct/25 10:15 PM,2025-11-08,2025-11-08
+[Back-End] Print Function Displays All Clients with Balance Instead of Searched Client,MFLP-24,10099,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,High,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,18/Oct/25 9:46 PM,18/Oct/25 9:46 PM,25/Oct/25 3:14 PM,,,0,"When performing a client search and using the *Print* function in the Trust Account Management System, the system incorrectly loads all clients with a balance instead of only the searched client(s). This behavior causes inaccurate print outputs and can lead to confusion.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Use the search bar to find a specific client (e.g., *“Amin”*).
+# Click on the *Print* button.
+
+h3. *Expected Result:*
+
+A new tab should open displaying *only the searched client(s)*, ready for printing.
+
+h3. *Actual Result:*
+
+The new tab displays *all clients with a balance*, instead of just the searched client(s).",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0003z:,,,,To Do,18/Oct/25 9:46 PM,2025-11-08,2025-11-08
+[Front-End] Clicking on a Case Under a Client Does Not Redirect to Case Details,MFLP-23,10066,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Medium,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,18/Oct/25 3:30 PM,18/Oct/25 3:30 PM,01/Nov/25 10:18 PM,,,0,"When expanding a client’s record in the *Client* tab to view associated cases, clicking on any listed case fails to redirect the user to the case details page. Instead, the system keeps the user on the *Client* page, preventing access to detailed case information.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Click the *Expand* button beside a client’s name to display their associated cases.
+# Click on any *Case* to view its details.
+
+h3. *Expected Result:*
+
+The system should redirect the user to the *Case Details* page, displaying all relevant information for the selected case.
+
+h3. *Actual Result:*
+
+The user remains on the *Client* page after clicking a case. No redirection occurs.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0003r:,,,,To Do,18/Oct/25 3:30 PM,2025-11-09,2025-11-09
+[Front-End] Client List with Default Filter ‘Non-Zero Balance’ and ‘Active’ Returns No Results Despite API Data,MFLP-22,10042,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Highest,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,17/Oct/25 11:54 PM,18/Oct/25 3:30 PM,25/Oct/25 3:15 PM,,,0,"When accessing the *Client* tab in the Trust Account Management System while the total number of clients exceeds 50, the system fails to display any data under the default filters *‘Non-Zero Balance’* and *‘Active’*. Although the API response contains valid client data, the interface incorrectly returns an empty result set. This issue impacts data visibility and prevents users from viewing active clients with existing balances.
+
+
+*Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Ensure the system contains more than *50 clients* (e.g., *61 clients* currently exist).
+# Observe that the default filters are set to *‘Non-Zero Balance’* and *‘Active’*.
+
+h3. *Expected Result:*
+
+The system should display all clients who have a *balance greater than 0* and are marked as *Active*.
+
+h3. *Actual Result:*
+
+No data appears in the client list, even though the *API response* includes valid client records.
+
+*Note*
+This issue was happened as there is no pagination when data is more than 50 client",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,18/Oct/25 12:22 AM;fe6dfacb-efad-4ad8-b401-009741b1d170;Screencast from 2025-10-17 23-58-20.mp4;https://abdelrahmansalah090.atlassian.net/rest/api/3/attachment/content/10051,18/Oct/25 12:22 AM;fe6dfacb-efad-4ad8-b401-009741b1d170;Screencast from 2025-10-17 23-58-20.mp4;https://abdelrahmansalah090.atlassian.net/rest/api/3/attachment/content/10051,,,0|i0003j:,,,,To Do,17/Oct/25 11:54 PM,2025-11-07,2025-11-07
+[Back-End] Client Search by Full Name Returns No Results,MFLP-20,10040,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,High,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,17/Oct/25 10:24 PM,18/Oct/25 3:30 PM,25/Oct/25 3:15 PM,,,0,"h3. When searching for an existing client using their *full name* in the Trust Account Management System, the system fails to return any results even though the client exists in the database.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# In the search bar, enter the *full name* of a client that already exists (e.g., “Amin Ezzy”).
+# Press *Enter* or click the *Search* button.
+
+h3. *Expected Result:*
+
+The system should display the existing client that matches the entered full name.
+
+h3. *Actual Result:*
+
+The search returns an empty result, even though the client exists in the system.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0003b:,,,,To Do,2025-11-08,2025-11-09,2025-11-09
+[Back-End] System Allows Bank Transaction Creation Without Selecting Client and Case,MFLP-19,10039,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Highest,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,17/Oct/25 9:18 PM,18/Oct/25 3:30 PM,06/Nov/25 8:36 PM,,,0,"When adding a new bank transaction in the Trust Account Management System, the system allows users to create a transaction without selecting a *Client* or *Case*. This leads to incomplete transaction records and potential data mismatches within the financial module.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Bank* tab.
+# Click on an *Account Number*.
+# Click on *Add New Bank Transaction*.
+# Choose the *Transaction Type* as *Deposit*.
+# Enter a *Reference* for the transaction.
+# Select a *Payee*.
+# Enter any amount (e.g., {{1000$}}).
+# Click *Save* or *Create Transaction* without selecting a *Client* or *Case*.
+
+h3. *Expected Result:*
+
+The system should prevent the transaction from being created and display an error message stating:
+
+{quote}“Please select a Client and Case before saving the transaction.”{quote}
+
+h3. *Actual Result:*
+
+The transaction is created successfully without requiring a Client or Case selection.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i00033:,,,,To Do,17/Oct/25 9:18 PM,2025-11-08,2025-11-08
+[Back-End] System Fails to Notify User When Internet Connection Is Lost During Client Creation,MFLP-18,10038,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,High,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,17/Oct/25 6:09 PM,18/Oct/25 3:31 PM,25/Oct/25 3:17 PM,,,0,"When attempting to create a new client while the internet connection is lost, the Trust Account Management System does not display any error or notification to inform the user about the connectivity issue. Instead, the user becomes stuck on the *New Client* pop-up with no indication of the problem.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Click on *Add New Client*.
+# Enter a valid *First Name* and *Last Name*.
+# Disconnect or turn off the internet connection.
+# Click on the *Save Client* button.
+
+h3. *Expected Result:*
+
+An error message should appear indicating that the internet connection is unavailable, and the client creation process should be safely halted.
+
+h3. *Actual Result:*
+
+No error message appears. The user is stuck on the *New Client* pop-up without any indication that the internet connection is down.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0002v:,,,,To Do,17/Oct/25 6:09 PM,2025-11-09,2025-11-09
+[Back-End] System Allows Special Characters in Client Name Without Validation,MFLP-17,10037,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Medium,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,17/Oct/25 6:03 PM,18/Oct/25 3:31 PM,22/Oct/25 10:02 PM,,,0,"When creating a new client in the Trust Account Management System, the system allows invalid special characters in the *First Name* and *Last Name* fields. The expected behavior is that only letters, hyphens ({{-}}), apostrophes ({{'}}), and periods ({{.}}) should be accepted. Allowing other characters may lead to inconsistent or corrupted client records.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Click on *Add New Client*.
+# Enter a *First Name* and *Last Name* containing special characters other than {{.}}, {{'}}, or {{-}} (e.g., {{@}}, {{#}}, {{!}}).
+# Click *Save* or *Create*.
+
+h3. *Expected Result:*
+
+An error message should appear stating:
+
+{quote}“First Name can only contain letters, hyphens, apostrophes, and periods.”{quote}
+
+The system should prevent creating the client record.
+
+h3. *Actual Result:*
+
+The client is created successfully without any validation error.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0002n:,,,,To Do,17/Oct/25 6:03 PM,2025-11-09,2025-11-09
+[Front-End] System Does Not Display Error for Duplicate Client Names,MFLP-16,10036,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Highest,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,17/Oct/25 5:24 PM,18/Oct/25 3:31 PM,01/Nov/25 10:16 PM,,,0,"When adding a new client with a name that already exists in the Trust Account Management System, the system fails to display a duplicate record error message. Instead, the user remains stuck on the *New Client* pop-up with no feedback
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Click on *Add New Client*.
+# Enter a *First Name* and *Last Name* that already exist in the system.
+# Click *Save* or *Create*.
+
+h3. *Expected Result:*
+
+An error message should appear stating:
+
+“A client with this name already exists. Please check for duplicates.”
+
+h3. *Actual Result:*
+
+No error message appears, and the user is stuck on the *New Client* pop-up without any response.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0002f:,,,,To Do,17/Oct/25 5:24 PM,2025-11-08,2025-11-08
+[Front-End] Add New Case Button Redirects to Clients Page Instead of Opening Add Case Pop-up,MFLP-15,10035,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Highest,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,17/Oct/25 5:07 PM,18/Oct/25 3:31 PM,18/Oct/25 3:38 PM,,,0,"When attempting to add a new case in the Trust Account Management System, clicking the *Add New Case* button incorrectly redirects the user back to the Clients page instead of opening add new case pop-up
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Click on the name of any existing client.
+# Click on the *Add New Case* button.
+
+h3. *Expected Result:*
+
+A pop-up or modal view should appear, allowing the user to add case related to the client.
+
+h3. *Actual Result:*
+
+The system redirects the user back to the *Clients* page.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i00027:,,,,To Do,17/Oct/25 5:07 PM,2025-11-08,2025-11-08
+[Front-End] Edit Client Button Redirects to Clients Page Instead of Opening Edit Pop-up,MFLP-14,10034,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Highest,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,17/Oct/25 5:00 PM,18/Oct/25 3:31 PM,28/Oct/25 11:45 PM,,,0,"When attempting to edit an existing client in the Trust Account Management System, clicking the *Edit Client* button incorrectly redirects the user back to the Clients page instead of opening the expected edit pop-up window.
+
+h3. *Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Click on the name of any existing client.
+# Click on the *Edit Client* button.
+
+h3. *Expected Result:*
+
+A pop-up or modal view should appear, allowing the user to edit the client’s details.
+
+h3. *Actual Result:*
+
+The system redirects the user back to the *Clients* page instead of opening the edit pop-up.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0001z:,,,,To Do,17/Oct/25 5:00 PM,2025-11-08,2025-11-08
+[Back-End] System Allows Client Creation with Invalid Zip Code Format,MFLP-13,10033,Bug,To Do,MFLP,Trust Account Management System,software,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Your first project,Medium,,Amin Ezzy,5b602559c564683b7b9054b6,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,17/Oct/25 4:53 PM,18/Oct/25 3:31 PM,31/Oct/25 11:50 PM,,,0,"When adding a new client in the Trust Account Management System, the system accepts an invalid zip code format instead of validating it.
+
+*Steps to Reproduce:*
+
+# Open the *Trust Account Management System*.
+# Navigate to the *Client* tab.
+# Click on *Add New Client*.
+# Enter valid *First Name* and *Last Name*.
+# Choose a valid *State* and *City*.
+# In the *Zip Code* field, enter an invalid value (e.g., {{2aa}}).
+# Click *Save* or *Create*.
+
+h3. *Expected Result:*
+
+The system should display an error message indicating an *invalid zip code format* and prevent the client from being created.
+
+h3. *Actual Result:*
+
+The system allows the client to be created successfully without validating the zip code format.",,Abdelrahman Salah,634aab21a205b2d6b8e71fd5,,,,,,,,,,,,,0|i0001r:,,,,To Do,17/Oct/25 4:53 PM,2025-11-09,2025-11-09

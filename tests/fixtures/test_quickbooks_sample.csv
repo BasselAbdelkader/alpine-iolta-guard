@@ -1,0 +1,6 @@
+Date,Ref No.,Type,Payee,Account,Memo,Payment,Deposit,Reconciliation Status,Added in Banking,Balance
+09/24/2025,2241,Check,John Smith,John Smith,Settlement to John Smith,20000.00,,Reconciled,Manually added,956296.36
+09/17/2025,2240,Check,ABC Law Firm LLC,Jane Doe,Attorney Fee to ABC Law Firm LLC,30000.00,,Reconciled,Manually added,971803.16
+09/17/2025,2239,Check,Dr. Medical Center,Bob Johnson,Medical expenses,5000.00,,Reconciled,Manually added,976803.16
+09/16/2025,DEP001,Deposit,Jane Doe,Jane Doe,Client retainer from Jane Doe,,50000.00,Reconciled,Manually added,981803.16
+09/15/2025,2238,Check,Superior Court,Bob Johnson,Court filing fee,500.00,,Reconciled,Manually added,931803.16

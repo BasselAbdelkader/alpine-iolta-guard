@@ -1,0 +1,37 @@
+# NEVER copy backup files to Docker image
+*.backup
+*.backup_*
+*.backup_before_*
+*.bak
+*~
+
+# NEVER copy Mac OS files
+._*
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# NEVER copy temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# NEVER copy editor files
+.vscode
+.idea
+*.sublime-*
+
+# NEVER copy logs
+*.log
+npm-debug.log*
+
+# NEVER copy git files
+.git
+.gitignore
+
+# NEVER copy development files
+Dockerfile
+.dockerignore
+serve.py
+TEST_*

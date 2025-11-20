@@ -1,0 +1,6 @@
+Date,Ref No.,Type,Payee,Account,Memo,Payment,Deposit,Reconciliation Status,Added in Banking,Balance
+09/24/2025,2241,Check,Robert Williams,Robert Williams,Settlement to Robert Williams,"17,209.28",,Reconciled,Manually added,"-17,209.28"
+09/17/2025,2240,Check,Smith & Johnson Law Offices,Mary Johnson,Attorney Fee to Smith & Johnson Law Offices,"34,754.79",,Reconciled,Manually added,"-51,964.07"
+09/17/2025,2239,Check,Franklin Healthcare Center,James Smith,Medical expenses,"5,319.47",,Reconciled,Manually added,"-57,283.54"
+09/16/2025,DEP001,Deposit,Mary Johnson,Mary Johnson,Client retainer from Mary Johnson,,"44,419.75",Reconciled,Manually added,"-12,863.79"
+09/15/2025,2238,Check,Clinton Municipal Court,James Smith,Court filing fee,493.46,,Reconciled,Manually added,"-13,357.25"

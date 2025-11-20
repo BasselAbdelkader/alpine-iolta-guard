@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% load accounting_filters %}
+
+{% block title %}Bank Transaction Details{% endblock %}
+
+{% block page_title %}Bank Transaction: {{ bank_transaction.bank_reference }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Bank Transaction Details</h4>
+                    <div class="btn-group">
+                        <a href="{% url 'bank_accounts:bank_transactions' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Bank Transactions
+                        </a>
+                        <a href="{% url 'bank_accounts:bank_transaction_edit' bank_transaction.pk %}" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit Transaction
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Transaction Information</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Bank Reference:</strong></td>
+                                    <td>{{ bank_transaction.bank_reference }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Bank Account:</strong></td>
+                                    <td>{{ bank_transaction.bank_account }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Transaction Date:</strong></td>
+                                    <td>{{ bank_transaction.transaction_date|date:"m/d/Y" }}</td>
+                                </tr>
+                                {% if bank_transaction.post_date %}
+                                <tr>
+                                    <td><strong>Post Date:</strong></td>
+                                    <td>{{ bank_transaction.post_date|date:"m/d/Y" }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td><strong>Transaction Type:</strong></td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if bank_transaction.transaction_type == 'DEPOSIT' %}bg-success
+                                            {% elif bank_transaction.transaction_type == 'WITHDRAWAL' %}bg-danger
+                                            {% elif bank_transaction.transaction_type == 'TRANSFER_IN' %}bg-info
+                                            {% elif bank_transaction.transaction_type == 'TRANSFER_OUT' %}bg-warning
+                                            {% elif bank_transaction.transaction_type == 'FEE' %}bg-secondary
+                                            {% elif bank_transaction.transaction_type == 'INTEREST' %}bg-primary
+                                            {% else %}bg-dark
+                                            {% endif %}">
+                                            {{ bank_transaction.get_transaction_type_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Amount:</strong></td>
+                                    <td>
+                                        <span class="{% if bank_transaction.is_credit %}text-success{% else %}text-dark{% endif %} fs-5">
+                                            {% if bank_transaction.is_credit %}{{ bank_transaction.amount|format_amount_accounting }}{% else %}{{ bank_transaction.amount|format_withdrawal }}{% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if bank_transaction.status == 'UNMATCHED' %}bg-warning
+                                            {% elif bank_transaction.status == 'MATCHED' %}bg-info
+                                            {% elif bank_transaction.status == 'RECONCILED' %}bg-success
+                                            {% else %}bg-secondary
+                                            {% endif %}">
+                                            {{ bank_transaction.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5>Reference Information</h5>
+                            <table class="table table-borderless">
+                                {% if bank_transaction.reference_number %}
+                                <tr>
+                                    <td><strong>Reference Number:</strong></td>
+                                    <td>{{ bank_transaction.reference_number }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if bank_transaction.check_number %}
+                                <tr>
+                                    <td><strong>Check Number:</strong></td>
+                                    <td>{{ bank_transaction.check_number }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if bank_transaction.bank_category %}
+                                <tr>
+                                    <td><strong>Bank Category:</strong></td>
+                                    <td>{{ bank_transaction.bank_category }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td><strong>Created By:</strong></td>
+                                    <td>{{ bank_transaction.created_by|default:"System" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Created At:</strong></td>
+                                    <td>{{ bank_transaction.created_at|date:"m/d/Y g:i A" }}</td>
+                                </tr>
+                                {% if bank_transaction.updated_at != bank_transaction.created_at %}
+                                <tr>
+                                    <td><strong>Last Updated:</strong></td>
+                                    <td>{{ bank_transaction.updated_at|date:"m/d/Y g:i A" }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5>Description</h5>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    {{ bank_transaction.description|linebreaks }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if bank_transaction.reconciliation_notes %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5>Reconciliation Notes</h5>
+                            <div class="card bg-info bg-opacity-10">
+                                <div class="card-body">
+                                    {{ bank_transaction.reconciliation_notes|linebreaks }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if bank_transaction.client or bank_transaction.case or bank_transaction.vendor %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5>Transaction Details</h5>
+                            <div class="card bg-info bg-opacity-10 border-info">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            {% if bank_transaction.client %}<strong>Client:</strong> {{ bank_transaction.client.full_name }}<br>{% endif %}
+                                            {% if bank_transaction.case %}<strong>Case:</strong> {{ bank_transaction.case.case_number }} - {{ bank_transaction.case.case_title }}<br>{% endif %}
+                                            {% if bank_transaction.vendor %}<strong>Vendor:</strong> {{ bank_transaction.vendor.vendor_name }}<br>{% endif %}
+                                        </div>
+                                        <div class="col-md-6">
+                                            {% if bank_transaction.memo %}<strong>Memo:</strong> {{ bank_transaction.memo }}<br>{% endif %}
+                                            {% if bank_transaction.payee %}<strong>Payee:</strong> {{ bank_transaction.payee }}<br>{% endif %}
+                                            {% if bank_transaction.case %}
+                                                <a href="{% url 'clients:case_detail' bank_transaction.case.pk %}" class="btn btn-sm btn-outline-info mt-2">
+                                                    <i class="fas fa-eye"></i> View Case Details
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>Unmatched Transaction:</strong> This bank transaction has not been matched to any internal transaction yet.
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block help_content %}
+<p>The <strong>Bank Transaction Detail</strong> page shows comprehensive information about a specific bank transaction.</p>
+<h6><i class="fas fa-info-circle"></i> Transaction Information</h6>
+<p>View all details including dates, amounts, references, and bank-specific information.</p>
+<h6><i class="fas fa-link"></i> Reconciliation</h6>
+<p>Check if this bank transaction has been matched to an internal transaction:</p>
+<ul>
+    <li><strong>Matched:</strong> Shows the corresponding internal transaction</li>
+    <li><strong>Unmatched:</strong> Needs to be reconciled with internal records</li>
+</ul>
+{% endblock %}

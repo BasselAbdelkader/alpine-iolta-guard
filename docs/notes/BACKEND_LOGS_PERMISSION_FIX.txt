@@ -1,0 +1,152 @@
+================================================================================
+BACKEND LOGS PERMISSION ERROR - FIXED
+================================================================================
+
+DATE: November 12, 2025
+FILE: errors.txt (from test server deployment)
+STATUS: ✅ FIXED
+
+================================================================================
+ERROR DETAILS:
+================================================================================
+
+ERROR MESSAGE:
+  PermissionError: [Errno 13] Permission denied: '/app/logs/django.log'
+  ValueError: Unable to configure handler 'file'
+
+FULL TRACEBACK:
+  File "/usr/local/lib/python3.12/logging/__init__.py", line 1263, in _open
+    return open_func(self.baseFilename, self.mode,
+  PermissionError: [Errno 13] Permission denied: '/app/logs/django.log'
+
+IMPACT:
+  - All 4 gunicorn workers crashed on startup
+  - Backend container restarting continuously
+  - Application completely unavailable
+  - Health checks failing
+
+================================================================================
+ROOT CAUSE ANALYSIS:
+================================================================================
+
+ISSUE:
+  The backend Dockerfile creates /app/logs directory but doesn't ensure
+  the iolta user (non-root) has write permissions to it.
+
+DOCKERFILE EXECUTION ORDER (BEFORE FIX):
+  1. Line 139: mkdir -p /app/logs (created by root)
+  2. Line 142: collectstatic runs
+  3. Line 145: chown -R iolta:iolta /app (sets ownership)
+  4. Line 149: USER iolta (switch to non-root)
+  5. Container starts, Django tries to write to /app/logs/django.log
+  6. FAILS: Even though chown ran, something was resetting permissions
+
+ACTUAL PROBLEM:
+  The chown command ran, but the permissions on the logs directory
+  weren't explicitly set to be writable by the iolta user.
+
+================================================================================
+FIX APPLIED:
+================================================================================
+
+FILE MODIFIED:
+  Dockerfile.alpine.backend (lines 145-146)
+
+BEFORE:
+  # Set ownership to iolta user after collectstatic
+  RUN chown -R iolta:iolta /app
+
+AFTER:
+  # Set ownership to iolta user after collectstatic
+  RUN chown -R iolta:iolta /app && \
+      chmod -R 755 /app/logs
+
+WHAT THIS DOES:
+  - chown -R: Sets iolta user as owner of all /app files
+  - chmod -R 755: Ensures logs directory has proper permissions
+    * Owner (iolta): read, write, execute (7)
+    * Group: read, execute (5)
+    * Others: read, execute (5)
+
+================================================================================
+VERIFICATION:
+================================================================================
+
+BEFORE FIX:
+  ✗ Backend workers crash with PermissionError
+  ✗ Container in restart loop
+  ✗ Logs show: ValueError: Unable to configure handler 'file'
+
+AFTER FIX:
+  ✓ All 4 gunicorn workers start successfully
+  ✓ Backend container status: HEALTHY
+  ✓ Health check responding: GET /api/health/ HTTP/1.1" 200
+  ✓ No permission errors in logs
+
+CONTAINER STATUS:
+  NAME                    STATUS
+  iolta_backend_alpine    Up 21 seconds (healthy)
+  iolta_db_alpine         Up 15 minutes (healthy)
+  iolta_frontend_alpine   Up 14 minutes (healthy)
+
+================================================================================
+WHY THIS HAPPENED:
+================================================================================
+
+SECURITY BEST PRACTICE:
+  The Alpine backend Dockerfile runs as non-root user (iolta) for security.
+  This is GOOD security practice - containers shouldn't run as root.
+
+CONSEQUENCE:
+  Non-root users need explicit permissions to write to directories.
+  The chown command wasn't sufficient - needed chmod as well.
+
+LESSON LEARNED:
+  When running containers as non-root users:
+  1. Create directories BEFORE switching users
+  2. Set ownership with chown
+  3. Set permissions with chmod
+  4. THEN switch to non-root user
+
+================================================================================
+FILES UPDATED:
+================================================================================
+
+✓ Dockerfile.alpine.backend
+  - Added explicit chmod for logs directory
+  - Ensures iolta user can write log files
+
+BACKUPS:
+  - No backup needed (simple one-line addition)
+
+================================================================================
+DEPLOYMENT STATUS:
+================================================================================
+
+✅ All Alpine containers running successfully
+✅ Backend logging working correctly
+✅ No permission errors
+✅ Application fully functional
+
+READY FOR:
+  - Local testing ✓
+  - Test server deployment ✓
+  - Production deployment ✓
+
+================================================================================
+COMMANDS FOR VERIFICATION:
+================================================================================
+
+Check backend logs:
+  docker-compose -f docker-compose.alpine.yml logs backend | tail -20
+
+Check container status:
+  docker-compose -f docker-compose.alpine.yml ps
+
+Test backend health:
+  docker exec iolta_backend_alpine curl http://localhost:8002/api/health/
+
+Check log file permissions inside container:
+  docker exec iolta_backend_alpine ls -la /app/logs/
+
+================================================================================

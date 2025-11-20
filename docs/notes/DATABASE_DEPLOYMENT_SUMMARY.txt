@@ -1,0 +1,85 @@
+================================================================================
+DATABASE DUMP CREATED - DEPLOYMENT SUMMARY
+================================================================================
+
+CREATED FILES:
+--------------
+1. /backups/iolta_production_dump.sql (246 KB)    ← RECOMMENDED for import
+2. /backups/iolta_production_dump.backup (109 KB)
+3. /backups/IMPORT_DATABASE_INSTRUCTIONS.txt       ← Full import guide
+4. /deploy_with_database.sh                        ← Automated deployment script
+
+DATABASE CONTENTS:
+------------------
+✓ 79 Clients (webapp test data)
+✓ 81 Cases (webapp test data)  
+✓ 100 Transactions (webapp test data)
+✓ All vendors, bank accounts, and settings
+✓ CSV-imported data was REMOVED before dump
+
+================================================================================
+QUICK DEPLOYMENT ON TEST SERVER (EASIEST METHOD)
+================================================================================
+
+1. Include these files in your tar:
+   - backups/iolta_production_dump.sql
+   - deploy_with_database.sh
+   - IMPORT_DATABASE_INSTRUCTIONS.txt (for reference)
+
+2. On test server after extracting tar:
+   $ cd ve_demo
+   $ chmod +x deploy_with_database.sh
+   $ ./deploy_with_database.sh
+
+   This script will:
+   ✓ Clean up old containers
+   ✓ Build Docker images
+   ✓ Start containers
+   ✓ Import database automatically (if dump file exists)
+   ✓ Verify import
+   ✓ Show container status
+
+3. Access application:
+   http://138.68.109.92
+
+================================================================================
+MANUAL DEPLOYMENT (ALTERNATIVE)
+================================================================================
+
+If you prefer manual control:
+
+$ cd ve_demo
+$ docker-compose down
+$ docker stop $(docker ps -aq)
+$ docker rm $(docker ps -aq)
+$ docker-compose build --no-cache
+$ docker-compose up -d
+$ sleep 15
+$ docker exec iolta_db psql -U iolta_user -d postgres -c "DROP DATABASE IF EXISTS iolta_guard_db; CREATE DATABASE iolta_guard_db;"
+$ cat backups/iolta_production_dump.sql | docker exec -i iolta_db psql -U iolta_user -d iolta_guard_db
+
+================================================================================
+VERIFICATION AFTER IMPORT
+================================================================================
+
+Check that data was imported correctly:
+
+$ docker exec iolta_db psql -U iolta_user -d iolta_guard_db -c "SELECT 'Clients:' as table_name, COUNT(*) FROM clients UNION ALL SELECT 'Cases:', COUNT(*) FROM cases UNION ALL SELECT 'Transactions:', COUNT(*) FROM bank_transactions;"
+
+Expected output:
+  table_name   | count 
+--------------+-------
+ Clients:     |    79
+ Cases:       |    81
+ Transactions:|   100
+
+================================================================================
+NOTES
+================================================================================
+
+• Database dump includes structure + data
+• No migrations needed after import (structure is already created)
+• User accounts are included in the dump
+• If you want fresh database instead, delete the SQL file and script will run migrations
+
+================================================================================

@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ bank_account.account_name }} - Bank Account Details{% endblock %}
+
+{% block page_title %}Bank Account Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Bank Account Details: {{ bank_account.account_name }}</h4>
+                    <div class="btn-group">
+                        <a href="{% url 'bank_accounts:index' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Bank Accounts
+                        </a>
+                        <a href="{% url 'bank_accounts:bank_transactions' %}" class="btn btn-info">
+                            <i class="fas fa-university"></i> Bank Transactions
+                        </a>
+                        <!-- Edit button removed - bank accounts cannot be modified after creation -->
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Account Information</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Account Number:</strong></td>
+                                    <td>{{ bank_account.account_number }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Account Name:</strong></td>
+                                    <td>{{ bank_account.account_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Bank Name:</strong></td>
+                                    <td>{{ bank_account.bank_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Routing Number:</strong></td>
+                                    <td>{{ bank_account.routing_number|default:'-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Account Type:</strong></td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if bank_account.account_type == 'Trust Account' %}bg-primary
+                                            {% elif bank_account.account_type == 'Operating Account' %}bg-success
+                                            {% elif bank_account.account_type == 'Escrow Account' %}bg-info
+                                            {% endif %}">
+                                            {{ bank_account.account_type }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        {% if bank_account.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Financial & Location</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Trust Balance:</strong></td>
+                                    <td>
+                                        <span class="{% if bank_account.get_current_balance >= 0 %}text-success{% else %}text-danger{% endif %} fs-5">
+                                            ${{ bank_account.get_current_balance|floatformat:2 }}
+                                        </span>
+                                        <small class="text-muted">(all non-voided transactions)</small>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Pending Transactions:</strong></td>
+                                    <td>
+                                        <span class="text-muted">
+                                            {{ bank_account.get_pending_transactions_count }}
+                                        </span>
+                                        <small class="text-muted">(need to be cleared)</small>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Bank Address:</strong></td>
+                                    <td>{{ bank_account.bank_address|default:'-'|linebreaks }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5>Recent Reconciliations</h5>
+                                <button class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-plus"></i> New Reconciliation
+                                </button>
+                            </div>
+                            {% if reconciliations %}
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Statement Balance</th>
+                                                <th>Book Balance</th>
+                                                <th>Difference</th>
+                                                <th>Status</th>
+                                                <th>Reconciled By</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for reconciliation in reconciliations %}
+                                            <tr>
+                                                <td>{{ reconciliation.reconciliation_date|date:"M d, Y" }}</td>
+                                                <td>${{ reconciliation.statement_balance|floatformat:2 }}</td>
+                                                <td>${{ reconciliation.book_balance|floatformat:2 }}</td>
+                                                <td>
+                                                    <span class="{% if reconciliation.difference == 0 %}text-success{% else %}text-danger{% endif %}">
+                                                        ${{ reconciliation.difference|floatformat:2 }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {% if reconciliation.is_reconciled %}
+                                                        <span class="badge bg-success">Reconciled</span>
+                                                    {% else %}
+                                                        <span class="badge bg-warning">Pending</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ reconciliation.reconciled_by|default:'-' }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted">No reconciliations found for this account.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <h5>Recent Transactions</h5>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Type</th>
+                                            <th>Description</th>
+                                            <th>Amount</th>
+                                            <th>Balance</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted">
+                                                Transaction history will be displayed here once transactions are implemented.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted">
+                                <strong>Created:</strong> {{ bank_account.created_at|date:"M d, Y g:i A" }}
+                            </small>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">
+                                <strong>Last Updated:</strong> {{ bank_account.updated_at|date:"M d, Y g:i A" }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,723 @@
+total 440392
+-rw-r--r--  1 bassel  staff       6778 Nov  4 13:19 DEPLOYMENT_INSTRUCTIONS.md
+-rw-r--r--  1 bassel  staff          0 Nov  4 13:20 PACKAGE_CONTENTS.txt
+-rw-------@ 1 bassel  staff  199662080 Nov  4 13:17 iolta-backend-image.tar
+-rw-------@ 1 bassel  staff   23246848 Nov  4 13:18 iolta-frontend-image.tar
+drwxr-xr-x  7 bassel  staff        224 Nov  4 13:18 source
+
+iolta-deployment//source:
+total 64
+-rw-r--r--@  1 bassel  staff   1254 Nov  4 13:18 account.json
+-rw-r--r--@  1 bassel  staff   4661 Nov  4 13:18 docker-compose-simple-production.yml
+drwxr-xr-x@ 14 bassel  staff    448 Nov  4 13:18 frontend
+-rw-r--r--   1 bassel  staff  19585 Nov  4 13:18 insurance_demo_data.sql
+drwxr-xr-x@ 20 bassel  staff    640 Nov  4 13:18 trust_account
+
+iolta-deployment//source/frontend:
+total 64
+-rw-r--r--@  1 bassel  staff   500 Nov  4 13:18 Dockerfile
+-rw-r--r--@  1 bassel  staff  3858 Nov  4 13:18 TEST_DASHBOARD.md
+drwxr-xr-x@  3 bassel  staff    96 Nov  4 13:18 css
+-rw-r--r--@  1 bassel  staff  1611 Nov  4 13:18 favicon-32x32.png
+-rw-r--r--@  1 bassel  staff  3057 Nov  4 13:18 favicon.ico
+-rw-r--r--@  1 bassel  staff  3057 Nov  4 13:18 favicon.png
+-rw-r--r--@  1 bassel  staff   185 Nov  4 13:18 favicon.svg
+drwxr-xr-x@  3 bassel  staff    96 Nov  4 13:18 frontend
+drwxr-xr-x@ 20 bassel  staff   640 Nov  4 13:18 html
+drwxr-xr-x@ 20 bassel  staff   640 Nov  4 13:18 js
+-rw-r--r--@  1 bassel  staff  3130 Nov  4 13:18 nginx.conf
+-rwxr-xr-x@  1 bassel  staff  1005 Nov  4 13:18 serve.py
+
+iolta-deployment//source/frontend/css:
+total 32
+-rw-r--r--@ 1 bassel  staff  12715 Nov  4 13:18 main.css
+
+iolta-deployment//source/frontend/frontend:
+total 0
+drwxr-xr-x@ 2 bassel  staff  64 Nov  4 13:18 css
+
+iolta-deployment//source/frontend/frontend/css:
+total 0
+
+iolta-deployment//source/frontend/html:
+total 592
+-rw-r--r--  1 bassel  staff  15268 Nov  4 13:18 audit-trail-print-v2.html
+-rw-r--r--  1 bassel  staff  14602 Nov  4 13:18 audit-trail-print.html
+-rw-r--r--  1 bassel  staff   7749 Nov  4 13:18 bank-accounts.html
+-rw-r--r--  1 bassel  staff  13168 Nov  4 13:18 bank-transactions.html
+-rw-r--r--  1 bassel  staff  39363 Nov  4 13:18 case-detail.html
+-rw-r--r--  1 bassel  staff  14373 Nov  4 13:18 client-detail.html
+-rw-r--r--  1 bassel  staff  13185 Nov  4 13:18 client-ledger.html
+-rw-r--r--  1 bassel  staff  24537 Nov  4 13:18 clients.html
+-rw-r--r--  1 bassel  staff  16999 Nov  4 13:18 dashboard.html
+-rw-r--r--  1 bassel  staff   5450 Nov  4 13:18 login.html
+-rw-r--r--@ 1 bassel  staff  10618 Nov  4 13:18 print-case-ledger.html.backup
+-rw-r--r--  1 bassel  staff  15261 Nov  4 13:18 print-checks.html
+-rw-r--r--  1 bassel  staff  18063 Nov  4 13:18 reports.html
+-rw-r--r--  1 bassel  staff  12956 Nov  4 13:18 settlements.html
+-rw-r--r--  1 bassel  staff  11756 Nov  4 13:18 uncleared-transactions.html
+-rw-r--r--  1 bassel  staff   7292 Nov  4 13:18 vendor-detail-old.html
+-rw-r--r--  1 bassel  staff  14038 Nov  4 13:18 vendor-detail.html
+-rw-r--r--  1 bassel  staff  15937 Nov  4 13:18 vendors.html
+
+iolta-deployment//source/frontend/js:
+total 736
+-rw-r--r--@ 1 bassel  staff   7491 Nov  4 13:18 api-client-session.js
+-rw-r--r--@ 1 bassel  staff   7328 Nov  4 13:18 api-client.js
+-rw-r--r--@ 1 bassel  staff   3230 Nov  4 13:18 api.js
+-rw-r--r--@ 1 bassel  staff   7350 Nov  4 13:18 bank-accounts.js
+-rw-r--r--  1 bassel  staff  83962 Nov  4 13:18 bank-transactions.js
+-rw-r--r--  1 bassel  staff  76617 Nov  4 13:18 case-detail.js
+-rw-r--r--@ 1 bassel  staff  30273 Nov  4 13:18 client-detail.js
+-rw-r--r--@ 1 bassel  staff   9130 Nov  4 13:18 client-ledger.js
+-rw-r--r--@ 1 bassel  staff  32086 Nov  4 13:18 clients.js
+-rw-r--r--@ 1 bassel  staff  10777 Nov  4 13:18 dashboard.js
+-rw-r--r--@ 1 bassel  staff   3439 Nov  4 13:18 law-firm-loader.js
+-rw-r--r--  1 bassel  staff  28494 Nov  4 13:18 print-checks.js
+-rw-r--r--@ 1 bassel  staff    523 Nov  4 13:18 reports.js
+-rw-r--r--@ 1 bassel  staff   8314 Nov  4 13:18 settlements.js
+-rw-r--r--@ 1 bassel  staff   8020 Nov  4 13:18 uncleared-transactions.js
+-rw-r--r--@ 1 bassel  staff   4947 Nov  4 13:18 vendor-detail-old.js
+-rw-r--r--@ 1 bassel  staff  10206 Nov  4 13:18 vendor-detail.js
+-rw-r--r--@ 1 bassel  staff  14557 Nov  4 13:18 vendors.js
+
+iolta-deployment//source/trust_account:
+total 160
+-rw-r--r--@  1 bassel  staff   1105 Nov  4 13:18 Dockerfile
+-rw-r--r--@  1 bassel  staff      0 Nov  4 13:18 account.json
+drwxr-xr-x@ 14 bassel  staff    448 Nov  4 13:18 apps
+-rw-r--r--@  1 bassel  staff  12065 Nov  4 13:18 concurrent_benchmark.py
+-rw-r--r--@  1 bassel  staff    182 Nov  4 13:18 gunicorn_conf.py
+-rwxr-xr-x@  1 bassel  staff    676 Nov  4 13:18 manage.py
+drwxr-xr-x@  2 bassel  staff     64 Nov  4 13:18 media
+-rw-r--r--@  1 bassel  staff  12891 Nov  4 13:18 performance_benchmark.py
+-rw-r--r--@  1 bassel  staff   7318 Nov  4 13:18 quick_benchmark.py
+-rw-r--r--@  1 bassel  staff    484 Nov  4 13:18 requirements.txt
+-rwxr-xr-x@  1 bassel  staff  23642 Nov  4 13:18 reset_database_with_test_data.py
+drwx------@  2 bassel  staff     64 Nov  4 13:18 sql
+drwxr-xr-x@  8 bassel  staff    256 Nov  4 13:18 static
+drwxr-xr-x@  2 bassel  staff     64 Nov  4 13:18 staticfiles
+drwxr-xr-x@  8 bassel  staff    256 Nov  4 13:18 templates
+-rw-r--r--@  1 bassel  staff   4041 Nov  4 13:18 test_case_number.py
+drwxr-xr-x@ 16 bassel  staff    512 Nov  4 13:18 trust_account_project
+
+iolta-deployment//source/trust_account/apps:
+total 0
+-rw-r--r--@  1 bassel  staff    0 Nov  4 13:18 __init__.py
+drwxr-xr-x@  3 bassel  staff   96 Nov  4 13:18 __pycache__
+drwxr-xr-x@ 10 bassel  staff  320 Nov  4 13:18 api
+drwxr-xr-x@ 14 bassel  staff  448 Nov  4 13:18 bank_accounts
+drwxr-xr-x@ 10 bassel  staff  320 Nov  4 13:18 checks
+drwxr-xr-x@ 15 bassel  staff  480 Nov  4 13:18 clients
+drwxr-xr-x@ 10 bassel  staff  320 Nov  4 13:18 dashboard
+drwxr-xr-x@ 10 bassel  staff  320 Nov  4 13:18 reports
+drwxr-xr-x@ 10 bassel  staff  320 Nov  4 13:18 settings
+drwxr-xr-x@ 13 bassel  staff  416 Nov  4 13:18 settlements
+drwxr-xr-x@ 13 bassel  staff  416 Nov  4 13:18 transactions
+drwxr-xr-x@ 13 bassel  staff  416 Nov  4 13:18 vendors
+
+iolta-deployment//source/trust_account/apps/__pycache__:
+total 8
+-rw-r--r--@ 1 bassel  staff  118 Nov  4 13:18 __init__.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/api:
+total 48
+-rw-r--r--@ 1 bassel  staff     0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 8 bassel  staff   256 Nov  4 13:18 __pycache__
+-rw-r--r--@ 1 bassel  staff  1810 Nov  4 13:18 auth_views.py
+-rw-r--r--@ 1 bassel  staff   396 Nov  4 13:18 authentication.py
+-rw-r--r--@ 1 bassel  staff  2952 Nov  4 13:18 health.py
+-rw-r--r--@ 1 bassel  staff   973 Nov  4 13:18 pagination.py
+-rw-r--r--@ 1 bassel  staff  1206 Nov  4 13:18 permissions.py
+-rw-r--r--@ 1 bassel  staff  1188 Nov  4 13:18 urls.py
+
+iolta-deployment//source/trust_account/apps/api/__pycache__:
+total 48
+-rw-r--r--@ 1 bassel  staff   122 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  2756 Nov  4 13:18 auth_views.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   747 Nov  4 13:18 authentication.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  1668 Nov  4 13:18 pagination.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  1833 Nov  4 13:18 permissions.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  1130 Nov  4 13:18 urls.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/bank_accounts:
+total 168
+-rw-r--r--@ 1 bassel  staff      0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 9 bassel  staff    288 Nov  4 13:18 __pycache__
+-rw-r--r--@ 1 bassel  staff      0 Nov  4 13:18 admin.py
+drwxr-xr-x@ 7 bassel  staff    224 Nov  4 13:18 api
+-rw-r--r--@ 1 bassel  staff    162 Nov  4 13:18 apps.py
+-rw-r--r--@ 1 bassel  staff  10350 Nov  4 13:18 forms.py
+drwxr-xr-x@ 4 bassel  staff    128 Nov  4 13:18 management
+drwxr-xr-x@ 8 bassel  staff    256 Nov  4 13:18 migrations
+-rw-r--r--  1 bassel  staff  28332 Nov  4 13:18 models.py
+drwxr-xr-x@ 3 bassel  staff     96 Nov  4 13:18 templates
+-rw-r--r--@ 1 bassel  staff   1611 Nov  4 13:18 urls.py
+-rw-r--r--@ 1 bassel  staff  33291 Nov  4 13:18 views.py
+
+iolta-deployment//source/trust_account/apps/bank_accounts/__pycache__:
+total 192
+-rw-r--r--@ 1 bassel  staff    132 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff    129 Nov  4 13:18 admin.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff    457 Nov  4 13:18 apps.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  10624 Nov  4 13:18 forms.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  27945 Nov  4 13:18 models.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   2250 Nov  4 13:18 urls.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  37982 Nov  4 13:18 views.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/bank_accounts/api:
+total 96
+-rw-r--r--@ 1 bassel  staff      0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 6 bassel  staff    192 Nov  4 13:18 __pycache__
+-rw-r--r--  1 bassel  staff  11132 Nov  4 13:18 serializers.py
+-rw-r--r--@ 1 bassel  staff   1273 Nov  4 13:18 urls.py
+-rw-r--r--  1 bassel  staff  29748 Nov  4 13:18 views.py
+
+iolta-deployment//source/trust_account/apps/bank_accounts/api/__pycache__:
+total 88
+-rw-r--r--@ 1 bassel  staff    136 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  10450 Nov  4 13:18 serializers.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff    811 Nov  4 13:18 urls.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  23335 Nov  4 13:18 views.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/bank_accounts/management:
+total 0
+-rw-r--r--@ 1 bassel  staff    0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 8 bassel  staff  256 Nov  4 13:18 commands
+
+iolta-deployment//source/trust_account/apps/bank_accounts/management/commands:
+total 136
+-rw-r--r--@ 1 bassel  staff      0 Nov  4 13:18 __init__.py
+-rw-r--r--@ 1 bassel  staff   9019 Nov  4 13:18 create_demo_bank_transactions.py
+-rw-r--r--@ 1 bassel  staff  16470 Nov  4 13:18 create_iolta_insurance_data.py
+-rw-r--r--@ 1 bassel  staff  21683 Nov  4 13:18 create_showcase_data.py
+-rw-r--r--@ 1 bassel  staff   6854 Nov  4 13:18 create_vendor_demo_data.py
+-rw-r--r--@ 1 bassel  staff   3496 Nov  4 13:18 match_demo_transactions.py
+
+iolta-deployment//source/trust_account/apps/bank_accounts/migrations:
+total 56
+-rw-r--r--@ 1 bassel  staff   3123 Nov  4 13:18 0001_initial.py
+-rw-r--r--@ 1 bassel  staff    465 Nov  4 13:18 0002_add_payee_index.py.disabled
+-rw-r--r--@ 1 bassel  staff    683 Nov  4 13:18 0002_add_reconciled_status.py
+-rw-r--r--@ 1 bassel  staff   3266 Nov  4 13:18 0003_banktransactionaudit.py
+-rw-r--r--@ 1 bassel  staff  10692 Nov  4 13:18 0004_bankreconciliation_alter_bankaccount_options_and_more.py
+-rw-r--r--@ 1 bassel  staff      0 Nov  4 13:18 __init__.py
+
+iolta-deployment//source/trust_account/apps/bank_accounts/templates:
+total 0
+drwxr-xr-x@ 6 bassel  staff  192 Nov  4 13:18 bank_accounts
+
+iolta-deployment//source/trust_account/apps/bank_accounts/templates/bank_accounts:
+total 56
+drwxr-xr-x@ 6 bassel  staff    192 Nov  4 13:18 bank_transactions
+-rw-r--r--@ 1 bassel  staff  11097 Nov  4 13:18 detail.html
+-rw-r--r--@ 1 bassel  staff   7049 Nov  4 13:18 form.html
+-rw-r--r--@ 1 bassel  staff   6588 Nov  4 13:18 index.html
+
+iolta-deployment//source/trust_account/apps/bank_accounts/templates/bank_accounts/bank_transactions:
+total 208
+-rw-r--r--@ 1 bassel  staff  11860 Nov  4 13:18 detail.html
+-rw-r--r--@ 1 bassel  staff  11196 Nov  4 13:18 form.html
+-rw-r--r--@ 1 bassel  staff  44279 Nov  4 13:18 index.html
+-rw-r--r--@ 1 bassel  staff  34122 Nov  4 13:18 modal_form.html
+
+iolta-deployment//source/trust_account/apps/checks:
+total 32
+-rw-r--r--@ 1 bassel  staff     0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 5 bassel  staff   160 Nov  4 13:18 __pycache__
+drwxr-xr-x@ 7 bassel  staff   224 Nov  4 13:18 api
+-rw-r--r--@ 1 bassel  staff   177 Nov  4 13:18 apps.py
+drwxr-xr-x@ 3 bassel  staff    96 Nov  4 13:18 templates
+drwxr-xr-x@ 5 bassel  staff   160 Nov  4 13:18 templatetags
+-rw-r--r--@ 1 bassel  staff   617 Nov  4 13:18 urls.py
+-rw-r--r--@ 1 bassel  staff  7582 Nov  4 13:18 views.py
+
+iolta-deployment//source/trust_account/apps/checks/__pycache__:
+total 40
+-rw-r--r--@ 1 bassel  staff    125 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   1164 Nov  4 13:18 urls.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  10275 Nov  4 13:18 views.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/checks/api:
+total 48
+-rw-r--r--@ 1 bassel  staff    120 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 6 bassel  staff    192 Nov  4 13:18 __pycache__
+-rw-r--r--@ 1 bassel  staff   1116 Nov  4 13:18 serializers.py
+-rw-r--r--@ 1 bassel  staff    253 Nov  4 13:18 urls.py
+-rw-r--r--  1 bassel  staff  11273 Nov  4 13:18 views.py
+
+iolta-deployment//source/trust_account/apps/checks/api/__pycache__:
+total 48
+-rw-r--r--@ 1 bassel  staff    264 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   1986 Nov  4 13:18 serializers.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff    512 Nov  4 13:18 urls.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  10740 Nov  4 13:18 views.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/checks/templates:
+total 0
+drwxr-xr-x@ 7 bassel  staff  224 Nov  4 13:18 checks
+
+iolta-deployment//source/trust_account/apps/checks/templates/checks:
+total 72
+-rw-r--r--@ 1 bassel  staff  4991 Nov  4 13:18 batch_print_layout.html
+-rw-r--r--@ 1 bassel  staff  8337 Nov  4 13:18 check_preview.html
+-rw-r--r--  1 bassel  staff  5650 Nov  4 13:18 check_print_layout.html
+-rw-r--r--@ 1 bassel  staff  7032 Nov  4 13:18 print_queue.html
+drwxr-xr-x@ 2 bassel  staff    64 Nov  4 13:18 templatetags
+
+iolta-deployment//source/trust_account/apps/checks/templates/checks/templatetags:
+total 0
+
+iolta-deployment//source/trust_account/apps/checks/templatetags:
+total 8
+-rw-r--r--@ 1 bassel  staff     0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 4 bassel  staff   128 Nov  4 13:18 __pycache__
+-rw-r--r--@ 1 bassel  staff  2220 Nov  4 13:18 check_filters.py
+
+iolta-deployment//source/trust_account/apps/checks/templatetags/__pycache__:
+total 16
+-rw-r--r--@ 1 bassel  staff   138 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  2807 Nov  4 13:18 check_filters.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/clients:
+total 160
+-rw-r--r--@ 1 bassel  staff      0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 9 bassel  staff    288 Nov  4 13:18 __pycache__
+-rw-r--r--@ 1 bassel  staff      0 Nov  4 13:18 admin.py
+drwxr-xr-x@ 7 bassel  staff    224 Nov  4 13:18 api
+-rw-r--r--@ 1 bassel  staff    150 Nov  4 13:18 apps.py
+-rw-r--r--@ 1 bassel  staff   7442 Nov  4 13:18 forms.py
+drwxr-xr-x@ 4 bassel  staff    128 Nov  4 13:18 management
+drwxr-xr-x@ 8 bassel  staff    256 Nov  4 13:18 migrations
+-rw-r--r--@ 1 bassel  staff  15585 Nov  4 13:18 models.py
+drwxr-xr-x@ 3 bassel  staff     96 Nov  4 13:18 templates
+drwxr-xr-x@ 6 bassel  staff    192 Nov  4 13:18 templatetags
+-rw-r--r--@ 1 bassel  staff   2169 Nov  4 13:18 urls.py
+-rw-r--r--@ 1 bassel  staff  46006 Nov  4 13:18 views.py
+
+iolta-deployment//source/trust_account/apps/clients/__pycache__:
+total 184
+-rw-r--r--@ 1 bassel  staff    126 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff    123 Nov  4 13:18 admin.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff    439 Nov  4 13:18 apps.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   8101 Nov  4 13:18 forms.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  16097 Nov  4 13:18 models.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   3253 Nov  4 13:18 urls.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  51281 Nov  4 13:18 views.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/clients/api:
+total 72
+-rw-r--r--@ 1 bassel  staff      0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 6 bassel  staff    192 Nov  4 13:18 __pycache__
+-rw-r--r--@ 1 bassel  staff  10390 Nov  4 13:18 serializers.py
+-rw-r--r--@ 1 bassel  staff   1726 Nov  4 13:18 urls.py
+-rw-r--r--@ 1 bassel  staff  17379 Nov  4 13:18 views.py
+
+iolta-deployment//source/trust_account/apps/clients/api/__pycache__:
+total 80
+-rw-r--r--@ 1 bassel  staff    130 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  10025 Nov  4 13:18 serializers.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   1251 Nov  4 13:18 urls.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  16396 Nov  4 13:18 views.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/clients/management:
+total 0
+-rw-r--r--@ 1 bassel  staff    0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 6 bassel  staff  192 Nov  4 13:18 commands
+
+iolta-deployment//source/trust_account/apps/clients/management/commands:
+total 24
+-rw-r--r--@ 1 bassel  staff     0 Nov  4 13:18 __init__.py
+-rw-r--r--@ 1 bassel  staff  1569 Nov  4 13:18 create_sample_firm_client.py
+-rw-r--r--@ 1 bassel  staff  3207 Nov  4 13:18 standardize_phone_numbers.py
+-rw-r--r--@ 1 bassel  staff  2358 Nov  4 13:18 update_case_numbers.py
+
+iolta-deployment//source/trust_account/apps/clients/migrations:
+total 40
+-rw-r--r--@ 1 bassel  staff  3273 Nov  4 13:18 0001_initial.py
+-rw-r--r--@ 1 bassel  staff   336 Nov  4 13:18 0002_remove_static_balance.py
+-rw-r--r--@ 1 bassel  staff  1358 Nov  4 13:18 0003_create_sample_firm_client.py
+-rw-r--r--@ 1 bassel  staff   395 Nov  4 13:18 0003_remove_case_title.py
+-rw-r--r--@ 1 bassel  staff  1432 Nov  4 13:18 0004_add_case_title.py
+-rw-r--r--@ 1 bassel  staff     0 Nov  4 13:18 __init__.py
+
+iolta-deployment//source/trust_account/apps/clients/templates:
+total 0
+drwxr-xr-x@ 10 bassel  staff  320 Nov  4 13:18 clients
+
+iolta-deployment//source/trust_account/apps/clients/templates/clients:
+total 232
+drwxr-xr-x@ 6 bassel  staff    192 Nov  4 13:18 cases
+-rw-r--r--@ 1 bassel  staff  40610 Nov  4 13:18 detail.html
+-rw-r--r--@ 1 bassel  staff   7047 Nov  4 13:18 form.html
+-rw-r--r--@ 1 bassel  staff  34869 Nov  4 13:18 index.html
+-rw-r--r--@ 1 bassel  staff   2944 Nov  4 13:18 modal_form.html
+-rw-r--r--@ 1 bassel  staff   5218 Nov  4 13:18 print_case_ledger.html
+-rw-r--r--@ 1 bassel  staff  11739 Nov  4 13:18 print_clients_report.html
+-rw-r--r--@ 1 bassel  staff   6649 Nov  4 13:18 print_clients_with_cases.html
+
+iolta-deployment//source/trust_account/apps/clients/templates/clients/cases:
+total 232
+-rw-r--r--@ 1 bassel  staff  66201 Nov  4 13:18 detail.html
+-rw-r--r--@ 1 bassel  staff   8675 Nov  4 13:18 form.html
+-rw-r--r--@ 1 bassel  staff  28673 Nov  4 13:18 index.html
+-rw-r--r--@ 1 bassel  staff   1789 Nov  4 13:18 modal_form.html
+
+iolta-deployment//source/trust_account/apps/clients/templatetags:
+total 16
+-rw-r--r--@ 1 bassel  staff     0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 5 bassel  staff   160 Nov  4 13:18 __pycache__
+-rw-r--r--@ 1 bassel  staff  4012 Nov  4 13:18 accounting_filters.py
+-rw-r--r--@ 1 bassel  staff  1701 Nov  4 13:18 custom_filters.py
+
+iolta-deployment//source/trust_account/apps/clients/templatetags/__pycache__:
+total 32
+-rw-r--r--@ 1 bassel  staff   139 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  5260 Nov  4 13:18 accounting_filters.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  2138 Nov  4 13:18 custom_filters.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/dashboard:
+total 64
+-rw-r--r--@ 1 bassel  staff      0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 6 bassel  staff    192 Nov  4 13:18 __pycache__
+drwxr-xr-x@ 6 bassel  staff    192 Nov  4 13:18 api
+-rw-r--r--@ 1 bassel  staff    154 Nov  4 13:18 apps.py
+drwxr-xr-x@ 4 bassel  staff    128 Nov  4 13:18 migrations
+drwxr-xr-x@ 3 bassel  staff     96 Nov  4 13:18 templates
+-rw-r--r--@ 1 bassel  staff    261 Nov  4 13:18 urls.py
+-rw-r--r--@ 1 bassel  staff  21210 Nov  4 13:18 views.py
+
+iolta-deployment//source/trust_account/apps/dashboard/__pycache__:
+total 64
+-rw-r--r--@ 1 bassel  staff    128 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff    445 Nov  4 13:18 apps.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff    571 Nov  4 13:18 urls.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  19093 Nov  4 13:18 views.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/dashboard/api:
+total 48
+-rw-r--r--@ 1 bassel  staff     23 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 5 bassel  staff    160 Nov  4 13:18 __pycache__
+-rw-r--r--@ 1 bassel  staff    376 Nov  4 13:18 urls.py
+-rw-r--r--@ 1 bassel  staff  12460 Nov  4 13:18 views.py
+
+iolta-deployment//source/trust_account/apps/dashboard/api/__pycache__:
+total 48
+-rw-r--r--@ 1 bassel  staff    132 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff    654 Nov  4 13:18 urls.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  14360 Nov  4 13:18 views.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/dashboard/migrations:
+total 8
+-rw-r--r--@ 1 bassel  staff  1465 Nov  4 13:18 0001_initial.py
+-rw-r--r--@ 1 bassel  staff     0 Nov  4 13:18 __init__.py
+
+iolta-deployment//source/trust_account/apps/dashboard/templates:
+total 0
+drwxr-xr-x@ 4 bassel  staff  128 Nov  4 13:18 dashboard
+
+iolta-deployment//source/trust_account/apps/dashboard/templates/dashboard:
+total 24
+-rw-r--r--@ 1 bassel  staff  6992 Nov  4 13:18 uncleared_transactions.html
+-rw-r--r--@ 1 bassel  staff  2054 Nov  4 13:18 uncleared_transactions_table.html
+
+iolta-deployment//source/trust_account/apps/reports:
+total 40
+-rw-r--r--@ 1 bassel  staff     0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 6 bassel  staff   192 Nov  4 13:18 __pycache__
+drwxr-xr-x@ 4 bassel  staff   128 Nov  4 13:18 api
+-rw-r--r--@ 1 bassel  staff   150 Nov  4 13:18 apps.py
+drwxr-xr-x@ 4 bassel  staff   128 Nov  4 13:18 migrations
+drwxr-xr-x@ 3 bassel  staff    96 Nov  4 13:18 templates
+-rw-r--r--@ 1 bassel  staff   216 Nov  4 13:18 urls.py
+-rw-r--r--@ 1 bassel  staff  8605 Nov  4 13:18 views.py
+
+iolta-deployment//source/trust_account/apps/reports/__pycache__:
+total 48
+-rw-r--r--@ 1 bassel  staff   126 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   439 Nov  4 13:18 apps.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   460 Nov  4 13:18 urls.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  8810 Nov  4 13:18 views.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/reports/api:
+total 16
+-rw-r--r--@ 1 bassel  staff    21 Nov  4 13:18 __init__.py
+-rw-r--r--@ 1 bassel  staff  2773 Nov  4 13:18 serializers.py
+
+iolta-deployment//source/trust_account/apps/reports/migrations:
+total 8
+-rw-r--r--@ 1 bassel  staff  334 Nov  4 13:18 0001_initial.py
+-rw-r--r--@ 1 bassel  staff    0 Nov  4 13:18 __init__.py
+
+iolta-deployment//source/trust_account/apps/reports/templates:
+total 0
+drwxr-xr-x@ 5 bassel  staff  160 Nov  4 13:18 reports
+
+iolta-deployment//source/trust_account/apps/reports/templates/reports:
+total 88
+-rw-r--r--@ 1 bassel  staff  17290 Nov  4 13:18 client_ledger.html
+-rw-r--r--@ 1 bassel  staff   4335 Nov  4 13:18 client_ledger_pdf.html
+-rw-r--r--@ 1 bassel  staff  12642 Nov  4 13:18 index.html
+
+iolta-deployment//source/trust_account/apps/settings:
+total 56
+-rw-r--r--@ 1 bassel  staff     0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 8 bassel  staff   256 Nov  4 13:18 __pycache__
+-rw-r--r--@ 1 bassel  staff  1552 Nov  4 13:18 admin.py
+-rw-r--r--@ 1 bassel  staff   152 Nov  4 13:18 apps.py
+drwxr-xr-x@ 4 bassel  staff   128 Nov  4 13:18 migrations
+-rw-r--r--  1 bassel  staff  8555 Nov  4 13:18 models.py
+-rw-r--r--@ 1 bassel  staff   146 Nov  4 13:18 urls.py
+-rw-r--r--@ 1 bassel  staff   198 Nov  4 13:18 views.py
+
+iolta-deployment//source/trust_account/apps/settings/__pycache__:
+total 64
+-rw-r--r--@ 1 bassel  staff    127 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   1860 Nov  4 13:18 admin.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff    442 Nov  4 13:18 apps.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  10469 Nov  4 13:18 models.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff    390 Nov  4 13:18 urls.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff    479 Nov  4 13:18 views.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/settings/migrations:
+total 16
+-rw-r--r--@ 1 bassel  staff  4790 Nov  4 13:18 0001_initial.py
+-rw-r--r--@ 1 bassel  staff     0 Nov  4 13:18 __init__.py
+
+iolta-deployment//source/trust_account/apps/settlements:
+total 88
+-rw-r--r--@ 1 bassel  staff     0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 9 bassel  staff   288 Nov  4 13:18 __pycache__
+-rw-r--r--@ 1 bassel  staff  4877 Nov  4 13:18 admin.py
+drwxr-xr-x@ 7 bassel  staff   224 Nov  4 13:18 api
+-rw-r--r--@ 1 bassel  staff   191 Nov  4 13:18 apps.py
+-rw-r--r--@ 1 bassel  staff  6279 Nov  4 13:18 forms.py
+drwxr-xr-x@ 4 bassel  staff   128 Nov  4 13:18 migrations
+-rw-r--r--@ 1 bassel  staff  6955 Nov  4 13:18 models.py
+drwxr-xr-x@ 3 bassel  staff    96 Nov  4 13:18 templates
+-rw-r--r--@ 1 bassel  staff  1003 Nov  4 13:18 urls.py
+-rw-r--r--@ 1 bassel  staff  8777 Nov  4 13:18 views.py
+
+iolta-deployment//source/trust_account/apps/settlements/__pycache__:
+total 112
+-rw-r--r--@ 1 bassel  staff    130 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   5044 Nov  4 13:18 admin.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff    487 Nov  4 13:18 apps.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   7447 Nov  4 13:18 forms.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  10436 Nov  4 13:18 models.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   1628 Nov  4 13:18 urls.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  13401 Nov  4 13:18 views.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/settlements/api:
+total 24
+-rw-r--r--@ 1 bassel  staff    0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 4 bassel  staff  128 Nov  4 13:18 __pycache__
+-rw-r--r--@ 1 bassel  staff   46 Nov  4 13:18 serializers.py
+-rw-r--r--@ 1 bassel  staff  134 Nov  4 13:18 urls.py
+-rw-r--r--@ 1 bassel  staff   40 Nov  4 13:18 views.py
+
+iolta-deployment//source/trust_account/apps/settlements/api/__pycache__:
+total 16
+-rw-r--r--@ 1 bassel  staff  134 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  197 Nov  4 13:18 urls.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/settlements/migrations:
+total 8
+-rw-r--r--@ 1 bassel  staff  3314 Nov  4 13:18 0001_initial.py
+-rw-r--r--@ 1 bassel  staff     0 Nov  4 13:18 __init__.py
+
+iolta-deployment//source/trust_account/apps/settlements/templates:
+total 0
+drwxr-xr-x@ 7 bassel  staff  224 Nov  4 13:18 settlements
+
+iolta-deployment//source/trust_account/apps/settlements/templates/settlements:
+total 112
+-rw-r--r--@ 1 bassel  staff  12279 Nov  4 13:18 detail.html
+-rw-r--r--@ 1 bassel  staff   7530 Nov  4 13:18 distribution_form.html
+-rw-r--r--@ 1 bassel  staff   5875 Nov  4 13:18 form.html
+-rw-r--r--@ 1 bassel  staff  10062 Nov  4 13:18 index.html
+-rw-r--r--@ 1 bassel  staff  14350 Nov  4 13:18 reconciliation.html
+
+iolta-deployment//source/trust_account/apps/transactions:
+total 88
+-rw-r--r--@ 1 bassel  staff      0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 6 bassel  staff    192 Nov  4 13:18 __pycache__
+-rw-r--r--@ 1 bassel  staff      0 Nov  4 13:18 admin.py
+drwxr-xr-x@ 6 bassel  staff    192 Nov  4 13:18 api
+-rw-r--r--@ 1 bassel  staff    160 Nov  4 13:18 apps.py
+-rw-r--r--@ 1 bassel  staff  11506 Nov  4 13:18 forms.py
+drwxr-xr-x@ 5 bassel  staff    160 Nov  4 13:18 migrations
+-rw-r--r--@ 1 bassel  staff    961 Nov  4 13:18 models.py
+drwxr-xr-x@ 3 bassel  staff     96 Nov  4 13:18 templates
+-rw-r--r--@ 1 bassel  staff    706 Nov  4 13:18 urls.py
+-rw-r--r--@ 1 bassel  staff  19890 Nov  4 13:18 views.py
+
+iolta-deployment//source/trust_account/apps/transactions/__pycache__:
+total 88
+-rw-r--r--@ 1 bassel  staff    131 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  11675 Nov  4 13:18 forms.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   1266 Nov  4 13:18 urls.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  20848 Nov  4 13:18 views.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/transactions/api:
+total 56
+-rw-r--r--@ 1 bassel  staff      0 Nov  4 13:18 __init__.py
+-rw-r--r--@ 1 bassel  staff   6340 Nov  4 13:18 serializers.py
+-rw-r--r--@ 1 bassel  staff   1428 Nov  4 13:18 urls.py
+-rw-r--r--@ 1 bassel  staff  12870 Nov  4 13:18 views.py
+
+iolta-deployment//source/trust_account/apps/transactions/migrations:
+total 24
+-rw-r--r--@ 1 bassel  staff   313 Nov  4 13:18 0001_initial.py
+-rw-r--r--@ 1 bassel  staff  3952 Nov  4 13:18 0002_initial.py
+-rw-r--r--@ 1 bassel  staff    20 Nov  4 13:18 __init__.py
+
+iolta-deployment//source/trust_account/apps/transactions/templates:
+total 0
+drwxr-xr-x@ 6 bassel  staff  192 Nov  4 13:18 transactions
+
+iolta-deployment//source/trust_account/apps/transactions/templates/transactions:
+total 136
+-rw-r--r--@ 1 bassel  staff  14295 Nov  4 13:18 detail.html
+-rw-r--r--@ 1 bassel  staff  13201 Nov  4 13:18 form.html
+-rw-r--r--@ 1 bassel  staff  27000 Nov  4 13:18 index.html
+-rw-r--r--@ 1 bassel  staff   6751 Nov  4 13:18 modal_form.html
+
+iolta-deployment//source/trust_account/apps/vendors:
+total 96
+-rw-r--r--@ 1 bassel  staff      0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 9 bassel  staff    288 Nov  4 13:18 __pycache__
+-rw-r--r--@ 1 bassel  staff      0 Nov  4 13:18 admin.py
+drwxr-xr-x@ 7 bassel  staff    224 Nov  4 13:18 api
+-rw-r--r--@ 1 bassel  staff    150 Nov  4 13:18 apps.py
+-rw-r--r--@ 1 bassel  staff   5477 Nov  4 13:18 forms.py
+drwxr-xr-x@ 4 bassel  staff    128 Nov  4 13:18 migrations
+-rw-r--r--@ 1 bassel  staff   4392 Nov  4 13:18 models.py
+drwxr-xr-x@ 3 bassel  staff     96 Nov  4 13:18 templates
+-rw-r--r--@ 1 bassel  staff    807 Nov  4 13:18 urls.py
+-rw-r--r--@ 1 bassel  staff  21336 Nov  4 13:18 views.py
+
+iolta-deployment//source/trust_account/apps/vendors/__pycache__:
+total 112
+-rw-r--r--@ 1 bassel  staff    126 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff    123 Nov  4 13:18 admin.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff    439 Nov  4 13:18 apps.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   5864 Nov  4 13:18 forms.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   6046 Nov  4 13:18 models.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   1486 Nov  4 13:18 urls.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  22846 Nov  4 13:18 views.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/vendors/api:
+total 48
+-rw-r--r--@ 1 bassel  staff      0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 6 bassel  staff    192 Nov  4 13:18 __pycache__
+-rw-r--r--@ 1 bassel  staff   5477 Nov  4 13:18 serializers.py
+-rw-r--r--@ 1 bassel  staff    856 Nov  4 13:18 urls.py
+-rw-r--r--@ 1 bassel  staff  11704 Nov  4 13:18 views.py
+
+iolta-deployment//source/trust_account/apps/vendors/api/__pycache__:
+total 64
+-rw-r--r--@ 1 bassel  staff    130 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   7420 Nov  4 13:18 serializers.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff    623 Nov  4 13:18 urls.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  13951 Nov  4 13:18 views.cpython-312.pyc
+
+iolta-deployment//source/trust_account/apps/vendors/migrations:
+total 8
+-rw-r--r--@ 1 bassel  staff  2593 Nov  4 13:18 0001_initial.py
+-rw-r--r--@ 1 bassel  staff     0 Nov  4 13:18 __init__.py
+
+iolta-deployment//source/trust_account/apps/vendors/templates:
+total 0
+drwxr-xr-x@ 6 bassel  staff  192 Nov  4 13:18 vendors
+
+iolta-deployment//source/trust_account/apps/vendors/templates/vendors:
+total 144
+-rw-r--r--@ 1 bassel  staff  32874 Nov  4 13:18 detail.html
+-rw-r--r--@ 1 bassel  staff   9190 Nov  4 13:18 form.html
+-rw-r--r--@ 1 bassel  staff  13012 Nov  4 13:18 index.html
+-rw-r--r--@ 1 bassel  staff   4432 Nov  4 13:18 modal_form.html
+
+iolta-deployment//source/trust_account/media:
+total 0
+
+iolta-deployment//source/trust_account/sql:
+total 0
+
+iolta-deployment//source/trust_account/static:
+total 32
+drwxr-xr-x@ 4 bassel  staff   128 Nov  4 13:18 css
+-rw-r--r--@ 1 bassel  staff  1611 Nov  4 13:18 favicon-32x32.png
+-rw-r--r--@ 1 bassel  staff  3057 Nov  4 13:18 favicon.ico
+-rw-r--r--@ 1 bassel  staff  3057 Nov  4 13:18 favicon.png
+-rw-r--r--@ 1 bassel  staff   185 Nov  4 13:18 favicon.svg
+drwxr-xr-x@ 6 bassel  staff   192 Nov  4 13:18 js
+
+iolta-deployment//source/trust_account/static/css:
+total 80
+-rw-r--r--@ 1 bassel  staff  22700 Nov  4 13:18 datatables.min.css
+-rw-r--r--@ 1 bassel  staff  14397 Nov  4 13:18 main.css
+
+iolta-deployment//source/trust_account/static/js:
+total 224
+-rw-r--r--@ 1 bassel  staff  87103 Nov  4 13:18 datatables.min.js
+-rw-r--r--@ 1 bassel  staff   3495 Nov  4 13:18 main.js
+-rw-r--r--@ 1 bassel  staff   3616 Nov  4 13:18 phone_formatter.js
+-rw-r--r--@ 1 bassel  staff  16080 Nov  4 13:18 tams-api-client.js
+
+iolta-deployment//source/trust_account/staticfiles:
+total 0
+
+iolta-deployment//source/trust_account/templates:
+total 56
+-rw-r--r--@ 1 bassel  staff   1599 Nov  4 13:18 404.html
+drwxr-xr-x@ 3 bassel  staff     96 Nov  4 13:18 admin
+-rw-r--r--@ 1 bassel  staff   4600 Nov  4 13:18 audit_trail_pdf.html
+-rw-r--r--@ 1 bassel  staff  12660 Nov  4 13:18 base.html
+drwxr-xr-x@ 4 bassel  staff    128 Nov  4 13:18 dashboard
+drwxr-xr-x@ 5 bassel  staff    160 Nov  4 13:18 registration
+
+iolta-deployment//source/trust_account/templates/admin:
+total 8
+-rw-r--r--@ 1 bassel  staff  2281 Nov  4 13:18 login.html
+
+iolta-deployment//source/trust_account/templates/dashboard:
+total 104
+-rw-r--r--@ 1 bassel  staff  39142 Nov  4 13:18 index.html
+-rw-r--r--@ 1 bassel  staff  10068 Nov  4 13:18 uncleared_transactions_table.html
+
+iolta-deployment//source/trust_account/templates/registration:
+total 24
+-rw-r--r--@ 1 bassel  staff  2500 Nov  4 13:18 login.html
+-rw-r--r--@ 1 bassel  staff  2548 Nov  4 13:18 login_blocked.html
+-rw-r--r--@ 1 bassel  staff  2413 Nov  4 13:18 login_rate_limited.html
+
+iolta-deployment//source/trust_account/trust_account_project:
+total 272
+-rw-r--r--@  1 bassel  staff      0 Nov  4 13:18 __init__.py
+drwxr-xr-x@ 12 bassel  staff    384 Nov  4 13:18 __pycache__
+-rw-r--r--@  1 bassel  staff  18225 Nov  4 13:18 api_hardening.py
+-rw-r--r--@  1 bassel  staff    229 Nov  4 13:18 asgi.py
+-rw-r--r--@  1 bassel  staff    205 Nov  4 13:18 context_processors.py
+-rw-r--r--@  1 bassel  staff  13477 Nov  4 13:18 csrf_protection.py
+-rw-r--r--@  1 bassel  staff   9074 Nov  4 13:18 forms.py
+-rw-r--r--@  1 bassel  staff   2144 Nov  4 13:18 middleware.py
+-rw-r--r--@  1 bassel  staff  14618 Nov  4 13:18 security.py
+-rw-r--r--@  1 bassel  staff   9972 Nov  4 13:18 settings.py
+-rw-r--r--@  1 bassel  staff  14490 Nov  4 13:18 settings_production.py
+-rw-r--r--@  1 bassel  staff  21146 Nov  4 13:18 threat_detection.py
+-rw-r--r--@  1 bassel  staff   1155 Nov  4 13:18 urls.py
+-rw-r--r--@  1 bassel  staff    229 Nov  4 13:18 wsgi.py
+
+iolta-deployment//source/trust_account/trust_account_project/__pycache__:
+total 200
+-rw-r--r--@ 1 bassel  staff    135 Nov  4 13:18 __init__.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  21528 Nov  4 13:18 api_hardening.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff    469 Nov  4 13:18 context_processors.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  15319 Nov  4 13:18 csrf_protection.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   9914 Nov  4 13:18 forms.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   2840 Nov  4 13:18 middleware.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff  17205 Nov  4 13:18 security.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   8027 Nov  4 13:18 settings.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff   1766 Nov  4 13:18 urls.cpython-312.pyc
+-rw-r--r--@ 1 bassel  staff    462 Nov  4 13:18 wsgi.cpython-312.pyc

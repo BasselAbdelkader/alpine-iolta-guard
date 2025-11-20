@@ -1,0 +1,7 @@
+Original,Fake,Type,First Seen,Occurrences
+ABC Law Firm LLC,Smith & Johnson Law Offices,Entity,Payee,1
+Bob Johnson,James Smith,Person,Account,2
+Dr. Medical Center,Franklin Healthcare Center,Entity,Payee,1
+Jane Doe,Mary Johnson,Person,Account,2
+John Smith,Robert Williams,Person,Account,1
+Superior Court,Clinton Municipal Court,Entity,Payee,1

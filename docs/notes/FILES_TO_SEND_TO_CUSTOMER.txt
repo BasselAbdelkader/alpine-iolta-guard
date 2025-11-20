@@ -1,0 +1,157 @@
+================================================================================
+IOLTA GUARD - FILES TO SEND TO CUSTOMER SERVER
+================================================================================
+Date: November 12, 2025
+Version: FIXED (Settings Page + QuickBooks Import)
+
+================================================================================
+REQUIRED FILES (Must send these)
+================================================================================
+
+1. iolta_alpine_images_FIXED.tar (587 MB)
+   - Contains all Docker images with fixes
+   - Backend: includes QuickBooks import API
+   - Frontend: includes settings and import pages
+   - Database: PostgreSQL 16 Alpine
+
+2. deploy_from_tar.sh
+   - Automated deployment script
+   - Very verbose with colored output
+   - Handles image loading, database import, health checks
+   - Make executable: chmod +x deploy_from_tar.sh
+
+3. DEPLOYMENT_INSTRUCTIONS_FOR_CUSTOMER.md
+   - Complete step-by-step instructions
+   - Troubleshooting guide
+   - Testing procedures
+
+================================================================================
+ALREADY ON CUSTOMER SERVER (Should exist)
+================================================================================
+
+These files should already be present from previous deployment:
+- docker-compose.alpine.yml
+- .env (with database credentials)
+- backups/iolta_production_dump.sql
+
+If missing, you'll need to send them too.
+
+================================================================================
+TRANSFER COMMANDS
+================================================================================
+
+Option 1: Using SCP (from your local machine)
+----------------------------------------------
+cd /home/amin/Projects/ve_demo
+
+scp iolta_alpine_images_FIXED.tar root@138.68.109.92:~/ve_demo/
+scp deploy_from_tar.sh root@138.68.109.92:~/ve_demo/
+scp DEPLOYMENT_INSTRUCTIONS_FOR_CUSTOMER.md root@138.68.109.92:~/ve_demo/
+
+Option 2: Create tar of all files
+----------------------------------
+cd /home/amin/Projects/ve_demo
+
+tar -czf iolta_deployment_package_FIXED.tar.gz \
+    iolta_alpine_images_FIXED.tar \
+    deploy_from_tar.sh \
+    DEPLOYMENT_INSTRUCTIONS_FOR_CUSTOMER.md
+
+# Then send single file:
+scp iolta_deployment_package_FIXED.tar.gz root@138.68.109.92:~/
+
+# On customer server, extract:
+cd ~/ve_demo
+tar -xzf ~/iolta_deployment_package_FIXED.tar.gz
+
+================================================================================
+DEPLOYMENT ON CUSTOMER SERVER
+================================================================================
+
+After files are transferred, on customer server run:
+
+cd ~/ve_demo
+chmod +x deploy_from_tar.sh
+./deploy_from_tar.sh
+
+The script will handle everything automatically with detailed progress output.
+
+================================================================================
+WHAT'S FIXED IN THIS VERSION
+================================================================================
+
+✅ Settings page now works (was redirecting to dashboard)
+✅ QuickBooks import page now works (was showing 404)
+✅ QuickBooks import API implemented (/api/v1/quickbooks/validate/ and /import/)
+✅ Backend log file permissions fixed
+✅ Frontend nginx runtime permissions fixed
+✅ Database password authentication corrected
+✅ All nginx routes properly configured
+
+================================================================================
+FILE CHECKSUMS (for verification)
+================================================================================
+
+To verify file integrity after transfer:
+
+On local machine:
+md5sum iolta_alpine_images_FIXED.tar > checksums.txt
+md5sum deploy_from_tar.sh >> checksums.txt
+
+On customer server (after transfer):
+md5sum -c checksums.txt
+
+================================================================================
+SIZE INFORMATION
+================================================================================
+
+iolta_alpine_images_FIXED.tar:    587 MB
+deploy_from_tar.sh:               ~7 KB
+DEPLOYMENT_INSTRUCTIONS_FOR_CUSTOMER.md: ~8 KB
+
+Total transfer size: ~587 MB
+
+If creating deployment package tar.gz:
+Compressed size: ~590 MB (Docker tar is already compressed)
+
+================================================================================
+ESTIMATED TRANSFER TIME
+================================================================================
+
+With typical internet speeds:
+- 10 Mbps upload: ~8 minutes
+- 50 Mbps upload: ~2 minutes
+- 100 Mbps upload: ~1 minute
+
+================================================================================
+POST-DEPLOYMENT VERIFICATION
+================================================================================
+
+After deployment completes, verify:
+
+1. All containers healthy:
+   docker-compose -f docker-compose.alpine.yml ps
+
+2. Settings page works:
+   curl http://localhost/settings
+   (Should return HTML, not redirect)
+
+3. Import page works:
+   curl http://localhost/import-quickbooks
+   (Should return HTML, not 404)
+
+4. QuickBooks API works:
+   curl -X POST http://localhost/api/v1/quickbooks/validate/
+   (Should return authentication error, not 404)
+
+================================================================================
+SUPPORT CONTACT
+================================================================================
+
+If deployment fails:
+1. Check deploy_from_tar.sh output (very detailed)
+2. Check docker logs: docker-compose -f docker-compose.alpine.yml logs
+3. Check container status: docker-compose -f docker-compose.alpine.yml ps
+4. Review DEPLOYMENT_INSTRUCTIONS_FOR_CUSTOMER.md troubleshooting section
+
+================================================================================
