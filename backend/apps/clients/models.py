@@ -283,29 +283,33 @@ class Case(models.Model):
 
     def save(self, *args, **kwargs):
         """Override save to handle auto-incremental case_number and create automatic deposit"""
+        from django.db import transaction
+
         is_new = self.pk is None
         old_case_amount = None
-        
-        # Auto-generate case_number for new cases
-        if is_new and not self.case_number:
-            self.case_number = self._generate_case_number()
-        
-        # Track case amount changes for existing cases
-        if not is_new:
-            try:
-                old_case = Case.objects.get(pk=self.pk)
-                old_case_amount = old_case.case_amount
-            except Case.DoesNotExist:
-                old_case_amount = 0
-        
-        super().save(*args, **kwargs)
-        
-        # Create automatic deposit transaction for new cases with amount > 0
-        if is_new and self.case_amount and self.case_amount > 0:
-            self._create_case_deposit()
-        # Update deposit for existing cases if amount changed
-        elif not is_new and old_case_amount != self.case_amount and self.case_amount and self.case_amount > 0:
-            self._update_case_deposit(old_case_amount)
+
+        # Wrap entire save operation in atomic transaction to ensure data consistency
+        with transaction.atomic():
+            # Auto-generate case_number for new cases
+            if is_new and not self.case_number:
+                self.case_number = self._generate_case_number()
+
+            # Track case amount changes for existing cases
+            if not is_new:
+                try:
+                    old_case = Case.objects.get(pk=self.pk)
+                    old_case_amount = old_case.case_amount
+                except Case.DoesNotExist:
+                    old_case_amount = 0
+
+            super().save(*args, **kwargs)
+
+            # Create automatic deposit transaction for new cases with amount > 0
+            if is_new and self.case_amount and self.case_amount > 0:
+                self._create_case_deposit()
+            # Update deposit for existing cases if amount changed
+            elif not is_new and old_case_amount != self.case_amount and self.case_amount and self.case_amount > 0:
+                self._update_case_deposit(old_case_amount)
     
     def _generate_case_number(self):
         """Generate auto-incremental case number atomically - never reuse deleted numbers"""
@@ -386,20 +390,39 @@ class Case(models.Model):
     def _update_case_deposit(self, old_amount):
         """Update existing case deposit when case amount changes"""
         from ..bank_accounts.models import BankTransaction
+        from decimal import Decimal
 
-        # Find existing case deposit in consolidated table
-        existing_transaction = BankTransaction.objects.filter(
+        # Convert to Decimal for accurate comparison
+        old_amount = Decimal(str(old_amount)) if old_amount else Decimal('0')
+        new_amount = Decimal(str(self.case_amount)) if self.case_amount else Decimal('0')
+
+        # Find ALL existing case deposits (there might be multiple from updates)
+        existing_transactions = BankTransaction.objects.filter(
             case=self,
             item_type='CLIENT_DEPOSIT',
-            reference_number=f'{self.case_number}'
-        ).first()
+            transaction_type='DEPOSIT'
+        ).exclude(status='voided').order_by('-created_at')
 
-        if existing_transaction:
-            # Update the consolidated transaction
-            existing_transaction.amount = self.case_amount
-            existing_transaction.description = f'Updated deposit for case {self.case_number}: {self.case_description or "N/A"}'
-            existing_transaction.save()
+        if existing_transactions.exists():
+            # Get the most recent non-voided deposit
+            latest_transaction = existing_transactions.first()
+
+            # Calculate the difference
+            amount_difference = new_amount - old_amount
+
+            if amount_difference != 0:
+                # Update the most recent transaction
+                latest_transaction.amount = new_amount
+                latest_transaction.description = f'Updated deposit for case {self.case_number}: {self.case_description or "N/A"} (Changed from ${old_amount:,.2f} to ${new_amount:,.2f})'
+                latest_transaction.save()
+
+                # Void any older duplicate deposits to prevent double-counting
+                for old_deposit in existing_transactions[1:]:
+                    if old_deposit.status != 'voided':
+                        old_deposit.status = 'voided'
+                        old_deposit.void_reason = f'Superseded by updated deposit transaction'
+                        old_deposit.save()
         else:
             # No existing deposit found, create new one
-            if self.case_amount > 0:
+            if new_amount > 0:
                 self._create_case_deposit()

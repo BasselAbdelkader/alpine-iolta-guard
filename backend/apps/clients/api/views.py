@@ -279,10 +279,15 @@ class ClientViewSet(viewsets.ModelViewSet):
         # Get client's current balance
         client_balance = Decimal(str(instance.get_current_balance() or 0))
 
-        # Check if client has transactions
+        # Check if client has ANY transactions (including voided ones for audit trail)
         has_transactions = BankTransaction.objects.filter(
             models.Q(client=instance) | models.Q(case__client=instance)
         ).exists()
+
+        # Check for non-voided transactions specifically
+        has_active_transactions = BankTransaction.objects.filter(
+            models.Q(client=instance) | models.Q(case__client=instance)
+        ).exclude(status='voided').exists()
 
         # RULE 1: If client has balance (≠ 0), REJECT deletion
         if client_balance != Decimal('0'):

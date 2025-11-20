@@ -46,12 +46,14 @@ def client_ledger_report(request):
         if not date_to:
             date_to = timezone.now().strftime('%Y-%m-%d')
         
-        # Build base queryset
+        # Build base queryset - EXCLUDE voided transactions for accurate balances
         transaction_items = BankTransaction.objects.select_related(
             'client', 'case', 'vendor'
         ).filter(
             client_id=client_id,
             transaction_date__range=[date_from, date_to]
+        ).exclude(
+            status='voided'  # Critical: Don't include voided transactions in balance calculations
         ).order_by('-transaction_date', '-created_at')
         
         # Apply case filter if specified
