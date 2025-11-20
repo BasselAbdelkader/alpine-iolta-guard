@@ -7,30 +7,82 @@ function populateOutstandingChecks(checks) {
     if (checks.length === 0) {
         checksTable.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No outstanding checks over 90 days</td></tr>';
     } else {
-        checksTable.innerHTML = checks.map(check => `
-            <tr>
-                <td>${check.check_number}</td>
-                <td>${check.date_issued}</td>
-                <td>${check.client_name}</td>
-                <td>${check.payee}</td>
-                <td><small>${check.description || ''}</small></td>
-                <td><span class="text-dark">(${formatCurrency(check.amount).replace('$', '')})</span></td>
-                <td><span class="badge bg-danger">${check.days_outstanding} days</span></td>
-                <td>
-                    <div class="btn-group btn-group-sm" role="group">
-                        <button class="btn btn-outline-primary btn-sm" onclick="editTransaction(${check.id})" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-outline-warning btn-sm" onclick="reissueCheck(${check.id}, '${check.check_number}')" title="Reissue">
-                            <i class="fas fa-redo"></i>
-                        </button>
-                        <button class="btn btn-outline-danger btn-sm" onclick="voidCheck(${check.id}, '${check.check_number}')" title="Void">
-                            <i class="fas fa-ban"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
+        // Clear table first
+        checksTable.innerHTML = '';
+
+        // Build rows safely to prevent XSS
+        checks.forEach(check => {
+            const row = document.createElement('tr');
+
+            // Create cells with safe text content
+            const cells = [
+                check.check_number || '',
+                check.date_issued || '',
+                check.client_name || '',
+                check.payee || '',
+                check.description || '',
+                `(${formatCurrency(check.amount).replace('$', '')})`,
+                `${check.days_outstanding} days`
+            ];
+
+            // Add text cells safely
+            cells.forEach((content, index) => {
+                const cell = document.createElement('td');
+                if (index === 4) { // Description cell
+                    const small = document.createElement('small');
+                    small.textContent = content;
+                    cell.appendChild(small);
+                } else if (index === 5) { // Amount cell
+                    const span = document.createElement('span');
+                    span.className = 'text-dark';
+                    span.textContent = content;
+                    cell.appendChild(span);
+                } else if (index === 6) { // Days cell
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-danger';
+                    badge.textContent = content;
+                    cell.appendChild(badge);
+                } else {
+                    cell.textContent = content;
+                }
+                row.appendChild(cell);
+            });
+
+            // Add action buttons cell
+            const actionCell = document.createElement('td');
+            const btnGroup = document.createElement('div');
+            btnGroup.className = 'btn-group btn-group-sm';
+            btnGroup.setAttribute('role', 'group');
+
+            // Edit button
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-outline-primary btn-sm';
+            editBtn.setAttribute('title', 'Edit');
+            editBtn.onclick = () => editTransaction(check.id);
+            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+
+            // Reissue button
+            const reissueBtn = document.createElement('button');
+            reissueBtn.className = 'btn btn-outline-warning btn-sm';
+            reissueBtn.setAttribute('title', 'Reissue');
+            reissueBtn.onclick = () => reissueCheck(check.id, check.check_number);
+            reissueBtn.innerHTML = '<i class="fas fa-redo"></i>';
+
+            // Void button
+            const voidBtn = document.createElement('button');
+            voidBtn.className = 'btn btn-outline-danger btn-sm';
+            voidBtn.setAttribute('title', 'Void');
+            voidBtn.onclick = () => voidCheck(check.id, check.check_number);
+            voidBtn.innerHTML = '<i class="fas fa-ban"></i>';
+
+            btnGroup.appendChild(editBtn);
+            btnGroup.appendChild(reissueBtn);
+            btnGroup.appendChild(voidBtn);
+            actionCell.appendChild(btnGroup);
+            row.appendChild(actionCell);
+
+            checksTable.appendChild(row);
+        });
     }
 }
 

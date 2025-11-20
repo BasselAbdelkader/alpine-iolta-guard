@@ -162,6 +162,16 @@ class BankTransactionSerializer(serializers.ModelSerializer):
         if not data.get('case'):
             errors['case'] = 'Please select a Case before saving the transaction.'
 
+        # CRITICAL: Prevent transactions on closed cases
+        case = data.get('case')
+        if case and case.case_status == 'Closed':
+            errors['case'] = f'Cannot add transactions to closed case: {case.case_title}. Case was closed on {case.closed_date}'
+
+        # CRITICAL: Validate client-case relationship
+        client = data.get('client')
+        if client and case and case.client_id != client.id:
+            errors['case'] = f'Case "{case.case_title}" does not belong to client "{client.full_name}". Please select a case that belongs to this client.'
+
         # Check if transaction_date is provided
         if not data.get('transaction_date'):
             errors['transaction_date'] = 'Please enter a Transaction Date before saving the transaction.'

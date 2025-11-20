@@ -441,8 +441,29 @@ def csv_import_confirm(request):
                 except Exception as e:
                     failed_records += 1
                     rows_with_errors += 1
-                    error_msg = f"Row {total_records}: {str(e)}\n"
+
+                    # Enhanced error logging with row data
+                    import traceback
+                    error_details = {
+                        'row_number': total_records,
+                        'error': str(e),
+                        'error_type': type(e).__name__,
+                        'row_data': {
+                            'client': f"{row.get('first_name', '')} {row.get('last_name', '')}",
+                            'case': row.get('case_title', ''),
+                            'amount': row.get('amount', ''),
+                            'transaction_date': row.get('transaction_date', '')
+                        },
+                        'traceback': traceback.format_exc()
+                    }
+
+                    error_msg = f"Row {total_records}: {str(e)} | Data: {error_details['row_data']}\n"
                     audit.error_log = (audit.error_log or '') + error_msg
+
+                    # Log to system for monitoring
+                    import logging
+                    logger = logging.getLogger('csv_import')
+                    logger.error(f"CSV Import Error: {error_details}")
 
         # Update audit record with all counts
         audit.total_records = total_records
