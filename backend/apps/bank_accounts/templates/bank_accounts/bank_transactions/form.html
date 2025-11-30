@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ form_title }}{% endblock %}
+
+{% block page_title %}{{ form_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{{ form_title }}</h4>
+                    <a href="{% url 'bank_accounts:bank_transactions' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Bank Transactions
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="bankTransactionForm">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.bank_account.id_for_label }}" class="form-label">
+                                        Bank Account <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.bank_account }}
+                                    {% if form.bank_account.errors %}
+                                        <div class="text-danger">{{ form.bank_account.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="{{ form.transaction_date.id_for_label }}" class="form-label">
+                                        Transaction Date <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.transaction_date }}
+                                    {% if form.transaction_date.errors %}
+                                        <div class="text-danger">{{ form.transaction_date.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="{{ form.post_date.id_for_label }}" class="form-label">Post Date</label>
+                                    {{ form.post_date }}
+                                    {% if form.post_date.errors %}
+                                        <div class="text-danger">{{ form.post_date.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="{{ form.transaction_type.id_for_label }}" class="form-label">
+                                        Transaction Type <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.transaction_type }}
+                                    {% if form.transaction_type.errors %}
+                                        <div class="text-danger">{{ form.transaction_type.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="{{ form.amount.id_for_label }}" class="form-label">
+                                        Amount <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.amount }}
+                                    </div>
+                                    {% if form.amount.errors %}
+                                        <div class="text-danger">{{ form.amount.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="{{ form.reference_number.id_for_label }}" class="form-label">Reference Number</label>
+                                    {{ form.reference_number }}
+                                    {% if form.reference_number.errors %}
+                                        <div class="text-danger">{{ form.reference_number.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="{{ form.check_number.id_for_label }}" class="form-label">Check Number</label>
+                                    {{ form.check_number }}
+                                    {% if form.check_number.errors %}
+                                        <div class="text-danger">{{ form.check_number.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">
+                                        Description <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                        <div class="text-danger">{{ form.description.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Bank-specific Information -->
+                        <h5 class="mb-3">Bank Information</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.bank_reference.id_for_label }}" class="form-label">Bank Reference</label>
+                                    {{ form.bank_reference }}
+                                    {% if form.bank_reference.errors %}
+                                        <div class="text-danger">{{ form.bank_reference.errors }}</div>
+                                    {% endif %}
+                                    <div class="form-text">Bank's internal reference number</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.bank_category.id_for_label }}" class="form-label">Bank Category</label>
+                                    {{ form.bank_category }}
+                                    {% if form.bank_category.errors %}
+                                        <div class="text-danger">{{ form.bank_category.errors }}</div>
+                                    {% endif %}
+                                    <div class="form-text">Bank's transaction category</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="{{ form.reconciliation_notes.id_for_label }}" class="form-label">Reconciliation Notes</label>
+                                    {{ form.reconciliation_notes }}
+                                    {% if form.reconciliation_notes.errors %}
+                                        <div class="text-danger">{{ form.reconciliation_notes.errors }}</div>
+                                    {% endif %}
+                                    <div class="form-text">Notes for matching this transaction during reconciliation</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'bank_accounts:bank_transactions' %}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Bank Transaction
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Auto-fill post date if not set
+    $('#id_transaction_date').change(function() {
+        var transactionDate = $(this).val();
+        var postDate = $('#id_post_date').val();
+        
+        if (transactionDate && !postDate) {
+            // Set post date to next day by default
+            var date = new Date(transactionDate);
+            date.setDate(date.getDate() + 1);
+            var nextDay = date.toISOString().split('T')[0];
+            $('#id_post_date').val(nextDay);
+        }
+    });
+    
+    // Auto-generate bank reference if not set
+    $('#id_transaction_date, #id_transaction_type').change(function() {
+        var bankRef = $('#id_bank_reference').val();
+        var transactionDate = $('#id_transaction_date').val();
+        var transactionType = $('#id_transaction_type').val();
+        
+        if (!bankRef && transactionDate && transactionType) {
+            var dateStr = transactionDate.replace(/-/g, '');
+            var typePrefix = transactionType.substring(0, 3).toUpperCase();
+            var timestamp = Date.now().toString().substring(-3);
+            $('#id_bank_reference').val('BANK' + dateStr + typePrefix + timestamp);
+        }
+    });
+});
+</script>
+{% endblock %}

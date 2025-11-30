@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Case Detail - Trust Account Management</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/favicon.png">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/main.css">
+
+    <style>
+/* Print header - hidden on screen, shown on print */
+.print-header {
+    display: none;
+}
+
+@media print {
+    /* Hide screen elements */
+    .sidebar,
+    header,
+    .no-print,
+    #caseDetailsCard,
+    .btn,
+    .btn-group {
+        display: none !important;
+    }
+
+    /* Show print header */
+    .print-header {
+        display: block !important;
+        margin-bottom: 20px;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 20px !important;
+    }
+
+    body {
+        background: white !important;
+    }
+
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+        margin-top: 0 !important;
+    }
+
+    .card-header {
+        background-color: white !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+
+    .card-body {
+        padding: 0 !important;
+    }
+
+    table {
+        page-break-inside: auto;
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    table thead {
+        display: table-header-group;
+        background-color: #333 !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    table thead th {
+        background-color: #333 !important;
+        color: white !important;
+        padding: 8px !important;
+        font-weight: bold !important;
+        border: 1px solid #000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    table tbody td {
+        border: 1px solid #ddd !important;
+        padding: 6px 8px !important;
+        font-size: 10pt !important;
+    }
+
+    tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+
+    /* Hide badges in print, show text */
+    .badge {
+        background: none !important;
+        color: #000 !important;
+        border: none !important;
+        padding: 0 !important;
+        font-weight: normal !important;
+    }
+
+    /* Hide action buttons in print */
+    td:last-child {
+        display: none !important;
+    }
+
+    th:last-child {
+        display: none !important;
+    }
+
+    /* Amount column colors */
+    .text-success {
+        color: #28a745 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .text-danger {
+        color: #dc3545 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Show FINAL BALANCE row only in print */
+    tr.print-only-row {
+        display: table-row !important;
+    }
+
+    /* Print audit trail modal */
+    #auditTrailModal .modal-dialog {
+        max-width: 100% !important;
+        margin: 0 !important;
+    }
+
+    #auditTrailModal .modal-content {
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    #auditTrailModal .modal-header {
+        border-bottom: 2px solid #000 !important;
+        padding-bottom: 10px !important;
+    }
+
+    #auditTrailModal .modal-body {
+        padding: 20px !important;
+    }
+
+    #auditTrailModal .card {
+        border: 1px solid #333 !important;
+        page-break-inside: avoid;
+    }
+
+    /* Ensure badges print with colors */
+    #auditTrailModal .badge {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}
+
+.case-details-table {
+    font-size: 0.9rem !important;
+    width: 100%;
+    border-collapse: separate !important;
+    border-spacing: 0;
+    caption-side: top !important;
+    background-color: #fff;
+    border-radius: 0.375rem;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+}
+.case-details-table td {
+    padding: 0.75rem 1rem;
+    border: none;
+    border-bottom: 1px solid #e9ecef !important;
+    font-size: 0.9rem !important;
+    vertical-align: middle;
+}
+.case-details-table tr:last-child td {
+    border-bottom: none !important;
+}
+.case-details-table tr:hover {
+    background-color: #f8f9fa;
+}
+/* Enhanced styling for professional appearance */
+.case-details-table .badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+}
+.case-details-table a {
+    color: #0d6efd;
+    text-decoration: none;
+}
+.case-details-table a:hover {
+    color: #0a58ca;
+    text-decoration: underline;
+}
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar p-3">
+        <div class="sidebar-header mb-4">
+            <h4 id="lawFirmName">IOLTA Guard Insurance Law</h4>
+            <small class="text-muted d-block" id="lawFirmLocation">San Francisco, CA</small>
+            <small class="text-muted d-block" id="lawFirmPhone">(415) 555-0100</small>
+            <small class="text-muted d-block" id="lawFirmEmail">info@ioltaguard.com</small>
+            <hr class="my-2 opacity-25">
+            <small class="text-muted">Trust Account System</small>
+        </div>
+
+        <ul class="nav nav-pills flex-column">
+            <li class="nav-item mb-2">
+                <a href="/dashboard" class="nav-link">
+                    <i class="fas fa-building-columns me-2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/clients" class="nav-link active">
+                    <i class="fas fa-users me-2"></i>Clients
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/vendors" class="nav-link">
+                    <i class="fas fa-building me-2"></i>Vendors
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/bank" class="nav-link">
+                    <i class="fas fa-university me-2"></i>Bank
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/settlements" class="nav-link">
+                    <i class="fas fa-balance-scale me-2"></i>3-Way Settlement
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/reports" class="nav-link">
+                    <i class="fas fa-chart-bar me-2"></i>Reports
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/checks" class="nav-link">
+                    <i class="fas fa-print me-2"></i>Print Checks
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+            <li class="nav-item mb-2">
+                <a href="/html/approval-dashboard.html" class="nav-link position-relative" id="approvalBadgeLink">
+                    <i class="fas fa-check-circle me-2"></i>Approvals
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                          id="approvalBadge"
+                          style="display: none;">
+                        0
+                        <span class="visually-hidden">pending approvals</span>
+                    </span>
+                </a>
+            </li>
+                <a href="/settings" class="nav-link">
+                    <i class="fas fa-cog me-2"></i>Settings
+                </a>
+            </li>
+        </ul>
+
+        <div class="mt-auto pt-3">
+            <div class="border-top pt-3">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="fas fa-user-circle me-2"></i>
+                    <span id="userName">admin</span>
+                </div>
+                <button class="btn btn-outline-light btn-sm" onclick="logout()">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Success Notification (Toast) -->
+    <div id="successNotification" style="position: fixed; bottom: 20px; right: 20px; z-index: 99999; display: none;">
+        <div class="alert alert-success alert-dismissible fade show shadow-lg" role="alert" style="min-width: 300px; border-left: 5px solid #198754; background-color: #198754; color: #ffffff;">
+            <i class="fas fa-check-circle me-2"></i>
+            <strong>Success!</strong> <span id="notificationMessage">Transaction saved successfully!</span>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="shadow-sm border-bottom p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0" id="headerLawFirmName">Law Firm</h2>
+                    <small class="text-muted" id="headerFirmDetails"></small>
+                </div>
+                <div>
+                    <span class="text-muted" id="headerUserName">admin</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page content -->
+        <main class="py-4" style="padding-left: 0.25rem; padding-right: 0.25rem;">
+            <!-- Print Header (only visible when printing) -->
+            <div class="print-header">
+                <div style="margin-bottom: 20px;">
+                    <h4 id="printFirmName" style="margin: 0; font-size: 14pt;">Sample Law Firm</h4>
+                </div>
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0; font-size: 18pt; font-weight: bold;">CASE LEDGER</h2>
+                    <p style="margin: 5px 0; font-size: 11pt;" id="printClientCase">Client: - | Case: -</p>
+                    <hr style="border-top: 2px solid #000; margin: 10px 0;">
+                </div>
+
+                <!-- Case Details for Print -->
+                <div id="printCaseDetails" style="margin-bottom: 20px;">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h4 class="mb-0" id="cardCaseTitle">Case Details</h4>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-secondary" id="allCasesBtn">
+                                        <i class="fas fa-list"></i> All Cases
+                                    </button>
+                                    <button type="button" class="btn btn-primary" id="editCaseBtn">
+                                        <i class="fas fa-edit"></i> Edit Case
+                                    </button>
+                                    <button type="button" class="btn btn-info" id="viewClientBtn">
+                                        <i class="fas fa-user"></i> View Client
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <table class="case-details-table">
+                                            <tbody>
+                                                <tr>
+                                                    <td style="width: 15%; font-weight: 600; color: #495057; padding-right: 1rem;">Case Title:</td>
+                                                    <td style="width: 35%; padding-right: 2rem;" id="detail-case-title">-</td>
+                                                    <td style="width: 15%; font-weight: 600; color: #495057; padding-right: 1rem;">Status:</td>
+                                                    <td style="width: 35%;" id="detail-status">-</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="width: 15%; font-weight: 600; color: #495057; padding-right: 1rem;">Client:</td>
+                                                    <td style="width: 35%; padding-right: 2rem;">
+                                                        <a href="#" id="detail-client-link" class="text-decoration-none">-</a>
+                                                    </td>
+                                                    <td style="width: 15%; font-weight: 600; color: #495057; padding-right: 1rem;">Case Balance:</td>
+                                                    <td style="width: 35%;">
+                                                        <strong class="h6 mb-0" id="detail-case-balance">$0.00</strong>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="width: 15%; font-weight: 600; color: #495057; padding-right: 1rem;">Opened Date:</td>
+                                                    <td style="width: 35%; padding-right: 2rem;" id="detail-opened-date">-</td>
+                                                    <td colspan="2" style="padding: 0.5rem;"></td>
+                                                </tr>
+                                                <tr id="closed-date-row" style="display: none;">
+                                                    <td style="width: 15%; font-weight: 600; color: #495057; padding-right: 1rem;">Closed Date:</td>
+                                                    <td style="width: 35%; padding-right: 2rem;" id="detail-closed-date">-</td>
+                                                    <td colspan="2" style="padding: 0.5rem;"></td>
+                                                </tr>
+                                                <tr id="description-row" style="display: none;">
+                                                    <td style="width: 15%; font-weight: 600; color: #495057; padding-right: 1rem;">Description:</td>
+                                                    <td style="width: 35%; padding-right: 2rem;" id="detail-description">-</td>
+                                                    <td colspan="2" style="padding: 0.5rem;"></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Case Ledger -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-exchange-alt text-primary"></i>
+                                        Case Ledger (<span id="transaction-count">0</span>)
+                                    </h5>
+                                    <small class="text-muted" id="ledger-subtitle">
+                                        Client: - | Case: -
+                                    </small>
+                                </div>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-outline-secondary" id="printLedgerBtn">
+                                        <i class="fas fa-print"></i> Print Ledger
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success" id="addTransactionBtn">
+                                        <i class="fas fa-plus"></i> Add Transaction
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="transactionsContainer">
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                        <p class="mt-2">Loading transactions...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Transaction Modal -->
+    <div class="modal fade" id="transactionModal" tabindex="-1" aria-labelledby="transactionModalLabel" aria-hidden="true" style="z-index: 1060; padding-left: 0 !important;">
+        <div class="modal-dialog" style="margin: 1.75rem auto; max-width: 85vw;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="transactionModalLabel">Add New Transaction</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Available Funds Display -->
+                    <div class="d-flex justify-content-end align-items-center mb-3">
+                        <div class="text-end">
+                            <span id="available-funds-container" style="font-weight: bold; font-size: 1.25rem;">
+                                Available Funds: $<span id="available-funds">0.00</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <form id="transactionForm">
+                        <!-- Hidden field for transaction ID (used for edit mode) -->
+                        <input type="hidden" id="transaction_id" name="transaction_id">
+
+                        <!-- Bank Account -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="transaction_bank_account" class="form-label">
+                                        Bank Account <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="transaction_bank_account" name="bank_account" required>
+                                        <option value="">Select Bank Account</option>
+                                    </select>
+                                    <small class="form-text text-muted">Select the bank account for this transaction</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Client and Case (Locked) -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="transaction_client" class="form-label">Client</label>
+                                    <input type="text" class="form-control" id="transaction_client" readonly style="background-color: #f8f9fa !important; cursor: not-allowed; color: #495057;">
+                                    <input type="hidden" id="transaction_client_id">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="transaction_case" class="form-label">Case</label>
+                                    <input type="text" class="form-control" id="transaction_case" readonly style="background-color: #f8f9fa !important; cursor: not-allowed; color: #495057;">
+                                    <input type="hidden" id="transaction_case_id">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Date, Type, Ref, Payee, Amount - ALL IN ONE LINE (Optimized) -->
+                        <div class="row">
+                            <div class="col-md-2" style="max-width: 180px;">
+                                <div class="mb-3">
+                                    <label for="transaction_date" class="form-label">
+                                        Date <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="date" class="form-control" id="transaction_date" name="transaction_date" required>
+                                </div>
+                            </div>
+                            <div class="col-md-2" style="max-width: 170px;">
+                                <div class="mb-3">
+                                    <label for="transaction_type" class="form-label">
+                                        Type <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="transaction_type" name="transaction_type" required>
+                                        <option value="">Select Type</option>
+                                        <option value="DEPOSIT">Deposit</option>
+                                        <option value="WITHDRAWAL">Withdrawal</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-1" style="max-width: 130px;">
+                                <div class="mb-3">
+                                    <label for="transaction_ref" class="form-label">
+                                        Ref <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="transaction_ref" name="reference_number" maxlength="10">
+                                </div>
+                            </div>
+                            <div class="col-md-2" id="to-print-container" style="display: none; max-width: 120px;">
+                                <div class="mb-3">
+                                    <label class="form-label">&nbsp;</label>
+                                    <div class="form-check" style="padding-top: 8px;">
+                                        <input type="checkbox" class="form-check-input" id="to_print">
+                                        <label class="form-check-label" for="to_print" style="font-size: 0.875rem; white-space: nowrap;">
+                                            To Print
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="mb-3" style="position: relative;">
+                                    <label for="transaction_payee" class="form-label">
+                                        Payee <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="transaction_payee" name="payee" placeholder="Type payee name..." autocomplete="off" required>
+                                    <div id="payee-suggestions" class="dropdown-menu" style="display: none; position: absolute; z-index: 1000; width: 100%; max-height: 300px; overflow-y: auto;">
+                                        <!-- Suggestions will be populated here -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2" style="max-width: 180px;">
+                                <div class="mb-3">
+                                    <label for="transaction_amount" class="form-label">
+                                        Amount <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="text" class="form-control" id="transaction_amount" name="amount" required>
+                                    </div>
+                                    <div id="amount-error" class="text-danger" style="display: none; font-size: 0.875rem; margin-top: 2px;">
+                                        Transaction not permitted - insufficient funds
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="transaction_description" class="form-label">
+                                        Description <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea class="form-control" id="transaction_description" name="description" rows="3" placeholder="Enter transaction description" required></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Check Memo -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="transaction_memo" class="form-label">Check Memo</label>
+                                    <input type="text" class="form-control" id="transaction_memo" name="check_memo">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveTransactionBtn">
+                        <i class="fas fa-save"></i> Save Transaction
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add New Payee Modal -->
+    <div class="modal fade" id="addPayeeModal" tabindex="-1" aria-labelledby="addPayeeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addPayeeModalLabel">Add New Payee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="payeeForm">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="payee_vendor_name" class="form-label">
+                                        Vendor Name <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" readonly style="background-color: #e9ecef; cursor: not-allowed;" id="payee_vendor_name" name="vendor_name" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="payee_contact_person" class="form-label">Contact Person</label>
+                                    <input type="text" class="form-control" id="payee_contact_person" name="contact_person">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="payee_phone" class="form-label">Phone</label>
+                                    <input type="tel" class="form-control" id="payee_phone" name="phone" placeholder="">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="payee_email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="payee_email" name="email">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="payee_address" class="form-label">Address</label>
+                                    <textarea class="form-control" id="payee_address" name="address" rows="2"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="payee_city" class="form-label">City</label>
+                                    <input type="text" class="form-control" id="payee_city" name="city">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="payee_state" class="form-label">State</label>
+                                    <select class="form-select" id="payee_state" name="state">
+                                        <option value="">Select State</option>
+                                        <option value="AL">AL</option>
+                <option value="AK">AK</option>
+                <option value="AZ">AZ</option>
+                <option value="AR">AR</option>
+                <option value="CA">CA</option>
+                <option value="CO">CO</option>
+                <option value="CT">CT</option>
+                <option value="DE">DE</option>
+                <option value="FL">FL</option>
+                <option value="GA">GA</option>
+                <option value="HI">HI</option>
+                <option value="ID">ID</option>
+                <option value="IL">IL</option>
+                <option value="IN">IN</option>
+                <option value="IA">IA</option>
+                <option value="KS">KS</option>
+                <option value="KY">KY</option>
+                <option value="LA">LA</option>
+                <option value="ME">ME</option>
+                <option value="MD">MD</option>
+                <option value="MA">MA</option>
+                <option value="MI">MI</option>
+                <option value="MN">MN</option>
+                <option value="MS">MS</option>
+                <option value="MO">MO</option>
+                <option value="MT">MT</option>
+                <option value="NE">NE</option>
+                <option value="NV">NV</option>
+                <option value="NH">NH</option>
+                <option value="NJ">NJ</option>
+                <option value="NM">NM</option>
+                <option value="NY">NY</option>
+                <option value="NC">NC</option>
+                <option value="ND">ND</option>
+                <option value="OH">OH</option>
+                <option value="OK">OK</option>
+                <option value="OR">OR</option>
+                <option value="PA">PA</option>
+                <option value="RI">RI</option>
+                <option value="SC">SC</option>
+                <option value="SD">SD</option>
+                <option value="TN">TN</option>
+                <option value="TX">TX</option>
+                <option value="UT">UT</option>
+                <option value="VT">VT</option>
+                <option value="VA">VA</option>
+                <option value="WA">WA</option>
+                <option value="WV">WV</option>
+                <option value="WI">WI</option>
+                <option value="WY">WY</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="payee_zip_code" class="form-label">Zip Code</label>
+                                    <input type="text" class="form-control" id="payee_zip_code" name="zip_code" maxlength="5" placeholder="">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="savePayeeBtn">
+                        <i class="fas fa-save"></i> Save Payee
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit Trail Modal -->
+    <div class="modal fade" id="auditTrailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Audit Trail</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="auditTrailContent">
+                        <div class="text-center py-3">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            <p class="mt-2">Loading audit history...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="printAuditTrail()">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simple Case Edit Modal -->
+    <div class="modal fade" id="caseEditModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header text-white" style="background-color: #1a365d;">
+                    <h5 class="modal-title">Edit Case</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit_case_id">
+                    <input type="hidden" id="edit_case_client">
+                    <input type="hidden" id="edit_case_amount">
+                    <input type="hidden" id="edit_case_opened_date">
+                    <input type="hidden" id="edit_case_closed_date">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Case Title *</label>
+                        <input type="text" class="form-control" id="edit_case_title" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Description</label>
+                        <textarea class="form-control" id="edit_case_description" rows="4"></textarea>
+                    </div>
+
+                    <div class="mb-3" id="edit_case_status_container">
+                        <label class="form-label fw-bold">Case Status</label>
+                        <select class="form-select" id="edit_case_status">
+                            <option value="Open">Open</option>
+                            <option value="Pending Settlement">Pending Settlement</option>
+                            <option value="Settled">Settled</option>
+                            <option value="Closed">Closed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="saveCaseEdits()">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    /* Fix modal positioning - account for sidebar */
+    #transactionModal {
+        z-index: 9999 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 250px !important;
+    }
+
+    #transactionModal .modal-dialog {
+        position: relative !important;
+        margin: 20px auto !important;
+        max-width: 60vw !important;
+        width: auto !important;
+        z-index: 10000 !important;
+    }
+
+    #transactionModal .modal-content {
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+        z-index: 10001 !important;
+    }
+
+    /* Payee modal should appear above transaction modal */
+    #addPayeeModal {
+        z-index: 10050 !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 250px !important;
+    }
+
+    #addPayeeModal .modal-backdrop {
+        z-index: 10049 !important;
+    }
+
+    /* Payee suggestions dropdown */
+    #payee-suggestions {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: white;
+        margin-top: 2px;
+    }
+
+    #payee-suggestions .dropdown-item {
+        padding: 10px 15px;
+        cursor: pointer;
+    }
+
+    #payee-suggestions .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    #payee-suggestions .dropdown-item.add-new {
+        color: #0d6efd;
+        font-weight: 500;
+        border-top: 1px solid #e9ecef;
+    }
+
+    #payee-suggestions .dropdown-item.add-new:hover {
+        background-color: #e7f3ff;
+        color: #0a58ca;
+    }
+    </style>
+
+    <!-- Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js?v=1762170271"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js?v=1762170271"></script>
+
+    <!-- API Client -->
+    <script src="../js/api-client-session.js?v=1762170271&nocache=1"></script>
+
+    <!-- Case Detail Logic -->
+    <script src="../js/case-detail.js?v=1762170271&nocache=1"></script>
+    <script src="/js/law-firm-loader.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', initLawFirmInfo);
+    </script>
+</body>
+</html>

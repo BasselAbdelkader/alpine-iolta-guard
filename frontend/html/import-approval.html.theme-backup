@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Approval - IOLTA Guard</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon.png">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/main.css">
+
+    <style>
+        .import-card {
+            transition: box-shadow 0.3s;
+        }
+
+        .import-card:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-box {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        #loadingSpinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <!-- Law Firm Info -->
+        <div class="sidebar-header mb-4">
+            <h4 id="lawFirmName">Loading...</h4>
+            <small class="text-muted d-block" id="lawFirmLocation"></small>
+            <small class="text-muted d-block" id="lawFirmPhone"></small>
+            <small class="text-muted d-block" id="lawFirmEmail"></small>
+            <hr class="my-2 opacity-25">
+            <small class="text-muted">Trust Account System</small>
+        </div>
+
+        <!-- Navigation Menu -->
+        <ul class="sidebar-menu">
+            <li><a href="/dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="/clients.html"><i class="fas fa-users"></i> Clients</a></li>
+            <li><a href="/bank-accounts.html"><i class="fas fa-university"></i> Bank Accounts</a></li>
+            <li><a href="/bank-transactions.html"><i class="fas fa-exchange-alt"></i> Transactions</a></li>
+            <li><a href="/vendors.html"><i class="fas fa-building"></i> Vendors</a></li>
+            <li><a href="/settlements.html"><i class="fas fa-gavel"></i> Settlements</a></li>
+            <li><a href="/print-checks.html"><i class="fas fa-check-square"></i> Print Checks</a></li>
+            <li class="active"><a href="/import-approval.html"><i class="fas fa-clipboard-check"></i> Import Approval</a></li>
+            <li><a href="/reports.html"><i class="fas fa-chart-bar"></i> Reports</a></li>
+            <li><a href="/settings.html"><i class="fas fa-cog"></i> Settings</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1><i class="fas fa-clipboard-check text-primary me-2"></i>Import Approval</h1>
+                <p class="text-muted">Review and approve pending CSV imports</p>
+            </div>
+            <div>
+                <span class="me-3"><i class="fas fa-user-circle"></i> <span id="userName">User</span></span>
+                <button class="btn btn-outline-danger" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
+
+        <!-- Actions Bar -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">Pending Imports</h5>
+                        <small class="text-muted">Imports waiting for approval</small>
+                    </div>
+                    <button class="btn btn-primary" id="refreshBtn">
+                        <i class="fas fa-sync-alt me-1"></i> Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Loading pending imports...</p>
+        </div>
+
+        <!-- Pending Imports Container -->
+        <div id="pendingImportsContainer">
+            <!-- Imports will be loaded here dynamically -->
+        </div>
+
+        <!-- Help Section -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-info-circle me-2"></i>
+                How Import Approval Works
+            </div>
+            <div class="card-body">
+                <h6>Two-Stage Import Process:</h6>
+                <ol>
+                    <li><strong>Import to Staging:</strong> When a user imports a CSV file, the data goes to staging tables (not production).</li>
+                    <li><strong>Pending Review:</strong> The import appears here with status "Pending Review".</li>
+                    <li><strong>Review Data:</strong> Authorized users (Managing Attorney or Accountant) can review the staging data.</li>
+                    <li><strong>Approve or Reject:</strong>
+                        <ul>
+                            <li><strong>Approve:</strong> Data is copied to production and staging is cleared.</li>
+                            <li><strong>Reject:</strong> Staging data is deleted and importer is notified.</li>
+                        </ul>
+                    </li>
+                </ol>
+
+                <div class="alert alert-warning mt-3 mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Dual Control:</strong> You cannot approve your own imports. Another authorized user must review them.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- API Client -->
+    <script src="/js/api-client-session.js"></script>
+    <!-- Law Firm Loader -->
+    <script src="/js/law-firm-loader.js"></script>
+    <!-- Import Approval Script -->
+    <script src="/js/import-approval.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', initLawFirmInfo);
+    </script>
+</body>
+</html>

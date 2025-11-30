@@ -1,0 +1,608 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% load accounting_filters %}
+
+{% block title %}Transactions Management{% endblock %}
+
+{% block page_title %}{% if global_law_firm %}{{ global_law_firm.firm_name }}{% else %}Transactions{% endif %}{% endblock %}
+
+{% block help_title %}Transactions{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/datatables.min.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Transactions Management</h4>
+                    <button type="button" class="btn btn-primary" onclick="addNewTransaction()">
+                        <i class="fas fa-plus"></i> Add New Transaction
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Dynamic Search Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card fade-in">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Search Transactions</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="search" class="form-label">Search</label>
+                                            <div class="position-relative">
+                                                <input type="text" 
+                                                       class="form-control" 
+                                                       id="search" 
+                                                       name="search" 
+                                                       placeholder="Reference number, description, client or vendor name (dynamic search)"
+                                                       autocomplete="off">
+                                                <div id="search-spinner" class="position-absolute top-50 end-0 translate-middle-y me-3" style="display: none;">
+                                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                                        <span class="visually-hidden">Searching...</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">&nbsp;</label>
+                                            <div>
+                                                <button type="button" id="clear-search" class="btn btn-secondary">
+                                                    <i class="fas fa-times"></i> Clear Search
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Summary Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-2">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h6>Total Deposits</h6>
+                                            <h4>{{ total_deposits|format_amount_accounting }}</h4>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-arrow-down fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card bg-danger text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h6>Total Withdrawals</h6>
+                                            <h4>{{ total_withdrawals|format_amount_accounting }}</h4>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-arrow-up fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h6>Total Transfers</h6>
+                                            <h4>{{ total_transfers|format_amount_accounting }}</h4>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-exchange-alt fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card bg-warning text-dark">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h6>Uncleared</h6>
+                                            <h4>{{ uncleared_count }}</h4>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-clock fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-success">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h6 class="text-success">Current Account Balance</h6>
+                                            <h4 class="text-success">{{ current_balance|format_amount_accounting }}</h4>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-wallet fa-2x text-success"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table id="transactionsTable" class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Ref Number</th>
+                                    <th>Payee</th>
+                                    <th>Client</th>
+                                    <th>Status</th>
+                                    <th>Amount</th>
+                                    <th>Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in transactions %}
+                                <tr>
+                                    <td>
+                                        {{ transaction.transaction_date|date:"m/d/Y" }}
+                                        <br><small class="text-muted">
+                                            <strong>Description:</strong> {{ transaction.description|default:"No description provided" }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if transaction.transaction_type == 'DEPOSIT' %}bg-success
+                                            {% elif transaction.transaction_type == 'WITHDRAWAL' %}bg-danger
+                                            {% elif transaction.transaction_type == 'TRANSFER' %}bg-info
+                                            {% endif %}">
+                                            {{ transaction.get_transaction_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ transaction.reference_number|default:'-' }}</td>
+                                    <td>
+                                        {% if transaction.vendor %}
+                                            {{ transaction.vendor.vendor_name }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if transaction.client %}
+                                            {{ transaction.client.full_name }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if transaction.is_cleared %}
+                                            <span class="badge bg-success">Cleared</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if transaction.transaction_type == 'DEPOSIT' %}
+                                            <span class="text-success">{{ transaction.amount|format_deposit }}</span>
+                                        {% elif transaction.transaction_type == 'WITHDRAWAL' %}
+                                            <span class="text-dark">{{ transaction.amount|format_withdrawal }}</span>
+                                        {% else %}
+                                            <span class="text-dark">{{ transaction.amount|format_amount_accounting }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold {{ transaction.running_balance|balance_status_class }}">
+                                            {{ transaction.running_balance|format_amount_accounting }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center">No transactions found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if is_paginated %}
+                    <nav aria-label="Transaction pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1">&laquo; First</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                </li>
+                            {% endif %}
+                            
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                                </span>
+                            </li>
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/datatables.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // Initialize DataTable
+    var transactionsTable = $('#transactionsTable').DataTable({
+        "pageLength": 25,
+        "order": [[ 0, "desc" ]],
+        "searching": false,
+        "lengthChange": false,
+        "columnDefs": [
+            {
+                "targets": 0,
+                "orderable": true,
+                "render": function(data, type, row) {
+                    if (type === 'sort') {
+                        // Extract the date part from the first line of the cell
+                        var dateStr = data.split('<br>')[0].trim();
+                        // Convert "Jan 01, 2024" to sortable format
+                        return new Date(dateStr).getTime();
+                    }
+                    return data;
+                }
+            }
+        ]
+    });
+    
+    // Dynamic Search Implementation
+    let searchTimeout;
+    const searchInput = $('#search');
+    const searchSpinner = $('#search-spinner');
+    const clearButton = $('#clear-search');
+    let originalData = null;
+    
+    // Store original data for clear functionality
+    if (transactionsTable.rows().data().length > 0) {
+        originalData = transactionsTable.rows().data().toArray();
+    }
+    
+    searchInput.on('input', function() {
+        const query = $(this).val().trim();
+        
+        // Clear previous timeout
+        clearTimeout(searchTimeout);
+        
+        // If query is empty, restore original data
+        if (query.length === 0) {
+            if (originalData) {
+                restoreOriginalData();
+            }
+            return;
+        }
+        
+        // If query is less than 2 characters, don't search
+        if (query.length < 2) {
+            return;
+        }
+        
+        // Show loading spinner
+        searchSpinner.show();
+        
+        // Debounce search requests by 300ms
+        searchTimeout = setTimeout(function() {
+            performSearch(query);
+        }, 300);
+    });
+    
+    clearButton.on('click', function() {
+        searchInput.val('');
+        searchSpinner.hide();
+        if (originalData) {
+            restoreOriginalData();
+        }
+    });
+    
+    function performSearch(query) {
+        $.ajax({
+            url: '{% url "transactions:ajax_search_transactions" %}',
+            type: 'GET',
+            data: {
+                'q': query,
+                'limit': 50
+            },
+            success: function(response) {
+                updateTable(response.transactions);
+                searchSpinner.hide();
+            },
+            error: function(xhr, status, error) {
+                console.error('Search error:', error);
+                searchSpinner.hide();
+                // Show error message
+                transactionsTable.clear().draw();
+                transactionsTable.row.add([
+                    '<td colspan="8" class="text-center text-danger">' +
+                    '<i class="fas fa-exclamation-triangle"></i> Search error. Please try again.' +
+                    '</td>',
+                    '', '', '', '', '', '', ''
+                ]).draw();
+            }
+        });
+    }
+    
+    function updateTable(transactions) {
+        // Clear existing table data
+        transactionsTable.clear();
+        
+        if (transactions.length === 0) {
+            transactionsTable.row.add([
+                '<td colspan="8" class="text-center">No transactions found matching your search</td>',
+                '', '', '', '', '', '', ''
+            ]).draw();
+            return;
+        }
+        
+        // Add new rows
+        transactions.forEach(function(transaction) {
+            var typeBadge = '<span class="badge ' + transaction.transaction_type_class + '">' + transaction.transaction_type_display + '</span>';
+            var statusBadge = '<span class="badge ' + transaction.status_class + '">' + transaction.status_display + '</span>';
+            
+            var dateWithDescription = transaction.transaction_date + 
+                '<br><small class="text-muted"><strong>Description:</strong> ' + 
+                transaction.description + '</small>';
+            
+            transactionsTable.row.add([
+                dateWithDescription,
+                typeBadge,
+                transaction.reference_number,
+                transaction.vendors,
+                transaction.clients,
+                statusBadge,
+                '<span class="' + transaction.amount_class + '">' + transaction.formatted_amount + '</span>',
+                '<span class="fw-bold ' + transaction.balance_class + '">' + transaction.running_balance + '</span>'
+            ]);
+        });
+        
+        transactionsTable.draw();
+    }
+    
+    function restoreOriginalData() {
+        transactionsTable.clear();
+        originalData.forEach(function(rowData) {
+            transactionsTable.row.add(rowData);
+        });
+        transactionsTable.draw();
+    }
+});
+
+// Transaction Modal Functions
+function addNewTransaction() {
+    console.log('Loading transaction form...');
+    
+    // Clear any previous content
+    $('#transactionModalContent').empty();
+    
+    // Show modal with explicit configuration (no backdrop to avoid issues)
+    $('#transactionModal').modal({
+        backdrop: false,
+        keyboard: true,
+        focus: true
+    }).modal('show');
+    
+    // Load form content via AJAX
+    $.ajax({
+        url: '{% url "transactions:create" %}',
+        type: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(response) {
+            console.log('Transaction form loaded successfully');
+            if (response.form_html) {
+                $('#transactionModalContent').html(response.form_html);
+            } else {
+                $('#transactionModalContent').html('<div class="alert alert-danger">Error loading form. Please try again.</div>');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading transaction form:', error);
+            $('#transactionModalContent').html('<div class="alert alert-danger">Error loading form: ' + error + '</div>');
+        }
+    });
+}
+
+function submitTransactionForm() {
+    console.log('submitTransactionForm called');
+    var form = $('#transactionModalForm');
+    
+    if (form.length === 0) {
+        console.error('Form not found!');
+        return;
+    }
+    
+    var formData = form.serialize();
+    var actionUrl = form.attr('action');
+    
+    console.log('Form action:', actionUrl);
+    console.log('Form data:', formData);
+    
+    // Disable submit button to prevent double submission
+    $('button[onclick="submitTransactionForm()"]').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+    
+    $.ajax({
+        url: actionUrl || '{% url "transactions:create" %}',
+        type: 'POST',
+        data: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(response) {
+            console.log('Success response:', response);
+            if (response.success) {
+                $('#transactionModal').modal('hide');
+                location.reload(); // Refresh the page to show new transaction
+            } else {
+                // Re-enable button
+                $('button[onclick="submitTransactionForm()"]').prop('disabled', false).html('<i class="fas fa-save"></i> Save Transaction');
+                
+                if (response.form_html) {
+                    $('#transactionModalContent').html(response.form_html);
+                } else {
+                    alert('Error: ' + (response.message || 'Please check the form for errors.'));
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error submitting form:', error);
+            console.error('XHR status:', xhr.status);
+            console.error('XHR response:', xhr.responseText);
+            
+            // Re-enable button
+            $('button[onclick="submitTransactionForm()"]').prop('disabled', false).html('<i class="fas fa-save"></i> Save Transaction');
+            
+            alert('Error creating transaction: ' + error);
+        }
+    });
+}
+
+// Clean up modal on close
+$('#transactionModal').on('hidden.bs.modal', function () {
+    console.log('Transaction modal hidden');
+    $('#transactionModalContent').empty(); // Clear content
+});
+
+</script>
+
+<!-- Transaction Modal -->
+<div class="modal fade" id="transactionModal" aria-labelledby="transactionModalLabel" aria-hidden="true" style="z-index: 1060; padding-left: 0 !important;">
+    <div class="modal-dialog modal-xl" style="margin: 1.75rem auto; max-width: 90vw;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transactionModalLabel">Add New Transaction</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="transactionModalForm" action="{% url 'transactions:create' %}" method="post">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div id="transactionModalContent">
+                        <!-- Transaction form fields will be loaded here via AJAX -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitTransactionForm()">
+                        <i class="fas fa-save"></i> Save Transaction
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Fix modal positioning issues - account for sidebar */
+#transactionModal {
+    z-index: 9999 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 250px !important; /* Account for sidebar width */
+    width: calc(100vw - 250px) !important; /* Reduce width by sidebar width */
+    height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+#transactionModal .modal-dialog {
+    position: relative !important;
+    margin: 20px !important;
+    max-width: calc(100vw - 300px) !important; /* Account for sidebar + extra margin */
+    width: auto !important;
+    z-index: 10000 !important;
+}
+
+/* Ensure modal content is scrollable if too tall */
+#transactionModal .modal-content {
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    z-index: 10001 !important;
+}
+
+/* Hide the modal initially */
+#transactionModal.fade:not(.show) {
+    display: none !important;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    #transactionModal {
+        left: 0 !important;
+        width: 100vw !important;
+    }
+    
+    #transactionModal .modal-dialog {
+        max-width: 95vw !important;
+        margin: 10px !important;
+    }
+}
+</style>
+
+{% endblock %}
+
+{% block help_content %}
+<p>The <strong>Transactions</strong> page records all money movements in and out of your trust account.</p>
+<h6><i class="fas fa-plus-circle"></i> Recording Transactions</h6>
+<p>Click "Add New Transaction" to record:</p>
+<ul>
+    <li><strong>Deposits:</strong> Client funds received into trust account</li>
+    <li><strong>Withdrawals:</strong> Payments made to vendors or clients</li>
+    <li><strong>Transfers:</strong> Money moved between accounts</li>
+</ul>
+<h6><i class="fas fa-check-circle"></i> Transaction Status</h6>
+<p>Track whether transactions are:</p>
+<ul>
+    <li><strong>Cleared:</strong> Processed by the bank</li>
+    <li><strong>Uncleared:</strong> Pending bank processing</li>
+</ul>
+<h6><i class="fas fa-receipt"></i> Transaction Items</h6>
+<p>Each transaction can have multiple items linking to specific clients, cases, or vendors for detailed tracking.</p>
+<h6><i class="fas fa-tools"></i> Actions</h6>
+<ul>
+    <li><i class="fas fa-eye"></i> <strong>View:</strong> See transaction details and items</li>
+    <li><i class="fas fa-edit"></i> <strong>Edit:</strong> Update transaction information</li>
+    <li><i class="fas fa-check"></i> <strong>Clear:</strong> Mark transaction as cleared</li>
+</ul>
+{% endblock %}

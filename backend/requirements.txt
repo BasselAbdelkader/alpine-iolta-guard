@@ -1,0 +1,36 @@
+# Django Core
+Django==4.2.7
+psycopg2-binary==2.9.9
+
+# Django REST Framework
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.0
+
+# Django Extensions
+django-cors-headers==4.3.1
+django-filter==23.5
+django-environ==0.11.2
+
+# Static Files
+whitenoise==6.6.0
+
+# Production Server
+gunicorn==21.2.0
+
+# Security
+cryptography==41.0.7
+
+# Redis Cache
+django-redis==5.4.0
+
+# Utilities
+python-dateutil==2.8.2
+pytz==2023.3
+
+# Excel support
+openpyxl==3.1.2
+
+# PDF generation
+weasyprint==62.3
+pydyf<0.11.0
+reportlab==4.0.7

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Audit Trail</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/favicon.png">
+
+    <!-- Bootstrap CSS for print -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        @page {
+            size: letter;
+            margin: 0.5in;
+        }
+
+        @media print {
+            body {
+                margin: 0;
+                padding: 20px;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 11pt;
+            color: #333;
+        }
+
+        /* Header styling */
+        .audit-header {
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #0056b3;
+        }
+
+        .audit-header h1 {
+            font-size: 24pt;
+            color: #0056b3;
+            margin-bottom: 5px;
+        }
+
+        .audit-header .subtitle {
+            font-size: 12pt;
+            color: #666;
+        }
+
+        /* Firm info */
+        .firm-info {
+            font-size: 10pt;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        /* Transaction details table */
+        .details-table {
+            width: 100%;
+            margin-bottom: 25px;
+            border-collapse: collapse;
+        }
+
+        .details-table td {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+        }
+
+        .details-table td:first-child {
+            font-weight: 600;
+            background-color: #f8f9fa;
+            width: 180px;
+        }
+
+        /* Audit history table */
+        .audit-history {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .audit-history th {
+            background-color: #0056b3;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-size: 10pt;
+            font-weight: 600;
+        }
+
+        .audit-history td {
+            padding: 10px;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 10pt;
+        }
+
+        .audit-history tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Status badges */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 9pt;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-created { background-color: #28a745; color: white; }
+        .badge-voided { background-color: #dc3545; color: white; }
+        .badge-cleared { background-color: #17a2b8; color: white; }
+        .badge-updated { background-color: #ffc107; color: #333; }
+
+        /* Amount styling */
+        .amount-change {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+        }
+
+        .amount-decrease {
+            color: #dc3545;
+        }
+
+        .amount-increase {
+            color: #28a745;
+        }
+
+        /* Footer */
+        .audit-footer {
+            margin-top: 40px;
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
+            font-size: 9pt;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid" id="auditTrailContent">
+        <!-- Header -->
+        <div class="audit-header">
+            <h1>TRANSACTION AUDIT TRAIL</h1>
+            <div class="subtitle" id="caseInfo">Transaction History & Changes</div>
+        </div>
+
+        <!-- Firm Information -->
+        <div class="firm-info" id="firmInfo">
+            <strong id="firmName">Sample Law Firm</strong><br>
+            <span id="firmAddress"></span>
+        </div>
+
+        <!-- Transaction Details -->
+        <h5 style="margin-bottom: 15px; color: #0056b3;">Transaction Details</h5>
+        <table class="details-table">
+            <tr>
+                <td>Transaction Number:</td>
+                <td id="txnNumber"></td>
+            </tr>
+            <tr>
+                <td>Date:</td>
+                <td id="txnDate"></td>
+            </tr>
+            <tr>
+                <td>Type:</td>
+                <td id="txnType"></td>
+            </tr>
+            <tr>
+                <td>Current Amount:</td>
+                <td id="txnAmount"></td>
+            </tr>
+            <tr>
+                <td>Current Status:</td>
+                <td id="txnStatus"></td>
+            </tr>
+            <tr>
+                <td>Payee:</td>
+                <td id="txnPayee"></td>
+            </tr>
+            <tr>
+                <td>Description:</td>
+                <td id="txnDescription"></td>
+            </tr>
+        </table>
+
+        <!-- Audit History -->
+        <h5 style="margin-bottom: 15px; color: #0056b3;">Audit History <span id="auditCount" style="font-size: 10pt; color: #666;"></span></h5>
+        <table class="audit-history">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Date & Time</th>
+                    <th style="width: 10%;">Action</th>
+                    <th style="width: 12%;">User</th>
+                    <th style="width: 20%;">Amount Change</th>
+                    <th style="width: 15%;">Status Change</th>
+                    <th style="width: 18%;">Reason</th>
+                    <th style="width: 10%;">IP Address</th>
+                </tr>
+            </thead>
+            <tbody id="auditHistoryBody">
+                <!-- Populated via JavaScript -->
+            </tbody>
+        </table>
+
+        <!-- Footer -->
+        <div class="audit-footer">
+            <div><strong>IOLTA Trust Account Management System</strong></div>
+            <div>Generated: <span id="generatedDate"></span> | Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>
+        </div>
+    </div>
+
+    <script>
+        // URLSearchParams polyfill for older browsers
+        class URLParams {
+            constructor(search) {
+                this.params = {};
+                if (search) {
+                    search.slice(1).split('&').forEach(pair => {
+                        const [key, value] = pair.split('=');
+                        this.params[decodeURIComponent(key)] = decodeURIComponent(value || '');
+                    });
+                }
+            }
+            get(key) {
+                return this.params[key];
+            }
+        }
+
+        // Get transaction ID from URL parameter
+        const urlParams = new URLParams(window.location.search);
+        const txnId = urlParams.get('id');
+
+        // Fetch law firm info
+        async function loadLawFirm() {
+            try {
+                const response = await fetch('/api/v1/law-firm/');
+                const firm = await response.json();
+                document.getElementById('firmName').textContent = firm.firm_name || 'Sample Law Firm';
+                document.getElementById('firmAddress').innerHTML =
+                    `${firm.address || ''}<br>${firm.city || ''}, ${firm.state || ''} ${firm.zip_code || ''}<br>${firm.phone || ''} | ${firm.email || ''}`;
+            } catch (error) {
+                console.error('Error loading firm info:', error);
+            }
+        }
+
+        // Fetch audit trail data
+        async function loadAuditTrail() {
+            try {
+                const response = await fetch(`/api/v1/bank-accounts/bank-transactions/${txnId}/audit_history/`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    // alert('Error loading audit trail');
+                    return;
+                }
+
+                const txn = data.transaction;
+
+                // Populate transaction details
+                document.getElementById('txnNumber').textContent = txn.transaction_number || 'N/A';
+                document.getElementById('txnDate').textContent = txn.transaction_date;
+                document.getElementById('txnType').textContent = txn.transaction_type_display || txn.transaction_type;
+                document.getElementById('txnAmount').textContent = `$${parseFloat(txn.amount).toFixed(2)}`;
+                document.getElementById('txnStatus').innerHTML = getStatusBadge(txn.status);
+                document.getElementById('txnPayee').textContent = txn.payee || 'N/A';
+                document.getElementById('txnDescription').textContent = txn.description || 'N/A';
+
+                // Populate case info
+                if (txn.client_name && txn.case_number) {
+                    document.getElementById('caseInfo').textContent =
+                        `Client: ${txn.client_name} | Case: ${txn.case_number} - ${txn.case_title || ''}`;
+                }
+
+                // Populate audit history
+                populateAuditHistory(data.audit_logs);
+                document.getElementById('auditCount').textContent = `(${data.count} entries)`;
+
+                // Set generated date
+                document.getElementById('generatedDate').textContent = new Date().toLocaleString();
+
+            } catch (error) {
+                console.error('Error loading audit trail:', error);
+                // alert('Error loading audit trail. Please try again.');
+            }
+        }
+
+        function populateAuditHistory(history) {
+            const tbody = document.getElementById('auditHistoryBody');
+            tbody.innerHTML = '';
+
+            history.forEach(entry => {
+                const row = document.createElement('tr');
+
+                // Date & Time
+                const dateCell = document.createElement('td');
+                dateCell.textContent = formatDateTime(entry.action_date);
+                row.appendChild(dateCell);
+
+                // Action badge
+                const actionCell = document.createElement('td');
+                actionCell.innerHTML = getActionBadge(entry.action);
+                row.appendChild(actionCell);
+
+                // User
+                const userCell = document.createElement('td');
+                userCell.textContent = entry.action_by || 'system';
+                row.appendChild(userCell);
+
+                // Amount change
+                const amountCell = document.createElement('td');
+                amountCell.innerHTML = formatAmountChange(entry.old_amount, entry.new_amount);
+                row.appendChild(amountCell);
+
+                // Status change
+                const statusCell = document.createElement('td');
+                statusCell.innerHTML = formatStatusChange(entry.old_status, entry.new_status);
+                row.appendChild(statusCell);
+
+                // Reason
+                const reasonCell = document.createElement('td');
+                reasonCell.textContent = entry.change_reason || '—';
+                row.appendChild(reasonCell);
+
+                // IP Address
+                const ipCell = document.createElement('td');
+                ipCell.textContent = entry.ip_address || '—';
+                ipCell.style.fontSize = '9pt';
+                ipCell.style.color = '#666';
+                row.appendChild(ipCell);
+
+                tbody.appendChild(row);
+            });
+        }
+
+        function getActionBadge(action) {
+            const badges = {
+                'CREATED': '<span class="badge badge-created">CREATED</span>',
+                'VOIDED': '<span class="badge badge-voided">VOIDED</span>',
+                'CLEARED': '<span class="badge badge-cleared">CLEARED</span>',
+                'UPDATED': '<span class="badge badge-updated">UPDATED</span>'
+            };
+            return badges[action] || `<span class="badge badge-updated">${action}</span>`;
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'pending': '<span class="badge badge-updated">PENDING</span>',
+                'cleared': '<span class="badge badge-cleared">CLEARED</span>',
+                'voided': '<span class="badge badge-voided">VOIDED</span>'
+            };
+            return badges[status] || status.toUpperCase();
+        }
+
+        function formatAmountChange(oldAmount, newAmount) {
+            if (oldAmount === null || oldAmount === undefined) {
+                return `<span class="amount-change amount-increase">+$${parseFloat(newAmount).toFixed(2)}</span>`;
+            }
+
+            const old = parseFloat(oldAmount);
+            const newAmt = parseFloat(newAmount);
+
+            if (old === newAmt) {
+                return `$${old.toFixed(2)} (no change)`;
+            }
+
+            const cssClass = newAmt < old ? 'amount-decrease' : 'amount-increase';
+            return `<span class="amount-change ${cssClass}">$${old.toFixed(2)} → $${newAmt.toFixed(2)}</span>`;
+        }
+
+        function formatStatusChange(oldStatus, newStatus) {
+            if (!oldStatus) {
+                return getStatusBadge(newStatus);
+            }
+
+            if (oldStatus === newStatus) {
+                return getStatusBadge(newStatus);
+            }
+
+            return `${oldStatus} → ${getStatusBadge(newStatus)}`;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+        }
+
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('en-US', {
+                month: '2-digit',
+                day: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        // Load audit trail when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            loadLawFirm();
+            loadAuditTrail();
+        });
+
+        // Print automatically if requested
+        if (window.location.search.includes('autoprint=true')) {
+            window.addEventListener('load', () => {
+                setTimeout(() => window.print(), 500);
+            });
+        }
+    </script>
+    <!-- Approval System Scripts -->
+    <script src="/js/approval-badge.js"></script>
+    <script src="/js/approval-widget.js"></script>
+</body>
+</html>

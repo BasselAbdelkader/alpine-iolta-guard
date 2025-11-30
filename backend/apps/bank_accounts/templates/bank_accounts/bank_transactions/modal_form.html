@@ -1,0 +1,761 @@
+{% load humanize %}
+<!-- Available Funds Display - Top Right - GREEN AND PROMINENT -->
+<div class="d-flex justify-content-end align-items-center mb-3">
+    <div class="text-end">
+        <!-- GREEN, BOLD, LARGE available funds display -->
+        <span id="available-funds-display" style="color: #28a745; font-weight: bold; font-size: 1.25rem; {% if mode == 'dynamic' %}display: none;{% endif %}">Available Funds: $<span id="available-funds">{% if mode == 'case_context' and available_funds %}{{ available_funds|floatformat:2|intcomma }}{% else %}0.00{% endif %}</span></span>
+
+        <!-- Show message in dynamic mode until both client and case are selected -->
+        <div id="funds-message" class="text-muted" style="{% if mode == 'case_context' %}display: none;{% else %}display: block;{% endif %} font-size: 0.875rem;">
+            {% if mode == 'dynamic' %}Select client and case to see available funds{% elif mode == 'case_context' and not default_bank_account %}Bank account required{% endif %}
+        </div>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    <!-- Hidden status field with default value -->
+    <input type="hidden" name="status" value="{{ form.status.value|default:'pending' }}">
+
+    <!-- Hidden field to preserve original mode on form submission -->
+    <input type="hidden" name="original_mode" value="{{ mode|default:'dynamic' }}">
+
+    <!-- Hidden fields for mode and current client/case context -->
+    <input type="hidden" id="form-mode" value="{{ mode|default:'dynamic' }}">
+
+    {% if client %}
+        <input type="hidden" id="current-client-id" value="{{ client.id }}">
+    {% elif current_client_id %}
+        <input type="hidden" id="current-client-id" value="{{ current_client_id }}">
+    {% endif %}
+    {% if case %}
+        <input type="hidden" id="current-case-id" value="{{ case.id }}">
+    {% elif current_case_id %}
+        <input type="hidden" id="current-case-id" value="{{ current_case_id }}">
+    {% endif %}
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
+
+    <!-- First Line: Bank Account -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="mb-3">
+                <label for="{{ form.bank_account.id_for_label }}" class="form-label">
+                    Bank Account <span class="text-danger">*</span>
+                </label>
+                {{ form.bank_account }}
+                {% if form.bank_account.errors %}
+                    <div class="text-danger small mt-1">{{ form.bank_account.errors.0 }}</div>
+                {% endif %}
+                <small class="form-text text-muted">Select the bank account for this transaction</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Second Line: Client and Case (Locked/Greyed Out) -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="{{ form.client.id_for_label }}" class="form-label">Client</label>
+                {{ form.client }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="{{ form.case.id_for_label }}" class="form-label">Case</label>
+                {{ form.case }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Third Line: Date, Type, Ref, To Print checkbox, Payee, Amount -->
+    <div class="row">
+        <div class="col-md-2">
+            <div class="mb-3">
+                <label for="{{ form.transaction_date.id_for_label }}" class="form-label">
+                    Date <span class="text-danger">*</span>
+                </label>
+                {{ form.transaction_date }}
+                {% if form.transaction_date.errors %}
+                    <div class="text-danger small mt-1">{{ form.transaction_date.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="mb-3">
+                <label for="{{ form.transaction_type.id_for_label }}" class="form-label">
+                    Type <span class="text-danger">*</span>
+                </label>
+                {{ form.transaction_type }}
+                {% if form.transaction_type.errors %}
+                    <div class="text-danger small mt-1">{{ form.transaction_type.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="mb-3">
+                <label for="{{ form.reference_number.id_for_label }}" class="form-label">Ref <span class="text-danger">*</span></label>
+                {{ form.reference_number }}
+                {% if form.reference_number.errors %}
+                    <div class="text-danger small mt-1">{{ form.reference_number.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="mb-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="form-check" style="padding-left: 1.5rem;">
+                    <input type="checkbox" class="form-check-input" id="id_to_print">
+                    <label class="form-check-label" for="id_to_print" style="font-size: 0.875rem; white-space: nowrap;">
+                        To print
+                    </label>
+                </div>
+                <div class="form-check mt-1" style="padding-left: 1.5rem;">
+                    <input type="checkbox" class="form-check-input" id="id_is_cleared">
+                    <label class="form-check-label" for="id_is_cleared" style="font-size: 0.875rem; white-space: nowrap;">
+                        Cleared
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="mb-3">
+                <label for="id_payee_text" class="form-label">Payee <span class="text-danger">*</span></label>
+                <input type="text" name="payee" class="form-control" id="id_payee_text" placeholder="Type payee name..." autocomplete="off" value="{{ form.payee.value|default:'' }}" required>
+                <div id="payee-suggestions" class="dropdown-menu" style="display: none; position: absolute; z-index: 1000; width: 100%;">
+                    <!-- Suggestions will be populated here -->
+                </div>
+                {% if form.payee.errors %}
+                    <div class="text-danger small mt-1">{{ form.payee.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="mb-3">
+                <label for="{{ form.amount.id_for_label }}" class="form-label">
+                    Amount <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="text" name="amount_display" class="form-control" id="id_amount_display" value="{% if form.amount.value %}{{ form.amount.value }}{% endif %}">
+                    <input type="hidden" name="amount" id="id_amount_hidden" value="{{ form.amount.value|default:'' }}">
+                </div>
+                <div id="amount-error" class="text-danger" style="display: none; font-size: 0.875rem; margin-top: 2px;">
+                    Transaction not permitted - insufficient funds
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fourth Line: Description -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="mb-3">
+                <label for="{{ form.description.id_for_label }}" class="form-label">
+                    Description <span class="text-danger">*</span>
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Fifth Line: Check Memo -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="mb-3">
+                <label for="{{ form.check_memo.id_for_label }}" class="form-label">Check Memo</label>
+                {{ form.check_memo }}
+                {% if form.check_memo.errors %}
+                    <div class="text-danger small mt-1">{{ form.check_memo.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Global vendor list for payee autocomplete
+    var vendorList = [];
+
+    $(document).ready(function() {
+        // "To Print" checkbox functionality - Lock Ref field when checked
+        $('#id_to_print').on('change', function() {
+            var isChecked = $(this).is(':checked');
+            var refField = $('#{{ form.reference_number.id_for_label }}');
+
+            if (isChecked) {
+                // Lock Ref field and set to "TO PRINT" with greyed out appearance
+                refField.val('TO PRINT')
+                    .prop('readonly', true)
+                    .css({
+                        'background-color': '#e9ecef',
+                        'color': '#6c757d',
+                        'cursor': 'not-allowed',
+                        'opacity': '0.7'
+                    });
+            } else {
+                // Unlock Ref field and clear value, restore normal appearance
+                refField.val('')
+                    .prop('readonly', false)
+                    .css({
+                        'background-color': '',
+                        'color': '',
+                        'cursor': '',
+                        'opacity': ''
+                    });
+            }
+        });
+
+        // Initialize on page load (for edit forms)
+        if ($('#id_to_print').is(':checked')) {
+            $('#{{ form.reference_number.id_for_label }}')
+                .val('TO PRINT')
+                .prop('readonly', true)
+                .css({
+                    'background-color': '#e9ecef',
+                    'color': '#6c757d',
+                    'cursor': 'not-allowed',
+                    'opacity': '0.7'
+                });
+        }
+
+        // Function to update available funds display (use case balance if available)
+        function updateAvailableFunds() {
+            var formMode = $('#form-mode').val();
+            var currentCaseId = $('#current-case-id').val();
+            var selectedClientId = $('#id_client').val();
+            var selectedCaseId = $('#id_case').val();
+            var bankAccountId = $('#id_bank_account').val();
+
+            console.log('updateAvailableFunds - formMode:', formMode, 'currentCaseId:', currentCaseId);
+
+            if (formMode === 'dynamic') {
+                // Dynamic mode: only show funds when both client and case are selected
+                if (selectedClientId && selectedCaseId) {
+                    // Get case balance for selected case
+                    $.ajax({
+                        url: '/clients/cases/' + selectedCaseId + '/balance/',
+                        method: 'GET',
+                        success: function(data) {
+                            var rawBalance = parseFloat(data.raw_balance) || 0;
+                            var displayBalance = rawBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            $('#available-funds').text(displayBalance);
+
+                            // Show available funds display and hide message
+                            $('#available-funds-display').show();
+                            $('#funds-message').hide();
+                        },
+                        error: function(xhr, status, error) {
+                            // Hide available funds and show message
+                            $('#available-funds-display').hide();
+                            $('#funds-message').show().text('Error loading balance');
+                        }
+                    });
+                } else {
+                    // Hide available funds and show selection message
+                    $('#available-funds-display').hide();
+                    $('#funds-message').show().text('Select client and case to see available funds');
+                }
+            } else {
+                // Case context mode: use existing logic
+                if (currentCaseId) {
+                    // Use case balance if we have a current case
+                    $.ajax({
+                        url: '/clients/cases/' + currentCaseId + '/balance/',
+                        method: 'GET',
+                        success: function(data) {
+                            var rawBalance = parseFloat(data.raw_balance) || 0;
+                            var displayBalance = rawBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                            $('#available-funds').text(displayBalance);
+                        },
+                        error: function(xhr, status, error) {
+                            // Fallback to bank account balance
+                            updateBankAccountBalance();
+                        }
+                    });
+                } else if (bankAccountId) {
+                    updateBankAccountBalance();
+                } else {
+                    $('#available-funds').text('0.00');
+                }
+            }
+        }
+
+        // Function to update bank account balance (fallback)
+        function updateBankAccountBalance() {
+            var bankAccountId = $('#id_bank_account').val();
+            if (bankAccountId) {
+                $.ajax({
+                    url: '/bank-accounts/api/balance/' + bankAccountId + '/',
+                    method: 'GET',
+                    success: function(data) {
+                        var balance = parseFloat(data.balance) || 0;
+                        var displayBalance = balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                        $('#available-funds').text(displayBalance);
+                    },
+                    error: function(xhr, status, error) {
+                        $('#available-funds').text('0.00');
+                    }
+                });
+            } else {
+                $('#available-funds').text('0.00');
+            }
+        }
+
+        // Load vendors for payee autocomplete
+        function loadVendorList() {
+            $.ajax({
+                url: '/vendors/api/list/',
+                method: 'GET',
+                success: function(data) {
+                    vendorList = data.vendors || [];
+                },
+                error: function() {
+                    console.log('Failed to load vendors');
+                }
+            });
+        }
+
+        // Payee autocomplete functionality
+        $('#id_payee_text').on('input', function() {
+            var query = $(this).val();
+            var queryLower = query.toLowerCase().trim();
+            var suggestions = $('#payee-suggestions');
+            var errorMsg = $('#payee-error');
+
+            if (query.length < 1) {
+                suggestions.hide();
+                errorMsg.hide();
+                return;
+            }
+
+            // Check for exact match (case-insensitive)
+            var exactMatch = vendorList.find(function(vendor) {
+                return vendor.vendor_name.toLowerCase() === queryLower;
+            });
+
+            // If exact match exists, auto-fill with proper capitalization
+            if (exactMatch) {
+                $('#id_payee_text').val(exactMatch.vendor_name);
+                suggestions.hide();
+                errorMsg.hide();
+                return;
+            }
+
+            // Filter vendors that match the query (case-insensitive)
+            var matches = vendorList.filter(function(vendor) {
+                return vendor.vendor_name.toLowerCase().includes(queryLower);
+            });
+
+            // Clear previous suggestions
+            suggestions.empty();
+
+            if (matches.length > 0) {
+                // Add matching vendors
+                matches.forEach(function(vendor) {
+                    var item = $('<a class="dropdown-item" href="#"></a>')
+                        .text(vendor.vendor_name)
+                        .on('click', function(e) {
+                            e.preventDefault();
+                            $('#id_payee_text').val(vendor.vendor_name);
+                            suggestions.hide();
+                            errorMsg.hide();
+                        });
+                    suggestions.append(item);
+                });
+                suggestions.show();
+                errorMsg.hide();
+            } else {
+                // Show "Add as new payee" option - preserve original capitalization
+                var addNewItem = $('<a class="dropdown-item text-primary" href="#"></a>')
+                    .html('<i class="fas fa-plus"></i> Add "' + query + '" as new payee')
+                    .on('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Add new payee clicked for:', query);
+                        suggestions.hide();
+                        showAddPayeeModal(query);
+                        return false;
+                    });
+                suggestions.append(addNewItem);
+                suggestions.show();
+                console.log('Showing add new payee option for:', query);
+            }
+        });
+
+        // Hide suggestions when clicking outside (but not when clicking on the suggestions)
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#id_payee_text, #payee-suggestions').length) {
+                setTimeout(function() {
+                    $('#payee-suggestions').hide();
+                }, 200);
+            }
+        });
+
+        // Format amount with commas as user types and validate against balance
+        $('#id_amount_display').on('input', function() {
+            var value = $(this).val().replace(/[^\d.]/g, ''); // Remove all non-digit and non-decimal characters
+            var parts = value.split('.');
+
+            // Add commas to integer part
+            if (parts[0]) {
+                parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            }
+
+            // Limit to 2 decimal places
+            if (parts[1]) {
+                parts[1] = parts[1].substring(0, 2);
+            }
+
+            var displayValue = parts.join('.');
+            $(this).val(displayValue);
+
+            // Store raw value without commas in hidden field
+            var rawValue = value;
+            $('#id_amount_hidden').val(rawValue);
+
+            // Validate against available balance for withdrawals
+            validateTransactionAmount();
+        });
+
+        // Function to validate transaction amount against available balance
+        function validateTransactionAmount() {
+            var transactionType = $('#id_transaction_type').val();
+            var amount = parseFloat($('#id_amount_hidden').val()) || 0;
+            var availableFundsText = $('#available-funds').text();
+            // Remove commas before parsing to handle formatted numbers like "65,000.00"
+            var cleanFundsText = availableFundsText.replace(/,/g, '');
+            var availableBalance = parseFloat(cleanFundsText) || 0;
+
+            // Validate for withdrawals - prevent any withdrawal if balance is negative
+            if (transactionType === 'WITHDRAWAL' && amount > 0) {
+                if (availableBalance < 0 || amount > availableBalance) {
+                    $('#amount-error').show();
+                    $('#id_amount_display').addClass('is-invalid');
+                    return false;
+                } else {
+                    $('#amount-error').hide();
+                    $('#id_amount_display').removeClass('is-invalid');
+                    return true;
+                }
+            } else {
+                $('#amount-error').hide();
+                $('#id_amount_display').removeClass('is-invalid');
+                return true;
+            }
+        }
+
+        // Update available funds when bank account changes
+        $('#id_bank_account').change(function() {
+            var bankAccountId = $(this).val();
+            if (bankAccountId) {
+                $('#bank-account-error').hide();
+            }
+            updateAvailableFunds();
+        });
+
+        // Validate amount when transaction type changes
+        $('#id_transaction_type').change(function() {
+            validateTransactionAmount();
+        });
+
+        // Lock/grey out client and case fields - ONLY LOCK if we have current context
+        function lockClientCaseFields() {
+            var clientField = $('#id_client');
+            var caseField = $('#id_case');
+            var formMode = $('#form-mode').val();
+
+            console.log('lockClientCaseFields - formMode:', formMode);
+
+            // CRITICAL: In dynamic mode, IGNORE all context variables
+            // Check context ONLY if NOT in dynamic mode
+            var currentClientId = null;
+            var currentCaseId = null;
+            var isEditing = {{ is_editing|yesno:"true,false" }};
+
+            if (formMode !== 'dynamic') {
+                // Only check for context if NOT in dynamic mode
+                currentClientId = window.currentClientId || $('#current-client-id').val();
+                currentCaseId = window.currentCaseId || $('#current-case-id').val();
+            }
+
+            if (formMode === 'dynamic') {
+                console.log('DYNAMIC MODE: Client/Case will NEVER be locked (ignoring any stale variables)');
+
+                // Dynamic mode: always leave fields unlocked and empty
+                clientField.closest('.mb-3').find('label').text('Client');
+                caseField.closest('.mb-3').find('label').text('Case');
+
+                // FORCE clear any pre-selected values in dynamic mode
+                clientField.val('').prop('disabled', false).prop('readonly', false)
+                    .removeClass('bg-light text-muted')
+                    .css({'background-color': '', 'cursor': '', 'opacity': ''});
+
+                caseField.val('').prop('disabled', false).prop('readonly', false)
+                    .removeClass('bg-light text-muted')
+                    .css({'background-color': '', 'cursor': '', 'opacity': ''});
+
+                // Add empty option to selects if not present
+                if (clientField.find('option[value=""]').length === 0) {
+                    clientField.prepend('<option value="">Select Client</option>');
+                }
+                if (caseField.find('option[value=""]').length === 0) {
+                    caseField.prepend('<option value="">Select Case</option>');
+                }
+
+                // FORCE Set to empty selection (do it twice to ensure)
+                clientField.val('');
+                caseField.val('');
+
+                // Trigger change to update any dependencies
+                clientField.trigger('change');
+                caseField.trigger('change');
+
+                console.log('Client field value after clear:', clientField.val());
+                console.log('Case field value after clear:', caseField.val());
+            } else if (formMode === 'editing') {
+                // Editing mode: ALWAYS lock client and case fields to prevent changes
+                clientField.closest('.mb-3').find('label').text('Client');
+                caseField.closest('.mb-3').find('label').text('Case');
+
+                // Lock both fields with existing values
+                clientField.prop('disabled', true).addClass('bg-light text-muted');
+                caseField.prop('disabled', true).addClass('bg-light text-muted');
+            } else {
+                // Case context mode: lock if we have context OR we're editing
+                if (currentClientId || currentCaseId || isEditing) {
+                    // Remove "Optional" text from labels when locking
+                    clientField.closest('.mb-3').find('label').text('Client');
+                    caseField.closest('.mb-3').find('label').text('Case');
+
+                    if (isEditing) {
+                        // For editing: lock to current values - keep existing values
+                        clientField.prop('disabled', true).addClass('bg-light text-muted');
+                        caseField.prop('disabled', true).addClass('bg-light text-muted');
+                    } else {
+                        // For creating from case detail page: lock to current case/client
+                        if (currentClientId) {
+                            clientField.val(currentClientId);
+                            clientField.prop('disabled', true).addClass('bg-light text-muted');
+                        }
+                        if (currentCaseId) {
+                            caseField.val(currentCaseId);
+                            caseField.prop('disabled', true).addClass('bg-light text-muted');
+                        }
+                    }
+                }
+            }
+        }
+
+        // Enable locked fields before form submission to include their values
+        // IMPORTANT: Prevent default form submission - we use AJAX instead via submitTransactionForm()
+        $('form').on('submit', function(e) {
+            e.preventDefault(); // Prevent default form submission
+            console.log('Form submit event prevented - use Save Transaction button instead');
+            return false;
+        });
+
+        // Add change listeners for dynamic mode (bank transactions page)
+        $('#id_client').change(function() {
+            var formMode = $('#form-mode').val();
+            if (formMode === 'dynamic') {
+                // Update case dropdown based on selected client
+                var clientId = $(this).val();
+                var caseSelect = $('#id_case');
+
+                if (clientId) {
+                    $.ajax({
+                        url: '/clients/ajax/cases-for-client/',
+                        method: 'GET',
+                        data: { 'client_id': clientId },
+                        success: function(data) {
+                            caseSelect.empty().append('<option value="">Select Case</option>');
+                            $.each(data.cases, function(index, case_obj) {
+                                caseSelect.append('<option value="' + case_obj.id + '">' + case_obj.case_title + '</option>');
+                            });
+                        },
+                        error: function() {
+                            caseSelect.empty().append('<option value="">Select Case</option>');
+                        }
+                    });
+                } else {
+                    // Clear case dropdown when no client selected
+                    caseSelect.empty().append('<option value="">Select Case</option>');
+                }
+
+                // Update available funds (will hide funds since case is now empty)
+                updateAvailableFunds();
+            }
+        });
+
+        $('#id_case').change(function() {
+            var formMode = $('#form-mode').val();
+            if (formMode === 'dynamic') {
+                updateAvailableFunds();
+            }
+        });
+
+        // Initialize everything
+        updateAvailableFunds();
+        loadVendorList();
+        lockClientCaseFields();
+    });
+
+    // Function to show add payee modal
+    function showAddPayeeModal(payeeName) {
+        console.log('showAddPayeeModal called with:', payeeName);
+        var modalUrl = '/vendors/create-modal/';
+        var separator = '?';
+
+        // Pre-populate vendor name if provided
+        if (payeeName) {
+            modalUrl += '?name=' + encodeURIComponent(payeeName);
+            separator = '&';
+        }
+
+        console.log('Fetching modal from:', modalUrl);
+
+        $.ajax({
+            url: modalUrl + separator + '_=' + Date.now(), // Cache busting
+            method: 'GET',
+            cache: false,
+            success: function(data) {
+                console.log('Modal data received:', data);
+                // Create a temporary modal for adding new payee
+                var modalHtml = `
+                    <div class="modal fade" id="addPayeeModal" tabindex="-1" aria-labelledby="addPayeeModalLabel" aria-hidden="true" style="z-index: 99999 !important;">
+                        <div class="modal-dialog modal-lg" style="z-index: 99999 !important;">
+                            <div class="modal-content" style="z-index: 99999 !important;">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="addPayeeModalLabel">Add New Payee</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    ${data.form_html}
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="button" class="btn btn-primary" id="savePayeeBtn">Save Payee</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Remove existing modal if present
+                $('#addPayeeModal').remove();
+                console.log('Removed old modal');
+
+                // Add modal to body and show
+                $('body').append(modalHtml);
+                console.log('Modal HTML added to body');
+
+                // Check if modal exists
+                console.log('Modal element found:', $('#addPayeeModal').length);
+
+                // Show modal using Bootstrap 5 API
+                var modalElement = document.getElementById('addPayeeModal');
+                var modal = new bootstrap.Modal(modalElement, {
+                    backdrop: false,
+                    keyboard: true
+                });
+                modal.show();
+                console.log('Modal show called with Bootstrap 5 API');
+
+                // Pre-populate vendor name field if provided (after modal is in DOM)
+                if (payeeName) {
+                    $('#addPayeeModal input[name="vendor_name"]')
+                        .val(payeeName)
+                        .prop('readonly', true)
+                        .css({
+                            'background-color': '#e9ecef',
+                            'cursor': 'not-allowed',
+                            'opacity': '0.7'
+                        });
+                    console.log('Vendor name pre-populated:', payeeName);
+                }
+
+                // Handle form submission with Save Payee button using event delegation
+                $(document).off('click', '#savePayeeBtn').on('click', '#savePayeeBtn', function(e) {
+                    e.preventDefault();
+                    console.log('Save Payee button clicked');
+
+                    // Get form data from the modal
+                    var formData = $('#addPayeeModal form').serialize();
+                    console.log('Form data being sent:', formData);
+
+                    $.ajax({
+                        url: '/vendors/create-modal/',
+                        method: 'POST',
+                        data: formData,
+                        success: function(response) {
+                            if (response.success) {
+                                // Mark as successful save so we don't clear the field
+                                payeeSaveSuccess = true;
+
+                                // Set the payee text field to the new vendor name
+                                $('#id_payee_text').val(response.vendor_name);
+
+                                // Add new vendor to the vendor list immediately (if it exists)
+                                if (typeof vendorList !== 'undefined' && Array.isArray(vendorList)) {
+                                    vendorList.push({
+                                        id: response.vendor_id,
+                                        vendor_name: response.vendor_name
+                                    });
+                                }
+
+                                // Hide the payee error message since we now have a valid vendor
+                                $('#payee-error').hide();
+
+                                // Reload vendor list to include the new vendor (if function exists)
+                                if (typeof loadVendorList === 'function') {
+                                    loadVendorList();
+                                }
+
+                                // Close modal
+                                $('#addPayeeModal').modal('hide');
+
+                                // Show success message
+                                alert(response.message);
+                            } else {
+                                // Replace modal content with form containing errors
+                                $('#addPayeeModal .modal-body').html(response.form_html);
+
+                                // No need to re-bind since we're using event delegation
+                            }
+                        },
+                        error: function() {
+                            alert('Error creating payee. Please try again.');
+                        }
+                    });
+                });
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading payee form:', status, error, xhr.responseText);
+                alert('Error loading payee form. Please try again. Error: ' + error);
+            }
+        });
+    }
+
+    // Track whether payee was successfully saved
+    var payeeSaveSuccess = false;
+
+    // Clear payee field when Add New Payee modal is cancelled/closed without saving
+    $(document).on('hidden.bs.modal', '#addPayeeModal', function (e) {
+        // Only clear if the modal was cancelled (payeeSaveSuccess will be set to true on successful save)
+        if (!payeeSaveSuccess) {
+            $('#id_payee_text').val('');
+            $('#id_payee_text').trigger('input'); // Trigger input to hide any suggestions
+        }
+        // Reset flag for next time
+        payeeSaveSuccess = false;
+    });
+    </script>
+</form>

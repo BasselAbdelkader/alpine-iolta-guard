@@ -1,0 +1,68 @@
+# NEVER copy Mac OS files
+._*
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# NEVER copy Python cache
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.so
+
+# NEVER copy backup files
+*.backup
+*.backup_*
+*.backup_before_*
+*.bak
+*~
+
+# NEVER copy temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# NEVER copy logs
+*.log
+npm-debug.log*
+
+# NEVER copy editor files
+.vscode
+.idea
+*.sublime-*
+
+# NEVER copy git files
+.git
+.gitignore
+.gitattributes
+
+# NEVER copy environment files
+.env
+.env.local
+venv/
+env/
+ENV/
+
+# NEVER copy database files
+*.sqlite3
+db.sqlite3
+
+# NEVER copy test files
+tests/
+*.test.py
+pytest.ini
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# NEVER copy documentation
+docs/
+*.md
+
+# NEVER copy development scripts
+scripts/
+TEST_*
+*.sh

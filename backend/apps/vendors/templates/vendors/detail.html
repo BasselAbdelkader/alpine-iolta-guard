@@ -1,0 +1,698 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% load accounting_filters %}
+
+{% block title %}{{ vendor.vendor_name }} - Vendor Details{% endblock %}
+
+{% block page_title %}{% if global_law_firm %}{{ global_law_firm.firm_name }}{% else %}Vendor Details{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+.vendor-details-table {
+    font-size: 0.7rem !important;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+.vendor-details-table td {
+    padding: 0.5rem 0.7rem;
+    border: none;
+    border-bottom: 3px solid #333333 !important; /* THICK horizontal lines */
+    font-size: 0.7rem !important; /* Force small font on table cells */
+}
+.vendor-details-table td:first-child {
+    font-weight: 600;
+    color: #495057;
+    width: auto;
+    white-space: nowrap;
+    padding-right: 0.5rem !important;
+}
+.detail-column {
+    border-right: 8px solid #007bff !important; /* THICK blue vertical lines */
+    padding-right: 1.2rem;
+    padding-left: 1rem;
+}
+.detail-column:last-child {
+    border-right: none !important;
+}
+.section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #007bff;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 4px solid #007bff;
+}
+/* Override Bootstrap table styles */
+.vendor-details-table tbody tr:nth-of-type(odd) {
+    background-color: transparent;
+}
+.vendor-details-table tbody tr:hover {
+    background-color: transparent;
+}
+/* Force small font size on all table elements */
+.vendor-details-table, 
+.vendor-details-table td, 
+.vendor-details-table th,
+.vendor-details-table tr,
+.vendor-details-table * {
+    font-size: 0.7rem !important;
+    line-height: 1.2 !important;
+}
+/* Override any Bootstrap or inherited styles */
+.detail-column .vendor-details-table * {
+    font-size: 0.7rem !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+                    <h4 class="mb-0 fw-semibold text-dark">Vendor Details: {{ vendor.vendor_name }}</h4>
+                    <div class="btn-group">
+                        <a href="{% url 'vendors:index' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Vendors
+                        </a>
+                        <button type="button" class="btn btn-primary" onclick="editVendor({{ vendor.pk }})">
+                            <i class="fas fa-edit"></i> Edit Vendor
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-4 detail-column">
+                            <table class="vendor-details-table">
+                                <tr>
+                                    <td>Name:</td>
+                                    <td>{{ vendor.vendor_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Email:</td>
+                                    <td>{{ vendor.email|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Phone:</td>
+                                    <td>
+                                        {% if vendor.phone %}
+                                            {{ vendor.phone|format_phone:vendor }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-4 detail-column">
+                            <table class="vendor-details-table">
+                                <tr>
+                                    <td>Address:</td>
+                                    <td>{{ vendor.address|default:'-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td>City:</td>
+                                    <td>{{ vendor.city|default:'-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td>State:</td>
+                                    <td>{{ vendor.state|default:'-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Zip Code:</td>
+                                    <td>{{ vendor.zip_code|default:'-' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-4 detail-column">
+                            <table class="vendor-details-table">
+                                <tr>
+                                    <td>Status:</td>
+                                    <td>
+                                        {% if vendor.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Created:</td>
+                                    <td>{{ vendor.created_at|date:"m/d/Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Updated:</td>
+                                    <td>{{ vendor.updated_at|date:"m/d/Y" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Section Separator -->
+                    <div class="border-top my-4"></div>
+
+                    <!-- Vendor Payment Register Section -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="mb-0 fw-semibold text-dark">
+                                    <i class="fas fa-money-check-alt me-2 text-primary"></i>Payment Register
+                                    <small class="text-muted">
+                                        (Total Payments:
+                                        <span class="text-success">
+                                            {{ total_payments|format_amount_accounting }}
+                                        </span>
+                                        • {{ payment_count }} payment{{ payment_count|pluralize }})
+                                    </small>
+                                </h5>
+                                {% if payment_register %}
+                                <a href="{% url 'vendors:export_payments' vendor.pk %}?{{ request.GET.urlencode }}"
+                                   class="btn btn-success btn-sm">
+                                    <i class="fas fa-file-excel"></i> Export to XLSX
+                                </a>
+                                {% endif %}
+                            </div>
+
+                            <!-- Date Range Filter -->
+                            <div class="d-flex justify-content-end mb-3">
+                                <form method="GET" class="d-flex gap-2 align-items-end">
+                                    <div>
+                                        <label class="form-label text-muted mb-1">From</label>
+                                        <input type="date" name="date_from" class="form-control border" value="{{ request.GET.date_from }}" style="width: 175px;">
+                                    </div>
+                                    <div>
+                                        <label class="form-label text-muted mb-1">To</label>
+                                        <input type="date" name="date_to" class="form-control border" value="{{ request.GET.date_to }}" style="width: 175px;">
+                                    </div>
+                                    <button type="submit" class="btn btn-outline-primary">
+                                        <i class="fas fa-filter"></i>
+                                    </button>
+                                    {% if request.GET.date_from or request.GET.date_to or search_query %}
+                                    <a href="?#payment-register" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                    {% endif %}
+                                </form>
+                            </div>
+
+                            {% if payment_register %}
+                                <div class="table-responsive shadow-sm rounded">
+                                    <table class="table table-sm table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="fw-semibold text-dark">Date</th>
+                                                <th class="fw-semibold text-dark">Client Source</th>
+                                                <th class="fw-semibold text-dark">Description</th>
+                                                <th class="fw-semibold text-dark">Reference</th>
+                                                <th class="text-end fw-semibold text-dark">Amount</th>
+                                                <th class="text-end fw-semibold text-dark">Running Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for payment in payment_register %}
+                                            <tr>
+                                                <td>{{ payment.date|date:"m/d/Y" }}</td>
+                                                <td>
+                                                    {% if payment.client %}
+                                                        <a href="{% url 'clients:detail' payment.client.id %}" 
+                                                           class="text-decoration-none">
+                                                            {{ payment.client_name }}
+                                                        </a>
+                                                    {% else %}
+                                                        <span class="text-muted">{{ payment.client_name }}</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{% url 'bank_accounts:bank_transaction_detail' payment.transaction.id %}"
+                                                       class="text-decoration-none">
+                                                        {{ payment.description|truncatechars:50 }}
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <small class="text-muted">
+                                                        {{ payment.reference|default:"-" }}
+                                                    </small>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span class="text-success fw-bold">
+                                                        {{ payment.amount|format_amount_accounting }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span class="text-primary fw-bold">
+                                                        {{ payment.running_total|format_amount_accounting }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Pagination -->
+                                {% if page_obj.has_other_pages %}
+                                <nav aria-label="Payment pagination" class="mt-4">
+                                    <ul class="pagination justify-content-center">
+                                        {% if page_obj.has_previous %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">
+                                                    <i class="fas fa-chevron-left"></i> Previous
+                                                </a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link"><i class="fas fa-chevron-left"></i> Previous</span>
+                                            </li>
+                                        {% endif %}
+
+                                        {% for num in page_obj.paginator.page_range %}
+                                            {% if page_obj.number == num %}
+                                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                                <li class="page-item"><a class="page-link" href="?page={{ num }}&{{ request.GET.urlencode }}">{{ num }}</a></li>
+                                            {% endif %}
+                                        {% endfor %}
+
+                                        {% if page_obj.has_next %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">
+                                                    Next <i class="fas fa-chevron-right"></i>
+                                                </a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link">Next <i class="fas fa-chevron-right"></i></span>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                                {% endif %}
+
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <div class="text-muted mb-3">
+                                        <i class="fas fa-money-check-alt fa-3x"></i>
+                                    </div>
+                                    <p class="text-muted">No payments found for this vendor.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Section Separator -->
+                    <div class="border-top my-4"></div>
+
+                    <!-- Client Source Breakdown Section -->
+                    {% if client_payments %}
+                    <div class="row">
+                        <div class="col-12">
+                            <h5 class="mb-4 fw-semibold text-dark">
+                                <i class="fas fa-chart-pie me-2 text-primary"></i>Payment Sources by Client
+                            </h5>
+
+                            <!-- Search by Client -->
+                            <div class="d-flex justify-content-end mb-3">
+                                <form method="GET" class="d-flex gap-2 align-items-end">
+                                    <input type="hidden" name="date_from" value="{{ request.GET.date_from }}">
+                                    <input type="hidden" name="date_to" value="{{ request.GET.date_to }}">
+                                    <div>
+                                        <label class="form-label text-muted mb-1">Search by Client</label>
+                                        <input type="text" name="search" class="form-control border"
+                                               placeholder="Client name..."
+                                               value="{{ search_query }}" style="width: 250px;">
+                                    </div>
+                                    <button type="submit" class="btn btn-outline-primary">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                    {% if search_query %}
+                                    <a href="?date_from={{ request.GET.date_from }}&date_to={{ request.GET.date_to }}#payment-sources" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                    {% endif %}
+                                </form>
+                            </div>
+
+                            <div class="table-responsive shadow-sm rounded">
+                                <table class="table table-sm table-striped mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="fw-semibold text-dark">Client</th>
+                                            <th class="text-end fw-semibold text-dark">Total Amount</th>
+                                            <th class="text-end fw-semibold text-dark">Payment Count</th>
+                                            <th class="text-end fw-semibold text-dark">Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for client_name, payment_data in client_payments.items %}
+                                        <tr>
+                                            <td>{{ client_name }}</td>
+                                            <td class="text-end">
+                                                <span class="text-success fw-bold">
+                                                    {{ payment_data.amount|format_amount_accounting }}
+                                                </span>
+                                            </td>
+                                            <td class="text-end">
+                                                <span class="badge bg-primary">{{ payment_data.count }}</span>
+                                            </td>
+                                            <td class="text-end">
+                                                {% widthratio payment_data.amount total_payments 100 as percentage %}
+                                                <span class="text-muted">{{ percentage }}%</span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Section Separator -->
+                    <div class="border-top my-4"></div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar-plus me-1"></i><strong>Created:</strong> {{ vendor.created_at|date:"m/d/Y g:i A" }}
+                            </small>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">
+                                <i class="fas fa-sync me-1"></i><strong>Last Updated:</strong> {{ vendor.updated_at|date:"m/d/Y g:i A" }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vendor Edit Modal -->
+<div class="modal fade" id="vendorModal" aria-labelledby="vendorModalLabel" aria-hidden="true" style="z-index: 1060; padding-left: 0 !important;">
+    <div class="modal-dialog modal-xl" style="margin: 1.75rem auto; max-width: 90vw;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="vendorModalLabel">Edit Vendor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="vendorModalForm" method="post">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div id="vendorModalContent">
+                        <!-- Vendor form fields will be loaded here via AJAX -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitVendorForm()">
+                        <i class="fas fa-save"></i> Save Vendor
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction Modal -->
+<div class="modal fade" id="transactionModal" aria-labelledby="transactionModalLabel" aria-hidden="true" style="z-index: 1060; padding-left: 0 !important;">
+    <div class="modal-dialog modal-xl" style="margin: 1.75rem auto; max-width: 90vw;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transactionModalLabel">Add New Transaction</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="transactionModalForm" action="{% url 'bank_accounts:create' %}" method="post">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div id="transactionModalContent">
+                        <!-- Transaction form fields will be loaded here via AJAX -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitTransactionForm()">
+                        <i class="fas fa-save"></i> Save Transaction
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Fix modal positioning issues - account for sidebar */
+#vendorModal, #transactionModal {
+    z-index: 9999 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 250px !important; /* Account for sidebar width */
+    width: calc(100vw - 250px) !important; /* Reduce width by sidebar width */
+    height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+#vendorModal .modal-dialog, #transactionModal .modal-dialog {
+    position: relative !important;
+    margin: 20px !important;
+    max-width: calc(100vw - 300px) !important; /* Account for sidebar + extra margin */
+    width: auto !important;
+    z-index: 10000 !important;
+}
+
+/* Ensure modal content is scrollable if too tall */
+#vendorModal .modal-content, #transactionModal .modal-content {
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    z-index: 10001 !important;
+}
+
+/* Hide the modal initially */
+#vendorModal.fade:not(.show), #transactionModal.fade:not(.show) {
+    display: none !important;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    #vendorModal, #transactionModal {
+        left: 0 !important;
+        width: 100vw !important;
+    }
+    
+    #vendorModal .modal-dialog, #transactionModal .modal-dialog {
+        max-width: 95vw !important;
+        margin: 10px !important;
+    }
+}
+</style>
+
+<script>
+// Global functions for vendor modal
+function editVendor(vendorId) {
+    console.log('Loading edit form for vendor:', vendorId);
+    
+    // Clear any previous content
+    $('#vendorModalContent').empty();
+    
+    // Update modal title
+    $('#vendorModalLabel').text('Edit Vendor');
+    
+    // Show modal with explicit configuration (no backdrop to avoid issues)
+    $('#vendorModal').modal({
+        backdrop: false,
+        keyboard: true,
+        focus: true
+    }).modal('show');
+    
+    // Update form action to edit URL
+    $('#vendorModalForm').attr('action', '{% url 'vendors:edit' 0 %}'.replace('0', vendorId));
+    
+    // Load form content via AJAX
+    $.ajax({
+        url: '{% url 'vendors:edit' 0 %}'.replace('0', vendorId),
+        type: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(response) {
+            console.log('Vendor edit form loaded successfully');
+            if (response.form_html) {
+                $('#vendorModalContent').html(response.form_html);
+            } else {
+                $('#vendorModalContent').html('<div class="alert alert-danger">Error loading form. Please try again.</div>');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading vendor edit form:', error);
+            $('#vendorModalContent').html('<div class="alert alert-danger">Error loading form: ' + error + '</div>');
+        }
+    });
+}
+
+function submitVendorForm() {
+    console.log('submitVendorForm called');
+    var form = $('#vendorModalForm');
+    
+    if (form.length === 0) {
+        console.error('Form not found!');
+        return;
+    }
+    
+    var formData = form.serialize();
+    var actionUrl = form.attr('action');
+    
+    console.log('Form action:', actionUrl);
+    console.log('Form data:', formData);
+    
+    // Disable submit button to prevent double submission
+    $('button[onclick="submitVendorForm()"]').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+    
+    $.ajax({
+        url: actionUrl,
+        type: 'POST',
+        data: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(response) {
+            console.log('Success response:', response);
+            if (response.success) {
+                $('#vendorModal').modal('hide');
+                location.reload(); // Refresh the page to show updated vendor
+            } else {
+                // Re-enable button
+                $('button[onclick="submitVendorForm()"]').prop('disabled', false).html('<i class="fas fa-save"></i> Save Vendor');
+                
+                if (response.form_html) {
+                    $('#vendorModalContent').html(response.form_html);
+                } else {
+                    alert('Error: ' + (response.message || 'Please check the form for errors.'));
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error submitting form:', error);
+            console.error('XHR status:', xhr.status);
+            console.error('XHR response:', xhr.responseText);
+            
+            // Re-enable button
+            $('button[onclick="submitVendorForm()"]').prop('disabled', false).html('<i class="fas fa-save"></i> Save Vendor');
+            
+            alert('Error updating vendor: ' + error);
+        }
+    });
+}
+
+// Global functions for transaction modal
+function addTransaction(vendorId) {
+    console.log('Loading transaction form for vendor:', vendorId);
+    
+    // Clear any previous content
+    $('#transactionModalContent').empty();
+    
+    // Show modal with explicit configuration (no backdrop to avoid issues)
+    $('#transactionModal').modal({
+        backdrop: false,
+        keyboard: true,
+        focus: true
+    }).modal('show');
+    
+    // Load form content via AJAX
+    $.ajax({
+        url: '{% url "bank_accounts:create" %}',
+        type: 'GET',
+        data: {
+            'vendor_id': vendorId
+        },
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(response) {
+            console.log('Transaction form loaded successfully');
+            if (response.form_html) {
+                $('#transactionModalContent').html(response.form_html);
+            } else {
+                $('#transactionModalContent').html('<div class="alert alert-danger">Error loading form. Please try again.</div>');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading transaction form:', error);
+            $('#transactionModalContent').html('<div class="alert alert-danger">Error loading form: ' + error + '</div>');
+        }
+    });
+}
+
+function submitTransactionForm() {
+    console.log('submitTransactionForm called');
+    var form = $('#transactionModalForm');
+    
+    if (form.length === 0) {
+        console.error('Form not found!');
+        return;
+    }
+    
+    var formData = form.serialize();
+    var actionUrl = form.attr('action');
+    
+    console.log('Form action:', actionUrl);
+    console.log('Form data:', formData);
+    
+    // Disable submit button to prevent double submission
+    $('button[onclick="submitTransactionForm()"]').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+    
+    $.ajax({
+        url: actionUrl || '{% url "bank_accounts:create" %}',
+        type: 'POST',
+        data: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(response) {
+            console.log('Success response:', response);
+            if (response.success) {
+                $('#transactionModal').modal('hide');
+                location.reload(); // Refresh the page to show new transaction
+            } else {
+                // Re-enable button
+                $('button[onclick="submitTransactionForm()"]').prop('disabled', false).html('<i class="fas fa-save"></i> Save Transaction');
+                
+                if (response.form_html) {
+                    $('#transactionModalContent').html(response.form_html);
+                } else {
+                    alert('Error: ' + (response.message || 'Please check the form for errors.'));
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error submitting form:', error);
+            console.error('XHR status:', xhr.status);
+            console.error('XHR response:', xhr.responseText);
+            
+            // Re-enable button
+            $('button[onclick="submitTransactionForm()"]').prop('disabled', false).html('<i class="fas fa-save"></i> Save Transaction');
+            
+            alert('Error creating transaction: ' + error);
+        }
+    });
+}
+
+// Clean up modals on close
+$('#vendorModal').on('hidden.bs.modal', function () {
+    console.log('Vendor modal hidden');
+    $('#vendorModalContent').empty(); // Clear content
+});
+
+$('#transactionModal').on('hidden.bs.modal', function () {
+    console.log('Transaction modal hidden');
+    $('#transactionModalContent').empty(); // Clear content
+});
+</script>
+
+{% endblock %}

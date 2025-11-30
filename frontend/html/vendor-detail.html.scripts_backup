@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Details - Trust Account Management</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/favicon.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+    <style>
+        /* Clean table layout - no thick borders */
+        .vendor-details-table {
+            width: 100%;
+            margin-bottom: 0;
+        }
+        .vendor-details-table td {
+            padding: 0.5rem 0.75rem;
+            border: none;
+            font-size: 0.875rem;
+            vertical-align: top;
+        }
+        .vendor-details-table td:first-child {
+            font-weight: 600;
+            color: #495057;
+            width: 100px;
+        }
+        .vendor-details-table td:last-child {
+            color: #212529;
+        }
+        .detail-column {
+            padding-right: 1.5rem;
+        }
+        .payment-register-table {
+            font-size: 0.875rem;
+        }
+        .payment-register-table th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar p-3">
+        <div class="sidebar-header mb-4">
+            <h4 id="firmNameSidebar">IOLTA Guard Insurance Law</h4>
+            <small class="text-muted d-block" id="firmLocation">San Francisco, CA</small>
+            <small class="text-muted d-block" id="firmPhone">(415) 555-0100</small>
+            <small class="text-muted d-block" id="firmEmail">info@ioltaguard.com</small>
+            <hr class="my-2 opacity-25">
+            <small class="text-muted">Trust Account System</small>
+        </div>
+
+        <ul class="nav nav-pills flex-column">
+            <li class="nav-item mb-2">
+                <a href="/dashboard" class="nav-link">
+                    <i class="fas fa-building-columns me-2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/clients" class="nav-link">
+                    <i class="fas fa-users me-2"></i>Clients
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/vendors" class="nav-link active">
+                    <i class="fas fa-building me-2"></i>Vendors
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/bank" class="nav-link">
+                    <i class="fas fa-university me-2"></i>Bank
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/settlements" class="nav-link">
+                    <i class="fas fa-balance-scale me-2"></i>3-Way Settlement
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/reports" class="nav-link">
+                    <i class="fas fa-chart-bar me-2"></i>Reports
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/checks" class="nav-link">
+                    <i class="fas fa-print me-2"></i>Print Checks
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+            <li class="nav-item mb-2">
+                <a href="/html/approval-dashboard.html" class="nav-link position-relative" id="approvalBadgeLink">
+                    <i class="fas fa-check-circle me-2"></i>Approvals
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                          id="approvalBadge"
+                          style="display: none;">
+                        0
+                        <span class="visually-hidden">pending approvals</span>
+                    </span>
+                </a>
+            </li>
+                <a href="/settings" class="nav-link">
+                    <i class="fas fa-cog me-2"></i>Settings
+                </a>
+            </li>
+        </ul>
+
+        <div class="mt-auto pt-3">
+            <div class="border-top pt-3">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="fas fa-user-circle me-2"></i>
+                    <span id="sidebarUsername">admin</span>
+                </div>
+                <a href="#" class="btn btn-outline-light btn-sm" onclick="logout()">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="shadow-sm border-bottom p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0" id="firmNameHeader">IOLTA Guard Insurance Law</h2>
+                    <small class="text-muted" id="firmAddressFull">San Francisco, CA | (415) 555-0100 | info@ioltaguard.com</small>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="text-muted" id="headerUsername">admin</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="p-4">
+            <div class="container-fluid">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-3">
+                        <h4 class="mb-0 fw-semibold text-dark" id="vendorPageTitle">Vendor Details: Loading...</h4>
+                        <div class="btn-group">
+                            <a href="/vendors" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Vendors
+                            </a>
+                            <button type="button" class="btn btn-primary" onclick="editVendor()">
+                                <i class="fas fa-edit"></i> Edit Vendor
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4">
+                        <!-- 3-Column Vendor Details with Clean Tables -->
+                        <div class="row">
+                            <div class="col-md-4 detail-column">
+                                <table class="vendor-details-table">
+                                    <tbody id="vendorDetailsCol1">
+                                        <tr><td colspan="2">Loading...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-4 detail-column">
+                                <table class="vendor-details-table">
+                                    <tbody id="vendorDetailsCol2">
+                                        <tr><td colspan="2">Loading...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-4 detail-column">
+                                <table class="vendor-details-table">
+                                    <tbody id="vendorDetailsCol3">
+                                        <tr><td colspan="2">Loading...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Section Separator -->
+                        <div class="border-top my-4"></div>
+
+                        <!-- Payment Register -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h5 class="mb-0 fw-semibold text-dark">
+                                        <i class="fas fa-money-check-alt me-2 text-primary"></i>Payment Register
+                                        <small class="text-muted" id="paymentSummary">
+                                            (Total Payments: <span class="text-success" id="totalPayments">$0.00</span> • <span id="paymentCount">0</span> payments)
+                                        </small>
+                                    </h5>
+                                    <button class="btn btn-success btn-sm" onclick="exportToExcel()">
+                                        <i class="fas fa-file-excel"></i> Export to XLSX
+                                    </button>
+                                </div>
+
+                                <!-- Date Range Filter -->
+                                <div class="d-flex justify-content-end mb-3 gap-2">
+                                    <div>
+                                        <label class="form-label text-muted mb-1">From</label>
+                                        <input type="date" id="dateFrom" class="form-control border" style="width: 175px;">
+                                    </div>
+                                    <div>
+                                        <label class="form-label text-muted mb-1">To</label>
+                                        <input type="date" id="dateTo" class="form-control border" style="width: 175px;">
+                                    </div>
+                                    <div class="d-flex align-items-end">
+                                        <button type="button" class="btn btn-outline-primary me-2" onclick="filterPayments()">
+                                            <i class="fas fa-filter"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Payment Register Table -->
+                                <div class="table-responsive">
+                                    <table class="table table-hover payment-register-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Client Source</th>
+                                                <th>Description</th>
+                                                <th>Reference</th>
+                                                <th class="text-end">Amount</th>
+                                                <th class="text-end">Running Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="paymentRegisterBody">
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted py-4">
+                                                    Loading payments...
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section Separator -->
+                        <div class="border-top my-4"></div>
+
+                        <!-- Payment Sources by Client -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h5 class="mb-3 fw-semibold text-dark">
+                                    <i class="fas fa-chart-pie me-2 text-primary"></i>Payment Sources by Client
+                                </h5>
+
+                                <!-- Client Search -->
+                                <div class="d-flex justify-content-end mb-3 gap-2">
+                                    <input type="text" id="clientSearch" class="form-control" placeholder="Search by Client..." style="width: 300px;">
+                                    <button type="submit" class="btn btn-outline-primary">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Client Breakdown Table -->
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Client</th>
+                                                <th class="text-end">Total Amount</th>
+                                                <th class="text-end">Percentage</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="clientBreakdownBody">
+                                            <tr>
+                                                <td colspan="3" class="text-center text-muted py-4">
+                                                    Loading client breakdown...
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js?v=1762170271"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js?v=1762170271"></script>
+    <script src="/js/api-client-session.js?v=1762170271"></script>
+    <script src="/js/vendor-detail.js?v=1762170271"></script>
+    <script src="/js/law-firm-loader.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', initLawFirmInfo);
+    </script>
+</body>
+</html>

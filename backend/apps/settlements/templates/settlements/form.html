@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ form_title }}{% endblock %}
+
+{% block page_title %}{{ form_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ form_title }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.settlement_date.id_for_label }}" class="form-label">Settlement Date</label>
+                                {{ form.settlement_date }}
+                                {% if form.settlement_date.errors %}
+                                    <div class="text-danger">{{ form.settlement_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.total_amount.id_for_label }}" class="form-label">Total Amount</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {{ form.total_amount }}
+                                </div>
+                                {% if form.total_amount.errors %}
+                                    <div class="text-danger">{{ form.total_amount.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.client.id_for_label }}" class="form-label">Client</label>
+                                {{ form.client }}
+                                {% if form.client.errors %}
+                                    <div class="text-danger">{{ form.client.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.case.id_for_label }}" class="form-label">Case</label>
+                                {{ form.case }}
+                                {% if form.case.errors %}
+                                    <div class="text-danger">{{ form.case.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.bank_account.id_for_label }}" class="form-label">Bank Account</label>
+                                {{ form.bank_account }}
+                                {% if form.bank_account.errors %}
+                                    <div class="text-danger">{{ form.bank_account.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                    <div class="text-danger">{{ form.status.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="text-danger">{{ form.notes.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'settlements:index' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Settlement
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block help_content %}
+Fill out the settlement information. Select a client and optionally a specific case. 
+The total amount represents the full settlement amount that will be distributed among vendors and clients.
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Filter cases based on selected client
+    $('#{{ form.client.id_for_label }}').change(function() {
+        var clientId = $(this).val();
+        var caseSelect = $('#{{ form.case.id_for_label }}');
+        
+        if (clientId) {
+            // You would implement this AJAX call to filter cases by client
+            // For now, we'll just enable the case select
+            caseSelect.prop('disabled', false);
+        } else {
+            caseSelect.prop('disabled', true);
+            caseSelect.val('');
+        }
+    });
+    
+    // Initialize case select based on current client selection
+    if ($('#{{ form.client.id_for_label }}').val()) {
+        $('#{{ form.case.id_for_label }}').prop('disabled', false);
+    } else {
+        $('#{{ form.case.id_for_label }}').prop('disabled', true);
+    }
+});
+</script>
+{% endblock %}

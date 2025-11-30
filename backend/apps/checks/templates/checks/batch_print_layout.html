@@ -1,0 +1,174 @@
+{% load check_filters %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: 8.5in 3.5in;
+            margin: 0;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            font-size: 11pt;
+        }
+        .check-container {
+            width: 8.5in;
+            height: 3.5in;
+            position: relative;
+            background: white;
+            page-break-after: always;
+        }
+        .check-container:last-child {
+            page-break-after: auto;
+        }
+        /* Check Number - Top Right */
+        .check-number {
+            position: absolute;
+            top: 0.35in;
+            right: 0.4in;
+            font-size: 14pt;
+            font-weight: normal;
+        }
+        /* Globe Icon - Top Left */
+        .globe-icon {
+            position: absolute;
+            top: 0.35in;
+            left: 0.35in;
+            font-size: 24pt;
+        }
+        /* Date Line - Right Side */
+        .date-line {
+            position: absolute;
+            top: 0.85in;
+            right: 0.4in;
+            font-size: 10pt;
+        }
+        .date-underline {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            min-width: 2in;
+            text-align: center;
+        }
+        /* Pay To The Order Of */
+        .payee-label {
+            position: absolute;
+            top: 1.25in;
+            left: 0.35in;
+            font-size: 10pt;
+        }
+        .payee-underline {
+            position: absolute;
+            top: 1.38in;
+            left: 1.45in;
+            width: 4.8in;
+            border-bottom: 1px solid #000;
+            padding-bottom: 2px;
+            font-size: 11pt;
+        }
+        /* Dollar Amount Box */
+        .amount-dollar-box {
+            position: absolute;
+            top: 1.2in;
+            right: 0.4in;
+            border: 1px solid #000;
+            padding: 3px 8px;
+            font-size: 11pt;
+            min-width: 1.5in;
+            text-align: center;
+        }
+        /* Amount in Words Line */
+        .amount-words-underline {
+            position: absolute;
+            top: 1.9in;
+            left: 0.35in;
+            width: 6.8in;
+            border-bottom: 1px solid #000;
+            padding-bottom: 2px;
+            font-size: 10pt;
+        }
+        /* DOLLARS Label */
+        .dollars-label {
+            position: absolute;
+            top: 1.9in;
+            right: 0.4in;
+            font-size: 10pt;
+            font-weight: normal;
+        }
+        /* MEMO Line */
+        .memo-label {
+            position: absolute;
+            bottom: 0.8in;
+            left: 0.35in;
+            font-size: 10pt;
+        }
+        .memo-underline {
+            position: absolute;
+            bottom: 0.8in;
+            left: 1in;
+            width: 3in;
+            border-bottom: 1px solid #000;
+            padding-bottom: 2px;
+            font-size: 10pt;
+        }
+        /* Signature Line */
+        .signature-underline {
+            position: absolute;
+            bottom: 0.8in;
+            right: 0.4in;
+            width: 3.2in;
+            border-bottom: 1px solid #000;
+            padding-bottom: 2px;
+        }
+        /* MICR Line */
+        .micr-line {
+            position: absolute;
+            bottom: 0.25in;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'MICR E13B', 'Courier New', monospace;
+            font-size: 11pt;
+            letter-spacing: 3px;
+        }
+    </style>
+</head>
+<body>
+    {% for check in checks %}
+    <div class="check-container">
+        <!-- Globe Icon -->
+        <div class="globe-icon">&#127760;</div>
+
+        <!-- Check Number -->
+        <div class="check-number">{{ check.reference_number }}</div>
+
+        <!-- Date -->
+        <div class="date-line">
+            DATE <span class="date-underline">{{ check.transaction_date|date:"m/d/Y" }}</span>
+        </div>
+
+        <!-- Pay To The Order Of -->
+        <div class="payee-label">PAY TO THE<br>ORDER OF</div>
+        <div class="payee-underline">{% if check.payee %}{{ check.payee }}{% elif check.vendor %}{{ check.vendor.vendor_name }}{% elif check.client %}{{ check.client.full_name }}{% endif %}</div>
+
+        <!-- Dollar Amount Box -->
+        <div class="amount-dollar-box">$ {{ check.amount|floatformat:2 }}</div>
+
+        <!-- Amount in Words -->
+        <div class="amount-words-underline">{{ check.amount|amount_in_words }} and {{ check.amount|cents_part }}/100</div>
+        <div class="dollars-label">DOLLARS &#128274;</div>
+
+        <!-- Memo -->
+        <div class="memo-label">MEMO</div>
+        <div class="memo-underline">{{ check.check_memo|default:"" }}</div>
+
+        <!-- Signature Line -->
+        <div class="signature-underline"></div>
+
+        <!-- MICR Line -->
+        <div class="micr-line">⁂3257804084⁂  00314724  0543   42</div>
+    </div>
+    {% endfor %}
+</body>
+</html>
