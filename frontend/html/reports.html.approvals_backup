@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Trust Account Management</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/favicon.png">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/main.css">
+    <!-- Approval Workflow CSS -->
+    <link rel="stylesheet" href="/css/approvals.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar p-3">
+        <div class="sidebar-header mb-4">
+            <h4 id="lawFirmName">IOLTA Guard Insurance Law</h4>
+            <small class="text-muted d-block" id="lawFirmLocation">San Francisco, CA</small>
+            <small class="text-muted d-block" id="lawFirmPhone">(415) 555-0100</small>
+            <small class="text-muted d-block" id="lawFirmEmail">info@ioltaguard.com</small>
+            <hr class="my-2 opacity-25">
+            <small class="text-muted">Trust Account System</small>
+        </div>
+
+        <ul class="nav nav-pills flex-column">
+            <li class="nav-item mb-2">
+                <a href="/dashboard" class="nav-link">
+                    <i class="fas fa-building-columns me-2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/clients" class="nav-link">
+                    <i class="fas fa-users me-2"></i>Clients
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/vendors" class="nav-link">
+                    <i class="fas fa-building me-2"></i>Vendors
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/bank-accounts" class="nav-link">
+                    <i class="fas fa-university me-2"></i>Bank
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/settlements" class="nav-link">
+                    <i class="fas fa-balance-scale me-2"></i>3-Way Settlement
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/reports" class="nav-link active">
+                    <i class="fas fa-chart-bar me-2"></i>Reports
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/checks" class="nav-link">
+                    <i class="fas fa-print me-2"></i>Print Checks
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/settings" class="nav-link">
+                    <i class="fas fa-cog me-2"></i>Settings
+                </a>
+            </li>
+        </ul>
+
+        <div class="mt-auto pt-3">
+            <div class="border-top pt-3">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="fas fa-user-circle me-2"></i>
+                    <span id="userName">admin</span>
+                </div>
+                <button class="btn btn-outline-light btn-sm" onclick="logout()">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <div class="main-content">
+        <!-- Page content -->
+        <main class="p-4">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="mb-0">
+                                    <i class="fas fa-chart-bar me-2"></i>
+                                    Trust Account Reports
+                                </h4>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted mb-4">
+                                    Generate comprehensive reports for trust account management, compliance, and client communication.
+                                </p>
+
+                                <!-- Phase 1 Reports -->
+                                <div class="row">
+                                    <div class="col-12">
+                                        <h5 class="text-primary mb-3">
+                                            <i class="fas fa-star me-2"></i>
+                                            Essential Reports
+                                        </h5>
+                                    </div>
+
+                                    <!-- Client Ledger Report -->
+                                    <div class="col-md-4 mb-4">
+                                        <div class="card h-100 border-primary">
+                                            <div class="card-header bg-primary text-white">
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-user-circle me-2"></i>
+                                                    Client Ledger Report
+                                                </h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="card-text">
+                                                    Detailed transaction history and current balance for individual clients or cases.
+                                                </p>
+                                                <ul class="small text-muted mb-3">
+                                                    <li>Individual client statements</li>
+                                                    <li>Running balance calculations</li>
+                                                    <li>Transaction details by date range</li>
+                                                    <li>Export to PDF/Excel</li>
+                                                </ul>
+                                            </div>
+                                            <div class="card-footer">
+                                                <a href="/reports/client-ledger" class="btn btn-primary w-100">
+                                                    <i class="fas fa-file-alt me-2"></i>
+                                                    Generate Report
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 3-Way Reconciliation (Coming Soon) -->
+                                    <div class="col-md-4 mb-4">
+                                        <div class="card h-100 border-secondary">
+                                            <div class="card-header bg-secondary text-white">
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-balance-scale me-2"></i>
+                                                    3-Way Reconciliation
+                                                </h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="card-text">
+                                                    Compare bank balance vs. book balance vs. client liability for compliance.
+                                                </p>
+                                                <ul class="small text-muted mb-3">
+                                                    <li>Bank vs. book comparison</li>
+                                                    <li>Client liability analysis</li>
+                                                    <li>Discrepancy identification</li>
+                                                    <li>Compliance verification</li>
+                                                </ul>
+                                            </div>
+                                            <div class="card-footer">
+                                                <button class="btn btn-secondary w-100" disabled>
+                                                    <i class="fas fa-clock me-2"></i>
+                                                    Coming Soon
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Outstanding Items (Coming Soon) -->
+                                    <div class="col-md-4 mb-4">
+                                        <div class="card h-100 border-secondary">
+                                            <div class="card-header bg-secondary text-white">
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                                    Outstanding Items
+                                                </h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="card-text">
+                                                    Track uncleared transactions, missing items, and pending settlements.
+                                                </p>
+                                                <ul class="small text-muted mb-3">
+                                                    <li>Uncleared transactions</li>
+                                                    <li>Missing bank records</li>
+                                                    <li>Pending settlements</li>
+                                                    <li>Follow-up required items</li>
+                                                </ul>
+                                            </div>
+                                            <div class="card-footer">
+                                                <button class="btn btn-secondary w-100" disabled>
+                                                    <i class="fas fa-clock me-2"></i>
+                                                    Coming Soon
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Future Reports Preview -->
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <h5 class="text-secondary mb-3">
+                                            <i class="fas fa-road me-2"></i>
+                                            Upcoming Reports (Phase 2)
+                                        </h5>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <div class="list-group">
+                                            <div class="list-group-item">
+                                                <div class="d-flex w-100 justify-content-between">
+                                                    <h6 class="mb-1">
+                                                        <i class="fas fa-university me-2 text-primary"></i>
+                                                        IOLTA Activity Report
+                                                    </h6>
+                                                    <small class="text-muted">Regulatory</small>
+                                                </div>
+                                                <p class="mb-1 small">Complete trust account activity for compliance reporting</p>
+                                            </div>
+
+                                            <div class="list-group-item">
+                                                <div class="d-flex w-100 justify-content-between">
+                                                    <h6 class="mb-1">
+                                                        <i class="fas fa-handshake me-2 text-warning"></i>
+                                                        Settlement Analysis
+                                                    </h6>
+                                                    <small class="text-muted">Business</small>
+                                                </div>
+                                                <p class="mb-1 small">Performance metrics and settlement tracking</p>
+                                            </div>
+
+                                            <div class="list-group-item">
+                                                <div class="d-flex w-100 justify-content-between">
+                                                    <h6 class="mb-1">
+                                                        <i class="fas fa-calendar-alt me-2 text-success"></i>
+                                                        Month-End Summary
+                                                    </h6>
+                                                    <small class="text-muted">Operational</small>
+                                                </div>
+                                                <p class="mb-1 small">Comprehensive period-end reporting</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <div class="list-group">
+                                            <div class="list-group-item">
+                                                <div class="d-flex w-100 justify-content-between">
+                                                    <h6 class="mb-1">
+                                                        <i class="fas fa-chart-line me-2 text-info"></i>
+                                                        Cash Flow Analysis
+                                                    </h6>
+                                                    <small class="text-muted">Financial</small>
+                                                </div>
+                                                <p class="mb-1 small">Money flow trends and planning insights</p>
+                                            </div>
+
+                                            <div class="list-group-item">
+                                                <div class="d-flex w-100 justify-content-between">
+                                                    <h6 class="mb-1">
+                                                        <i class="fas fa-search me-2 text-danger"></i>
+                                                        Audit Trail Report
+                                                    </h6>
+                                                    <small class="text-muted">Security</small>
+                                                </div>
+                                                <p class="mb-1 small">User activity and change tracking</p>
+                                            </div>
+
+                                            <div class="list-group-item">
+                                                <div class="d-flex w-100 justify-content-between">
+                                                    <h6 class="mb-1">
+                                                        <i class="fas fa-flag me-2 text-warning"></i>
+                                                        Exception Report
+                                                    </h6>
+                                                    <small class="text-muted">Monitoring</small>
+                                                </div>
+                                                <p class="mb-1 small">Unusual patterns and items requiring review</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js?v=1762170271"></script>
+    <!-- Law Firm Loader (shared utility) -->
+    <script src="/js/law-firm-loader.js?v=1762170271"></script>
+    <!-- API Client -->
+    <script src="/js/api-client-session.js?v=1762170271"></script>
+    <!-- Reports JS -->
+    <script src="/js/reports.js?v=1762170271"></script>
+</body>
+</html>

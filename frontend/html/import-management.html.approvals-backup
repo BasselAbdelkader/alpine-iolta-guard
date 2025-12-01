@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Management - IOLTA Guard</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/favicon.png">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/main.css">
+
+    <style>
+        .upload-section {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 8px;
+            border: 2px dashed #dee2e6;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .upload-section:hover {
+            border-color: #0d6efd;
+            background: #f0f4ff;
+        }
+
+        .stats-box {
+            background: #fff;
+            padding: 1rem;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 1rem;
+        }
+
+        .stats-box .stat-item {
+            display: inline-block;
+            margin-right: 2rem;
+            padding: 0.5rem 1rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .stats-box .stat-item strong {
+            color: #0d6efd;
+            font-size: 1.2rem;
+        }
+
+        .error-list {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #fff;
+            padding: 1rem;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+        }
+
+        .error-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-left: 3px solid #dc3545;
+            background: #fff5f5;
+            border-radius: 4px;
+        }
+
+        .warning-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-left: 3px solid #ffc107;
+            background: #fffef0;
+            border-radius: 4px;
+        }
+
+        .progress-container {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+
+        .progress {
+            height: 30px;
+            font-size: 1rem;
+        }
+
+        .summary-box {
+            background: #d1e7dd;
+            border: 1px solid #badbcc;
+            padding: 2rem;
+            border-radius: 8px;
+        }
+
+        .summary-box h3 {
+            color: #0f5132;
+        }
+
+        .summary-box .summary-item {
+            padding: 0.75rem;
+            background: #fff;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar p-3">
+        <div class="sidebar-header mb-4">
+            <h4 id="lawFirmName">IOLTA Guard Insurance Law</h4>
+            <small class="text-muted d-block" id="lawFirmLocation">San Francisco, CA</small>
+            <small class="text-muted d-block" id="lawFirmPhone">(415) 555-0100</small>
+            <small class="text-muted d-block" id="lawFirmEmail">info@ioltaguard.com</small>
+            <hr class="my-2 opacity-25">
+            <small class="text-muted">Trust Account System</small>
+        </div>
+
+        <ul class="nav nav-pills flex-column">
+            <li class="nav-item mb-2">
+                <a href="/dashboard" class="nav-link">
+                    <i class="fas fa-building-columns me-2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/clients" class="nav-link">
+                    <i class="fas fa-users me-2"></i>Clients
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/vendors" class="nav-link">
+                    <i class="fas fa-building me-2"></i>Vendors
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/bank" class="nav-link">
+                    <i class="fas fa-university me-2"></i>Bank
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/settlements" class="nav-link">
+                    <i class="fas fa-balance-scale me-2"></i>3-Way Settlement
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/reports" class="nav-link">
+                    <i class="fas fa-chart-bar me-2"></i>Reports
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/checks" class="nav-link">
+                    <i class="fas fa-print me-2"></i>Print Checks
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/settings" class="nav-link">
+                    <i class="fas fa-cog me-2"></i>Settings
+                </a>
+            </li>
+        </ul>
+
+        <div class="mt-auto pt-3">
+            <div class="border-top pt-3">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="fas fa-user-circle me-2"></i>
+                    <span id="userName">admin</span>
+                </div>
+                <button class="btn btn-outline-light btn-sm" onclick="logout()">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </button>
+            </div>
+
+            <!-- Theme Toggle -->
+            <div class="mt-3">
+                <button class="btn btn-outline-secondary btn-sm" id="theme-toggle">
+                    <i class="fas fa-moon me-1"></i><span>Dark Mode</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="shadow-sm border-bottom p-3 mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <!-- Breadcrumb -->
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-2">
+                            <li class="breadcrumb-item"><a href="/settings">Settings</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Import CSV</li>
+                        </ol>
+                    </nav>
+                    <h2 class="mb-0">
+                        <i class="fas fa-file-import me-2"></i>Import Management
+                    </h2>
+                    <small class="text-muted">Import clients, cases, and transactions from CSV file</small>
+                </div>
+                <div>
+                    <span class="text-muted" id="headerUserName">admin</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Container -->
+        <div class="container-fluid">
+
+            <!-- Section 1: Upload -->
+            <div id="uploadSection" class="section active">
+                <div class="row">
+                    <div class="col-lg-8 offset-lg-2">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4 class="card-title mb-4">Step 1: Upload CSV File</h4>
+
+                                <div class="upload-section">
+                                    <i class="fas fa-cloud-upload-alt fa-4x mb-3 text-muted"></i>
+                                    <h5>Select CSV File</h5>
+                                    <p class="text-muted">
+                                        Choose the CSV file exported from CSV file containing your transaction data
+                                    </p>
+                                    <input type="file" id="csvFile" accept=".csv" class="form-control w-50 mx-auto mt-3">
+                                    <button id="validateBtn" class="btn btn-primary mt-3" disabled>
+                                        <i class="fas fa-check-circle me-2"></i>Validate File
+                                    </button>
+                                </div>
+
+                                <div class="alert alert-info mt-3">
+                                    <strong><i class="fas fa-info-circle me-2"></i>Expected CSV Format:</strong>
+                                    <ul class="mb-0 mt-2">
+                                        <li>Export your data from CSV file as CSV</li>
+                                        <li>Required columns: Date, Type, Account, Payee, Memo, Payment, Deposit</li>
+                                        <li>Account column represents Client names</li>
+                                        <li>Each client will get one case created automatically</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Validation Results -->
+            <div id="validationSection" class="section">
+                <div class="row">
+                    <div class="col-lg-10 offset-lg-1">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4 class="card-title mb-4">Step 2: Validation Results</h4>
+
+                                <!-- Stats Summary -->
+                                <div class="stats-box">
+                                    <div class="stat-item">
+                                        <small class="text-muted d-block">Clients Found</small>
+                                        <strong id="clientCount">0</strong>
+                                    </div>
+                                    <div class="stat-item">
+                                        <small class="text-muted d-block">Transactions Found</small>
+                                        <strong id="transactionCount">0</strong>
+                                    </div>
+                                    <div class="stat-item">
+                                        <small class="text-muted d-block">Valid Rows</small>
+                                        <strong id="validRowCount" class="text-success">0</strong>
+                                    </div>
+                                    <div class="stat-item">
+                                        <small class="text-muted d-block">Errors</small>
+                                        <strong id="errorCount" class="text-danger">0</strong>
+                                    </div>
+                                </div>
+
+                                <!-- Warnings -->
+                                <div id="warningsContainer" style="display:none;">
+                                    <h5 class="mt-4"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Warnings</h5>
+                                    <div id="warningsList" class="error-list">
+                                        <!-- Warnings will be inserted here -->
+                                    </div>
+                                </div>
+
+                                <!-- Errors -->
+                                <div id="errorsContainer" style="display:none;">
+                                    <h5 class="mt-4"><i class="fas fa-times-circle text-danger me-2"></i>Errors</h5>
+                                    <div id="errorsList" class="error-list">
+                                        <!-- Errors will be inserted here -->
+                                    </div>
+                                    <div class="alert alert-warning mt-3">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Rows with errors will be skipped during import. Valid rows will be imported.
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="mt-4 d-flex justify-content-between">
+                                    <button id="backToUploadBtn" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i>Back
+                                    </button>
+                                    <button id="importBtn" class="btn btn-success btn-lg" disabled>
+                                        <i class="fas fa-cloud-upload-alt me-2"></i>Import Data
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Import Progress -->
+            <div id="progressSection" class="section">
+                <div class="row">
+                    <div class="col-lg-8 offset-lg-2">
+                        <div class="progress-container">
+                            <h4><i class="fas fa-spinner fa-spin me-2"></i>Importing CSV Data...</h4>
+                            <p class="text-muted">Please wait while we import your data. This may take a few moments.</p>
+
+                            <div class="progress mt-4">
+                                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated"
+                                     role="progressbar" style="width: 0%">0%</div>
+                            </div>
+
+                            <p id="progressText" class="mt-3 text-muted">Initializing...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Success Summary -->
+            <div id="summarySection" class="section">
+                <div class="row">
+                    <div class="col-lg-8 offset-lg-2">
+                        <div class="summary-box">
+                            <h3><i class="fas fa-check-circle me-2"></i>Import Complete!</h3>
+                            <p class="mb-4">Your data has been successfully imported.</p>
+
+                            <div class="summary-item">
+                                <i class="fas fa-users text-primary me-2"></i>
+                                <strong>Clients Created:</strong> <span id="clientsCreated">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <i class="fas fa-folder text-primary me-2"></i>
+                                <strong>Clients Already Existed:</strong> <span id="clientsExisting">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <i class="fas fa-briefcase text-primary me-2"></i>
+                                <strong>Cases Created:</strong> <span id="casesCreated">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <i class="fas fa-exchange-alt text-success me-2"></i>
+                                <strong>Transactions Imported:</strong> <span id="transactionsImported">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                <strong>Transactions Skipped:</strong> <span id="transactionsSkipped">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <i class="fas fa-clock text-muted me-2"></i>
+                                <strong>Duration:</strong> <span id="importDuration">0</span> seconds
+                            </div>
+
+                            <div id="importErrorsContainer" style="display:none;" class="mt-3">
+                                <div class="alert alert-warning">
+                                    <strong><i class="fas fa-exclamation-triangle me-2"></i>Some transactions were skipped:</strong>
+                                    <div id="importErrorsList" class="mt-2">
+                                        <!-- Import errors will be shown here -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <a href="/clients" class="btn btn-primary btn-lg me-2">
+                                    <i class="fas fa-users me-2"></i>View Clients
+                                </a>
+                                <button id="importAnotherBtn" class="btn btn-outline-secondary">
+                                    <i class="fas fa-redo me-2"></i>Import Another File
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- API Client with Authentication -->
+    <script src="/js/api-client-session.js"></script>
+    <!-- Page-specific JS -->
+    <script src="/js/import-management.js"></script>
+    <script src="/js/law-firm-loader.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', initLawFirmInfo);
+    </script>
+    <!-- Approval System Scripts -->
+    <script src="/js/approval-badge.js"></script>
+    <script src="/js/approval-widget.js"></script>
+</body>
+</html>

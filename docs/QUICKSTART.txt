@@ -1,0 +1,76 @@
+╔══════════════════════════════════════════════════════════════╗
+║  IOLTA Guard Trust Account System - Quick Start Guide       ║
+║  Production Server: 138.68.109.92                            ║
+╚══════════════════════════════════════════════════════════════╝
+
+STEP 1: EXTRACT
+─────────────────────────────────────────────────────────────
+tar -xzf iolta-production.tar.gz
+cd iolta-production
+
+
+STEP 2: DEPLOY (as root/sudo)
+─────────────────────────────────────────────────────────────
+sudo ./deploy.sh
+
+This will:
+  ✓ Install Docker & Docker Compose (if needed)
+  ✓ Generate secure passwords
+  ✓ Start all services
+  ✓ Initialize database with schema
+  ✓ Create admin user
+
+
+STEP 3: ACCESS
+─────────────────────────────────────────────────────────────
+Open browser: http://138.68.109.92
+
+Default Login:
+  Username: admin
+  Password: admin123
+
+⚠️  IMPORTANT: Change password immediately!
+
+
+USEFUL COMMANDS
+─────────────────────────────────────────────────────────────
+
+View Logs:
+  docker-compose -f docker-compose.prod.yml logs -f
+
+Stop Services:
+  docker-compose -f docker-compose.prod.yml down
+
+Restart Services:
+  docker-compose -f docker-compose.prod.yml restart
+
+Backup Database:
+  ./backup.sh
+
+Restore Database:
+  ./restore.sh backups/iolta_backup_YYYYMMDD_HHMMSS.sql.gz
+
+
+TROUBLESHOOTING
+─────────────────────────────────────────────────────────────
+
+Check Status:
+  docker-compose -f docker-compose.prod.yml ps
+
+Check Backend:
+  docker-compose -f docker-compose.prod.yml logs backend
+
+Check Database:
+  docker-compose -f docker-compose.prod.yml logs database
+
+Reset Everything:
+  docker-compose -f docker-compose.prod.yml down -v
+  sudo ./deploy.sh
+
+
+SUPPORT
+─────────────────────────────────────────────────────────────
+For detailed instructions, see: README.md
+For schema details, see: sql/SCHEMA_README.md (if included)
+
+Version: 1.0.0 | Schema: twentysixnovember.sql

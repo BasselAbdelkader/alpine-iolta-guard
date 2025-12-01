@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ report_title }}</title>
+    <style>
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none !important; }
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            margin: 20px;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+        }
+        
+        .law-firm-info {
+            margin-bottom: 10px;
+        }
+        
+        .law-firm-name {
+            font-size: 18pt;
+            font-weight: bold;
+            color: #1a365d;
+            margin-bottom: 5px;
+        }
+        
+        .law-firm-details {
+            font-size: 10pt;
+            color: #666;
+            line-height: 1.3;
+        }
+        
+        .report-title {
+            font-size: 16pt;
+            font-weight: bold;
+            margin: 15px 0 10px 0;
+            color: #1a365d;
+        }
+        
+        .report-info {
+            font-size: 10pt;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .summary-box {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .summary-title {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #1a365d;
+            margin-bottom: 10px;
+        }
+        
+        .summary-stats {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            margin: 5px;
+        }
+        
+        .stat-label {
+            font-size: 9pt;
+            color: #666;
+            display: block;
+        }
+        
+        .stat-value {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #047857;
+        }
+        
+        .clients-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 10pt;
+        }
+        
+        .clients-table th {
+            background-color: #1a365d;
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+            border: 1px solid #333;
+            font-weight: bold;
+        }
+        
+        .clients-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            vertical-align: top;
+        }
+        
+        .clients-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .clients-table tbody tr:hover {
+            background-color: #e9ecef;
+        }
+        
+        .balance-positive {
+            color: #047857;
+            font-weight: bold;
+        }
+        
+        .balance-negative {
+            color: #b91c1c;
+            font-weight: bold;
+        }
+        
+        .client-name {
+            font-weight: 600;
+        }
+        
+        .client-contact {
+            font-size: 9pt;
+            color: #666;
+        }
+        
+        .total-row {
+            background-color: #e9ecef !important;
+            font-weight: bold;
+        }
+        
+        .total-row td {
+            border-top: 2px solid #333;
+            padding: 12px 8px;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+            font-size: 9pt;
+            color: #666;
+            text-align: center;
+        }
+        
+        .no-clients-message {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        
+        @page {
+            margin: 1in;
+            @bottom-center {
+                content: "Page " counter(page) " of " counter(pages);
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+        
+        .print-button {
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11pt;
+            margin: 10px;
+        }
+        
+        .print-button:hover {
+            background-color: #0b5ed7;
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <button class="print-button" onclick="window.print()">
+            <i class="fas fa-print"></i> Print Report
+        </button>
+        <button class="print-button" onclick="window.close()" style="background-color: #6c757d;">
+            <i class="fas fa-times"></i> Close
+        </button>
+    </div>
+
+    <div class="header">
+        <div class="law-firm-info">
+            {% if law_firm %}
+                <div class="law-firm-name">{{ law_firm.firm_name }}</div>
+                <div class="law-firm-details">
+                    {{ law_firm.address_line1 }}{% if law_firm.address_line2 %}, {{ law_firm.address_line2 }}{% endif %}<br>
+                    {{ law_firm.city }}, {{ law_firm.state }} {{ law_firm.zip_code }}<br>
+                    Phone: {{ law_firm.phone }}{% if law_firm.email %} | Email: {{ law_firm.email }}{% endif %}
+                </div>
+            {% else %}
+                <div class="law-firm-name">Trust Account Management System</div>
+            {% endif %}
+        </div>
+        
+        <div class="report-title">{{ report_title }}</div>
+        <div class="report-info">Generated on {{ report_date }} at {{ report_time }}</div>
+        <div class="report-info">Report includes only clients with non-zero trust account balances</div>
+    </div>
+
+    <div class="summary-box">
+        <div class="summary-title">Report Summary</div>
+        <div class="summary-stats">
+            <div class="stat-item">
+                <span class="stat-label">Total Clients</span>
+                <span class="stat-value">{{ client_count }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Combined Trust Balance</span>
+                <span class="stat-value {% if total_balance < 0 %}balance-negative{% else %}balance-positive{% endif %}">
+                    {% if total_balance < 0 %}
+                        (${{ total_balance|floatformat:2|cut:"-"|floatformat:2 }})
+                    {% else %}
+                        ${{ total_balance|floatformat:2 }}
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    {% if clients_with_balances %}
+        <table class="clients-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">#</th>
+                    <th style="width: 30%;">Client Name</th>
+                    <th style="width: 25%;">Contact Information</th>
+                    <th style="width: 20%;">Address</th>
+                    <th style="width: 20%;">Trust Balance</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in clients_with_balances %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        <div class="client-name">{{ item.client.full_name }}</div>
+                        <div class="client-contact">
+                            Client ID: {{ item.client.id }}
+                            {% if item.client.client_number %} | #{{ item.client.client_number }}{% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            {% if item.client.email %}
+                                Email: {{ item.client.email }}<br>
+                            {% endif %}
+                            {% if item.client.phone %}
+                                Phone: {{ item.client.phone }}
+                            {% endif %}
+                            {% if not item.client.email and not item.client.phone %}
+                                <em>No contact info</em>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        {% if item.client.address %}
+                            {{ item.client.address }}<br>
+                        {% endif %}
+                        {% if item.client.city or item.client.state or item.client.zip_code %}
+                            {{ item.client.city }}{% if item.client.city and item.client.state %}, {% endif %}{{ item.client.state }} {{ item.client.zip_code }}
+                        {% endif %}
+                        {% if not item.client.address and not item.client.city and not item.client.state %}
+                            <em>No address</em>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right;">
+                        <span class="{% if item.balance < 0 %}balance-negative{% else %}balance-positive{% endif %}">
+                            {% if item.balance < 0 %}
+                                (${{ item.balance|floatformat:2|cut:"-"|floatformat:2 }})
+                            {% else %}
+                                ${{ item.balance|floatformat:2 }}
+                            {% endif %}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+                
+                <tr class="total-row">
+                    <td colspan="4" style="text-align: right; font-size: 12pt;">
+                        <strong>Total Trust Account Balance:</strong>
+                    </td>
+                    <td style="text-align: right; font-size: 12pt;">
+                        <span class="{% if total_balance < 0 %}balance-negative{% else %}balance-positive{% endif %}">
+                            {% if total_balance < 0 %}
+                                <strong>(${{ total_balance|floatformat:2|cut:"-"|floatformat:2 }})</strong>
+                            {% else %}
+                                <strong>${{ total_balance|floatformat:2 }}</strong>
+                            {% endif %}
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    {% else %}
+        <div class="no-clients-message">
+            <h3>No Clients with Non-Zero Balances Found</h3>
+            <p>All active clients currently have zero balances in their trust accounts.</p>
+        </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>
+            <strong>Note:</strong> This report shows only clients with non-zero trust account balances as of {{ report_date }} at {{ report_time }}.<br>
+            Trust account balances are calculated based on all transactions recorded in the system.<br>
+            Generated by Trust Account Management System (TAMS)
+        </p>
+    </div>
+
+    <script>
+        // Auto-focus for better print experience
+        window.addEventListener('load', function() {
+            document.body.focus();
+        });
+        
+        // Handle keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                window.print();
+            }
+            if (e.key === 'Escape') {
+                window.close();
+            }
+        });
+    </script>
+</body>
+</html>

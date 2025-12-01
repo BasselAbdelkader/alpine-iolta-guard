@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Please Wait{% endblock %}
+
+{% block page_title %}Please Wait{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-clock"></i>
+                        Rate Limit Active
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info" role="alert">
+                        <h5 class="alert-heading">Please Wait Before Trying Again</h5>
+                        <p>{{ error_message }}</p>
+                        <hr>
+                        <p class="mb-0">
+                            <strong>You can try again in {{ retry_after_seconds }} seconds.</strong>
+                        </p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Please wait...</p>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <button id="retryBtn" class="btn btn-primary" disabled>
+                        <i class="fas fa-redo"></i> Try Again (<span id="countdown">{{ retry_after_seconds }}</span>s)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let countdownSeconds = {{ retry_after_seconds }};
+const countdownElement = document.getElementById('countdown');
+const retryBtn = document.getElementById('retryBtn');
+
+function updateCountdown() {
+    countdownElement.textContent = countdownSeconds;
+    
+    if (countdownSeconds <= 0) {
+        retryBtn.disabled = false;
+        retryBtn.innerHTML = '<i class="fas fa-redo"></i> Try Again';
+        retryBtn.onclick = function() {
+            window.location.href = '{% url "admin:login" %}';
+        };
+    } else {
+        countdownSeconds--;
+        setTimeout(updateCountdown, 1000);
+    }
+}
+
+// Start countdown
+setTimeout(updateCountdown, 1000);
+</script>
+{% endblock %}

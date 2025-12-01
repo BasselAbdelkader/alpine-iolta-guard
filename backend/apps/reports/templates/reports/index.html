@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reports Dashboard{% endblock %}
+
+{% block page_title %}{% if global_law_firm %}{{ global_law_firm.firm_name }}{% else %}Reports{% endif %}{% endblock %}
+
+{% block help_title %}Reports{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Trust Account Reports
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">
+                        Generate comprehensive reports for trust account management, compliance, and client communication.
+                    </p>
+                    
+                    <!-- Phase 1 Reports -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h5 class="text-primary mb-3">
+                                <i class="fas fa-star me-2"></i>
+                                Essential Reports
+                            </h5>
+                        </div>
+                        
+                        <!-- Client Ledger Report -->
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-user-circle me-2"></i>
+                                        Client Ledger Report
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        Detailed transaction history and current balance for individual clients or cases.
+                                    </p>
+                                    <ul class="small text-muted mb-3">
+                                        <li>Individual client statements</li>
+                                        <li>Running balance calculations</li>
+                                        <li>Transaction details by date range</li>
+                                        <li>Export to PDF/Excel</li>
+                                    </ul>
+                                </div>
+                                <div class="card-footer">
+                                    <a href="{% url 'reports:client_ledger' %}" class="btn btn-primary w-100">
+                                        <i class="fas fa-file-alt me-2"></i>
+                                        Generate Report
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Placeholders for future reports -->
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 border-secondary">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-balance-scale me-2"></i>
+                                        3-Way Reconciliation
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        Compare bank balance vs. book balance vs. client liability for compliance.
+                                    </p>
+                                    <ul class="small text-muted mb-3">
+                                        <li>Bank vs. book comparison</li>
+                                        <li>Client liability analysis</li>
+                                        <li>Discrepancy identification</li>
+                                        <li>Compliance verification</li>
+                                    </ul>
+                                </div>
+                                <div class="card-footer">
+                                    <button class="btn btn-secondary w-100" disabled>
+                                        <i class="fas fa-clock me-2"></i>
+                                        Coming Soon
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 border-secondary">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Outstanding Items
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        Track uncleared transactions, missing items, and pending settlements.
+                                    </p>
+                                    <ul class="small text-muted mb-3">
+                                        <li>Uncleared transactions</li>
+                                        <li>Missing bank records</li>
+                                        <li>Pending settlements</li>
+                                        <li>Follow-up required items</li>
+                                    </ul>
+                                </div>
+                                <div class="card-footer">
+                                    <button class="btn btn-secondary w-100" disabled>
+                                        <i class="fas fa-clock me-2"></i>
+                                        Coming Soon
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Future Reports Preview -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5 class="text-secondary mb-3">
+                                <i class="fas fa-road me-2"></i>
+                                Upcoming Reports (Phase 2)
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="list-group">
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">
+                                            <i class="fas fa-university me-2 text-primary"></i>
+                                            IOLTA Activity Report
+                                        </h6>
+                                        <small class="text-muted">Regulatory</small>
+                                    </div>
+                                    <p class="mb-1 small">Complete trust account activity for compliance reporting</p>
+                                </div>
+                                
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">
+                                            <i class="fas fa-handshake me-2 text-warning"></i>
+                                            Settlement Analysis
+                                        </h6>
+                                        <small class="text-muted">Business</small>
+                                    </div>
+                                    <p class="mb-1 small">Performance metrics and settlement tracking</p>
+                                </div>
+                                
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">
+                                            <i class="fas fa-calendar-alt me-2 text-success"></i>
+                                            Month-End Summary
+                                        </h6>
+                                        <small class="text-muted">Operational</small>
+                                    </div>
+                                    <p class="mb-1 small">Comprehensive period-end reporting</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="list-group">
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">
+                                            <i class="fas fa-chart-line me-2 text-info"></i>
+                                            Cash Flow Analysis
+                                        </h6>
+                                        <small class="text-muted">Financial</small>
+                                    </div>
+                                    <p class="mb-1 small">Money flow trends and planning insights</p>
+                                </div>
+                                
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">
+                                            <i class="fas fa-search me-2 text-danger"></i>
+                                            Audit Trail Report
+                                        </h6>
+                                        <small class="text-muted">Security</small>
+                                    </div>
+                                    <p class="mb-1 small">User activity and change tracking</p>
+                                </div>
+                                
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">
+                                            <i class="fas fa-flag me-2 text-warning"></i>
+                                            Exception Report
+                                        </h6>
+                                        <small class="text-muted">Monitoring</small>
+                                    </div>
+                                    <p class="mb-1 small">Unusual patterns and items requiring review</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block help_content %}
+<p>The <strong>Reports</strong> section provides comprehensive reporting capabilities for trust account management.</p>
+<h6><i class="fas fa-star"></i> Essential Reports</h6>
+<p>Start with the most important reports for daily operations and compliance:</p>
+<ul>
+    <li><strong>Client Ledger:</strong> Individual client account statements and transaction history</li>
+    <li><strong>3-Way Reconciliation:</strong> Compare bank, book, and client balances</li>
+    <li><strong>Outstanding Items:</strong> Track items requiring attention or follow-up</li>
+</ul>
+<h6><i class="fas fa-download"></i> Export Options</h6>
+<p>Most reports can be exported in multiple formats:</p>
+<ul>
+    <li><strong>PDF:</strong> Professional formatted reports for printing and client delivery</li>
+    <li><strong>Excel:</strong> Spreadsheet format for further analysis</li>
+    <li><strong>Print:</strong> Browser-optimized printing</li>
+</ul>
+<h6><i class="fas fa-calendar"></i> Date Ranges</h6>
+<p>Filter reports by specific date ranges to focus on relevant time periods for analysis or compliance requirements.</p>
+{% endblock %}

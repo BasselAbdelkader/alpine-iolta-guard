@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Ledger Report - Trust Account Management</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/favicon.png">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/main.css">
+    <style>
+        @media print {
+            .sidebar, header, .no-print { display: none !important; }
+            .main-content { margin-left: 0 !important; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar p-3 no-print">
+        <div class="sidebar-header mb-4">
+            <h4 id="lawFirmName">IOLTA Guard Insurance Law</h4>
+            <small class="text-muted d-block" id="lawFirmLocation">San Francisco, CA</small>
+            <small class="text-muted d-block" id="lawFirmPhone">(415) 555-0100</small>
+            <small class="text-muted d-block" id="lawFirmEmail">info@ioltaguard.com</small>
+            <hr class="my-2 opacity-25">
+            <small class="text-muted">Trust Account System</small>
+        </div>
+
+        <ul class="nav nav-pills flex-column">            <li class="nav-item mb-2">
+                <a href="/html/approval-dashboard.html" class="nav-link position-relative" id="approvalBadgeLink">
+                    <i class="fas fa-check-circle me-2"></i>Approvals
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                          id="approvalBadge"
+                          style="display: none;">
+                        0
+                        <span class="visually-hidden">pending approvals</span>
+                    </span>
+                </a>
+            </li>
+
+            
+            <li class="nav-item mb-2">
+                <a href="/dashboard" class="nav-link">
+                    <i class="fas fa-building-columns me-2"></i>Dashboard
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/clients" class="nav-link">
+                    <i class="fas fa-users me-2"></i>Clients
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/vendors" class="nav-link">
+                    <i class="fas fa-building me-2"></i>Vendors
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/bank-accounts" class="nav-link">
+                    <i class="fas fa-university me-2"></i>Bank
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/settlements" class="nav-link">
+                    <i class="fas fa-balance-scale me-2"></i>3-Way Settlement
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/reports" class="nav-link active">
+                    <i class="fas fa-chart-bar me-2"></i>Reports
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a href="/checks" class="nav-link">
+                    <i class="fas fa-print me-2"></i>Print Checks
+                </a>
+            </li><li class="nav-item mb-2">
+                <a href="/settings" class="nav-link">
+                    <i class="fas fa-cog me-2"></i>Settings
+                </a>
+            </li>
+        </ul>
+
+        <div class="mt-auto pt-3">
+            <div class="border-top pt-3">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="fas fa-user-circle me-2"></i>
+                    <span id="userName">admin</span>
+                </div>
+                <button class="btn btn-outline-light btn-sm" onclick="logout()">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="shadow-sm border-bottom p-3 no-print">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">Client Ledger Report</h2>
+                    <small class="text-muted" id="headerFirmAddress">123 Legal Plaza, New York, NY 10001 | 555-LAW-FIRM | admin@samplelawfirm.com</small>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary me-2" onclick="window.location.href='/reports'">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Reports
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i>Print
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page content -->
+        <main class="p-4">
+            <div class="container-fluid">
+                <!-- Filter Form -->
+                <div class="card mb-4 no-print">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-filter me-2"></i>Report Filters
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="filterForm">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="clientSelect" class="form-label">Client *</label>
+                                    <select class="form-select" id="clientSelect" required>
+                                        <option value="">-- Select Client --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="caseSelect" class="form-label">Case (Optional)</label>
+                                    <select class="form-select" id="caseSelect">
+                                        <option value="">-- All Cases --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-file-alt me-2"></i>Generate Report
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="dateFrom" class="form-label">Date From</label>
+                                    <input type="date" class="form-control" id="dateFrom">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="dateTo" class="form-label">Date To</label>
+                                    <input type="date" class="form-control" id="dateTo">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button type="button" class="btn btn-outline-secondary w-100" onclick="resetFilters()">
+                                        <i class="fas fa-redo me-2"></i>Reset
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Report Display -->
+                <div id="reportDisplay" style="display: none;">
+                    <!-- Report Header -->
+                    <div class="card mb-3">
+                        <div class="card-body text-center">
+                            <h3 id="reportFirmName">Law Firm Name</h3>
+                            <p class="mb-0" id="reportFirmAddress">Address</p>
+                            <h4 class="mt-3">Client Ledger Report</h4>
+                            <p class="text-muted" id="reportDateRange">Date Range</p>
+                        </div>
+                    </div>
+
+                    <!-- Client Info -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Client:</strong> <span id="reportClientName">-</span><br>
+                                    <strong>Case:</strong> <span id="reportCaseName">All Cases</span>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <strong>Report Generated:</strong> <span id="reportGenerated">-</span><br>
+                                    <strong>Current Balance:</strong> <span id="reportBalance" class="text-primary fw-bold">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">Summary</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-3">
+                                    <small class="text-muted">Total Deposits</small>
+                                    <h5 class="text-success" id="totalDeposits">$0.00</h5>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">Total Withdrawals</small>
+                                    <h5 class="text-danger" id="totalWithdrawals">$0.00</h5>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">Net Change</small>
+                                    <h5 id="netChange">$0.00</h5>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">Transaction Count</small>
+                                    <h5 id="transactionCount">0</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transactions Table -->
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">Transaction Details</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Type</th>
+                                            <th>Ref</th>
+                                            <th>Payee</th>
+                                            <th>Description</th>
+                                            <th class="text-end">Amount</th>
+                                            <th class="text-end">Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="transactionsBody">
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-4">
+                                                Select a client and click "Generate Report" to view transactions
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- No Data Message -->
+                <div id="noDataMessage" class="alert alert-info" style="display: none;">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Select a client and date range to generate the report.
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js?v=1762170271"></script>
+    <!-- API Client -->
+    <script src="/js/api-client-session.js?v=1762170271"></script>
+    <!-- Client Ledger JS -->
+    <script src="/js/client-ledger.js?v=1762170271"></script>
+    <script src="/js/law-firm-loader.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', initLawFirmInfo);
+    </script>
+    <!-- Approval System Scripts -->
+    <script src="/js/approval-badge.js"></script>
+    <script src="/js/approval-widget.js"></script>
+</body>
+</html>

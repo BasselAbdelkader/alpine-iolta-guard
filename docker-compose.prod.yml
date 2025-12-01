@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:16-alpine
+    container_name: iolta_db_prod
+    environment:
+      POSTGRES_DB: iolta_guard_db
+      POSTGRES_USER: iolta_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d
+    networks:
+      - iolta_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iolta_user -d iolta_guard_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: iolta_redis_prod
+    networks:
+      - iolta_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  backend:
+    build: ./backend
+    container_name: iolta_backend_prod
+    working_dir: /app
+    command: sh -c "python manage.py migrate && gunicorn trust_account_project.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120"
+    environment:
+      DJANGO_SETTINGS_MODULE: trust_account_project.settings
+      DB_NAME: iolta_guard_db
+      DB_USER: iolta_user
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: database
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: "False"
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+    networks:
+      - iolta_network
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: iolta_frontend_prod
+    ports:
+      - "80:80"
+    networks:
+      - iolta_network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  iolta_network:
+    driver: bridge

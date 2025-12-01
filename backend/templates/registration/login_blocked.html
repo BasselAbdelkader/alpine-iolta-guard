@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Access Temporarily Blocked{% endblock %}
+
+{% block page_title %}Access Temporarily Blocked{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="fas fa-shield-alt"></i>
+                        Security Protection Active
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <h5 class="alert-heading">Too Many Failed Login Attempts</h5>
+                        <p>{{ error_message }}</p>
+                        <hr>
+                        <p class="mb-0">
+                            <strong>Please try again in {{ retry_after_minutes }} minutes.</strong>
+                        </p>
+                    </div>
+                    
+                    <div class="text-muted small">
+                        <p><strong>Why was I blocked?</strong></p>
+                        <ul>
+                            <li>Multiple failed login attempts were detected from your IP address</li>
+                            <li>This is a security measure to protect the system from unauthorized access</li>
+                            <li>The block will be automatically lifted after the waiting period</li>
+                        </ul>
+                        
+                        <p><strong>What should I do?</strong></p>
+                        <ul>
+                            <li>Wait for the timeout period to expire</li>
+                            <li>Ensure you are using the correct username and password</li>
+                            <li>Contact your system administrator if you continue to experience issues</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{% url 'admin:login' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-refresh after timeout period (convert minutes to milliseconds)
+setTimeout(function() {
+    window.location.reload();
+}, {{ retry_after_minutes }} * 60 * 1000);
+</script>
+{% endblock %}

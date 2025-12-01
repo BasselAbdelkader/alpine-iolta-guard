@@ -1,0 +1,11 @@
+
+# Temporary/scratch files
+temp/
+*.txt.bak
+
+# Patch scripts (development artifacts)
+scripts/patches/
+
+# Backups (keep schema, exclude data dumps)
+backups/*.sql
+!backups/iolta_schema_*.sql

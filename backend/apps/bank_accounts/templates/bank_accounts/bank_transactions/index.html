@@ -1,0 +1,886 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% load accounting_filters %}
+
+{% block title %}Bank Register{% endblock %}
+
+{% block page_title %}Bank Register{% endblock %}
+
+{% block help_title %}Bank Register{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/datatables.min.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Filter Card -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Search & Filter Bank Transactions</h5>
+                    <button type="button" class="btn btn-primary" onclick="addBankTransaction()">
+                        <i class="fas fa-plus"></i> Add New Bank Transaction
+                    </button>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3 align-items-end">
+                        <div class="col-md-2">
+                            {{ search_form.search }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ search_form.transaction_type }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ search_form.status }}
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Date From</label>
+                            {{ search_form.date_from }}
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Date To</label>
+                            {{ search_form.date_to }}
+                        </div>
+                        <div class="col-md-2">
+                            <div class="d-grid gap-2 d-md-flex">
+                                <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                                    <i class="fas fa-search"></i> Filter
+                                </button>
+                                <a href="{% url 'bank_accounts:bank_transactions' %}" class="btn btn-outline-secondary btn-sm flex-fill">
+                                    <i class="fas fa-times"></i> Clear
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="row mb-4">
+                <div class="col-md-2 col-sm-6 mb-3">
+                    <div class="card bg-success text-white h-100" style="background-color: #198754 !important;">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="card-title mb-0" style="font-size: 0.8rem;">Total Deposits</h6>
+                                <i class="fas fa-arrow-down" style="font-size: 1.2rem; opacity: 0.7;"></i>
+                            </div>
+                            <div class="flex-grow-1 d-flex flex-column justify-content-center">
+                                <h5 class="mb-1 text-center" style="font-size: 1.2rem; line-height: 1.1;">{{ deposits_count }}</h5>
+                                <small class="text-center" style="font-size: 0.7rem; line-height: 1.0; word-break: break-all;">{{ total_deposits|format_amount_accounting }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-sm-6 mb-3">
+                    <div class="card bg-danger text-white h-100" style="background-color: #dc3545 !important;">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="card-title mb-0" style="font-size: 0.8rem;">Total Withdrawals</h6>
+                                <i class="fas fa-arrow-up" style="font-size: 1.2rem; opacity: 0.7;"></i>
+                            </div>
+                            <div class="flex-grow-1 d-flex flex-column justify-content-center">
+                                <h5 class="mb-1 text-center" style="font-size: 1.2rem; line-height: 1.1;">{{ withdrawals_count }}</h5>
+                                <small class="text-center" style="font-size: 0.7rem; line-height: 1.0; word-break: break-all;">{{ total_withdrawals|format_amount_accounting }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-sm-6 mb-3">
+                    <div class="card bg-warning text-dark h-100" style="background-color: #ffc107 !important;">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="card-title mb-0" style="font-size: 0.8rem;">Unmatched</h6>
+                                <i class="fas fa-exclamation-triangle" style="font-size: 1.2rem; opacity: 0.7;"></i>
+                            </div>
+                            <div class="flex-grow-1 d-flex flex-column justify-content-center">
+                                <h5 class="mb-1 text-center" style="font-size: 1.2rem; line-height: 1.1;">{{ unmatched_count }}</h5>
+                                <small class="text-center" style="font-size: 0.7rem; line-height: 1.0; word-break: break-all;">{{ unmatched_amount|format_amount_accounting }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-sm-6 mb-3">
+                    <div class="card bg-info text-white h-100" style="background-color: #0dcaf0 !important;">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="card-title mb-0" style="font-size: 0.8rem;">Matched</h6>
+                                <i class="fas fa-check" style="font-size: 1.2rem; opacity: 0.7;"></i>
+                            </div>
+                            <div class="flex-grow-1 d-flex flex-column justify-content-center">
+                                <h5 class="mb-1 text-center" style="font-size: 1.2rem; line-height: 1.1;">{{ matched_count }}</h5>
+                                <small class="text-center" style="font-size: 0.7rem; line-height: 1.0; word-break: break-all;">{{ matched_amount|format_amount_accounting }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-sm-6 mb-3">
+                    <div class="card bg-secondary text-white h-100" style="background-color: #6c757d !important;">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="card-title mb-0" style="font-size: 0.8rem;">Missing Transactions</h6>
+                                <i class="fas fa-exclamation-circle" style="font-size: 1.2rem; opacity: 0.7;"></i>
+                            </div>
+                            <div class="flex-grow-1 d-flex flex-column justify-content-center">
+                                <h5 class="mb-1 text-center" style="font-size: 1.2rem; line-height: 1.1;">{{ missing_checks_count }}</h5>
+                                <small class="text-center" style="font-size: 0.7rem; line-height: 1.0; word-break: break-all;">{{ missing_checks_amount|format_amount_accounting }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Bank Transactions</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="bankTransactionsTable" class="table table-striped table-hover align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th style="width: 100px;" class="text-center">Date</th>
+                                    <th style="width: 90px;" class="text-center">Type</th>
+                                    <th style="width: 110px;" class="text-center">Reference</th>
+                                    <th style="width: 160px;">Payee</th>
+                                    <th style="width: 160px;">Client</th>
+                                    <th style="width: 150px;">Check Memo</th>
+                                    <th style="width: 120px;" class="text-end">Amount</th>
+                                    <th style="width: 110px;" class="text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in bank_transactions %}
+                                <tr>
+                                    <!-- Date -->
+                                    <td class="text-center">
+                                        <span class="fw-medium">{{ transaction.transaction_date|date:"m/d/Y" }}</span>
+                                        {% if transaction.post_date and transaction.post_date != transaction.transaction_date %}
+                                            <br><small class="text-muted">Posted: {{ transaction.post_date|date:"m/d/Y" }}</small>
+                                        {% endif %}
+                                    </td>
+
+                                    <!-- Type -->
+                                    <td class="text-center">
+                                        {% if transaction.status == 'voided' %}
+                                            <span class="badge bg-danger">VOIDED - {{ transaction.get_transaction_type_display }}</span>
+                                        {% else %}
+                                            <span class="badge
+                                                {% if transaction.transaction_type == 'DEPOSIT' %}bg-success
+                                                {% elif transaction.transaction_type == 'WITHDRAWAL' %}bg-danger
+                                                {% elif transaction.transaction_type == 'TRANSFER_IN' %}bg-info
+                                                {% elif transaction.transaction_type == 'TRANSFER_OUT' %}bg-warning text-dark
+                                                {% elif transaction.transaction_type == 'FEE' %}bg-secondary
+                                                {% elif transaction.transaction_type == 'INTEREST' %}bg-primary
+                                                {% else %}bg-dark
+                                                {% endif %}">
+                                                {{ transaction.get_transaction_type_display }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+
+                                    <!-- Reference -->
+                                    <td class="text-center">
+                                        {% if transaction.reference_number %}
+                                            <span class="text-dark">{{ transaction.reference_number }}</span>
+                                        {% elif transaction.check_number %}
+                                            <span class="text-muted">Check: {{ transaction.check_number }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <!-- Payee -->
+                                    <td>
+                                        {% if transaction.payee %}
+                                            <span class="fw-medium">{{ transaction.payee }}</span>
+                                        {% elif transaction.vendor %}
+                                            <span class="fw-medium">{{ transaction.vendor.vendor_name }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <!-- Client -->
+                                    <td>
+                                        {% if transaction.client %}
+                                            <span class="fw-medium">{{ transaction.client.full_name }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <!-- Memo -->
+                                    <td>
+                                        {% if transaction.check_memo %}
+                                            <span class="text-dark">{{ transaction.check_memo|truncatechars:35 }}</span>
+                                        {% elif transaction.description %}
+                                            <span class="text-muted">{{ transaction.description|truncatechars:35 }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <!-- Amount -->
+                                    <td class="text-end">
+                                        {% if transaction.status == 'voided' %}
+                                            <span class="text-muted" style="text-decoration: line-through;">
+                                                {% if transaction.transaction_type == 'DEPOSIT' or transaction.transaction_type == 'TRANSFER_IN' or transaction.transaction_type == 'INTEREST' %}
+                                                    +{{ transaction.amount|format_amount_accounting }} <small>(VOIDED)</small>
+                                                {% else %}
+                                                    -{{ transaction.amount|format_amount_accounting }} <small>(VOIDED)</small>
+                                                {% endif %}
+                                            </span>
+                                        {% else %}
+                                            {% if transaction.transaction_type == 'DEPOSIT' or transaction.transaction_type == 'TRANSFER_IN' or transaction.transaction_type == 'INTEREST' %}
+                                                <span class="text-success fw-medium">+{{ transaction.amount|format_amount_accounting }}</span>
+                                            {% else %}
+                                                <span class="text-danger fw-medium">-{{ transaction.amount|format_amount_accounting }}</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+
+                                    <!-- Status -->
+                                    <td class="text-center">
+                                        {% if transaction.status == 'voided' %}
+                                            <span class="badge bg-danger">VOIDED</span>
+                                        {% elif transaction.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                        {% elif transaction.status == 'cleared' %}
+                                            <span class="badge bg-success">Cleared</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ transaction.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center">No bank transactions found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if is_paginated %}
+                    <nav aria-label="Bank transaction pagination" class="mt-4">
+                        <ul class="pagination justify-content-center pagination-lg">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link rounded-start shadow-sm" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" title="Go to first page">
+                                        <i class="fas fa-angle-double-left me-1"></i>First
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link shadow-sm" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" title="Go to previous page">
+                                        <i class="fas fa-angle-left me-1"></i>Previous
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link rounded-start">
+                                        <i class="fas fa-angle-double-left me-1 text-muted"></i>First
+                                    </span>
+                                </li>
+                                <li class="page-item disabled">
+                                    <span class="page-link">
+                                        <i class="fas fa-angle-left me-1 text-muted"></i>Previous
+                                    </span>
+                                </li>
+                            {% endif %}
+                            
+                            <li class="page-item active">
+                                <span class="page-link bg-info border-info shadow-sm">
+                                    <i class="fas fa-university me-1"></i>
+                                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                                </span>
+                            </li>
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link shadow-sm" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" title="Go to next page">
+                                        Next<i class="fas fa-angle-right ms-1"></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link rounded-end shadow-sm" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" title="Go to last page">
+                                        Last<i class="fas fa-angle-double-right ms-1"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">
+                                        Next<i class="fas fa-angle-right ms-1 text-muted"></i>
+                                    </span>
+                                </li>
+                                <li class="page-item disabled">
+                                    <span class="page-link rounded-end">
+                                        Last<i class="fas fa-angle-double-right ms-1 text-muted"></i>
+                                    </span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Missing Transactions Section -->
+            {% if missing_checks_count > 0 %}
+            <div class="card mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-circle text-warning"></i>
+                        Missing Transactions (Outstanding) - {{ missing_checks_count }}
+                    </h5>
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshMissingTransactions()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>These transactions were recorded internally but have not yet appeared in the bank statement.</strong>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Reference</th>
+                                    <th>Client/Payee</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in missing_checks %}
+                                <tr>
+                                    <td>{{ transaction.transaction_date|date:"m/d/Y" }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if transaction.transaction_type == 'DEPOSIT' %}bg-success
+                                            {% elif transaction.transaction_type == 'WITHDRAWAL' %}bg-danger  
+                                            {% elif transaction.transaction_type == 'TRANSFER' %}bg-info
+                                            {% endif %}">
+                                            {{ transaction.get_transaction_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ transaction.reference_number|default:'-' }}</td>
+                                    <td>
+                                        {% if transaction.client %}
+                                            {{ transaction.client.full_name }}
+                                        {% elif transaction.vendor %}
+                                            {{ transaction.vendor.vendor_name }}
+                                        {% elif transaction.payee %}
+                                            {{ transaction.payee }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ transaction.description|truncatechars:50 }}</td>
+                                    <td>
+                                        {% if transaction.transaction_type == 'DEPOSIT' %}
+                                            <span class="text-success">{{ transaction.amount|format_amount_accounting }}</span>
+                                        {% else %}
+                                            <span class="text-dark">{{ transaction.amount|format_withdrawal }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i>
+                                Missing transactions represent internal records that should appear in future bank statements.
+                            </small>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <strong class="text-warning">
+                                Total Outstanding: {{ missing_checks_amount|format_amount_accounting }}
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/datatables.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // Only initialize DataTables if table has rows
+    if ($('#bankTransactionsTable tbody tr').length > 0 && !$('#bankTransactionsTable tbody tr td[colspan]').length) {
+        $('#bankTransactionsTable').DataTable({
+        "pageLength": 25,
+        "order": [[ 0, "desc" ]],
+        "searching": false,
+        "lengthChange": false,
+        "paging": false,  // Disable DataTables pagination
+        "info": true,     // Keep "Showing 1 to X of Y entries" info
+        "columnDefs": [
+            {
+                "targets": 0,
+                "orderable": true,
+                "render": function(data, type, row) {
+                    if (type === 'sort') {
+                        var dateStr = data.split('<br>')[0].trim();
+                        return new Date(dateStr).getTime();
+                    }
+                    return data;
+                }
+            },
+        ]
+        });
+    }
+});
+
+function refreshMissingTransactions() {
+    // Show loading state
+    const refreshBtn = document.querySelector('button[onclick="refreshMissingTransactions()"]');
+    const originalText = refreshBtn.innerHTML;
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+    refreshBtn.disabled = true;
+    
+    // Reload the page to get updated missing transactions
+    setTimeout(() => {
+        window.location.reload();
+    }, 500);
+}
+
+// Bank Transaction Modal Functions - Use unified transaction modal
+function addBankTransaction() {
+    console.log('Loading transaction form from bank transactions page - DYNAMIC MODE');
+
+    // CRITICAL: Clear global variables to prevent context pollution from previous modals
+    window.currentClientId = null;
+    window.currentCaseId = null;
+    console.log('Cleared global client/case variables');
+
+    // Clear any previous content
+    $('#transactionModalContent').empty();
+
+    // Show unified transaction modal
+    $('#transactionModal').modal('show');
+
+    // Load form content via AJAX (WITHOUT client/case context - DYNAMIC MODE)
+    $.ajax({
+        url: '{% url "bank_accounts:bank_transaction_create" %}',
+        type: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(response) {
+            console.log('Transaction form loaded - Should be DYNAMIC mode');
+            if (response.form_html) {
+                $('#transactionModalContent').html(response.form_html);
+
+                // FORCE remove any hidden client/case fields that might exist from previous loads
+                $('#current-client-id').remove();
+                $('#current-case-id').remove();
+                console.log('Removed hidden client/case fields');
+
+                // Initialize the form functionality
+                initializeTransactionForm();
+            } else {
+                $('#transactionModalContent').html('<div class="alert alert-danger">Error loading form. Please try again.</div>');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading transaction form:', error);
+            $('#transactionModalContent').html('<div class="alert alert-danger">Error loading form: ' + error + '</div>');
+        }
+    });
+}
+
+function submitTransactionForm() {
+    console.log('submitTransactionForm called');
+    var form = $('#transactionModalContent form');
+    if (form.length === 0) {
+        console.error('Form not found in modal content!');
+        return;
+    }
+
+    // Ensure hidden fields are populated correctly before submission (SCOPED TO FORM)
+    // Handle amount field (from display field to hidden field)
+    var displayAmount = form.find('#id_amount_display').val();
+    if (displayAmount) {
+        var rawAmount = displayAmount.replace(/,/g, '');
+        form.find('#id_amount_hidden').val(rawAmount);
+        form.find('input[name="amount"]').val(rawAmount);
+    }
+
+    // Handle payee field (from autocomplete text field to form payee field)
+    var payeeText = form.find('#id_payee_text').val();
+    if (payeeText && payeeText.trim()) {
+        // Make sure payee field is properly set
+        form.find('input[name="payee"]').val(payeeText.trim());
+    }
+
+    // COMPREHENSIVE VALIDATION - SCOPED TO MODAL FORM
+    // All selectors scoped to form to avoid conflicts
+    var bankAccountId = form.find('select[name="bank_account"]').val();
+    var transactionType = form.find('select[name="transaction_type"]').val();
+    var referenceNumber = form.find('input[name="reference_number"]').val() || '';
+    var payeeDisplayValue = form.find('#id_payee_text').val() || ''; // Check visible field
+    var amountDisplayValue = form.find('#id_amount_display').val() || '';
+    var amount = parseFloat(amountDisplayValue.replace(/,/g, '')) || 0;
+    var description = form.find('textarea[name="description"]').val() || '';
+    var checkMemo = form.find('textarea[name="check_memo"]').val() || '';
+
+    // Get mode to determine if client/case are required
+    var formMode = form.find('#form-mode').val() || 'dynamic';
+
+    console.log('=== VALIDATION DEBUG ===');
+    console.log('Form Mode:', formMode);
+    console.log('Bank Account:', bankAccountId);
+    console.log('Transaction Type:', transactionType);
+    console.log('Reference Number:', referenceNumber);
+    console.log('Payee Display:', payeeDisplayValue);
+    console.log('Amount Display:', amountDisplayValue);
+    console.log('Amount Parsed:', amount);
+    console.log('Description:', description);
+    console.log('Check Memo:', checkMemo);
+
+    // Helper function to show inline error
+    function showError(fieldSelector, errorMessage) {
+        var field = form.find(fieldSelector);
+        field.addClass('is-invalid');
+
+        // Remove existing error message if any
+        field.next('.invalid-feedback').remove();
+
+        // Add error message
+        field.after('<div class="invalid-feedback d-block" style="color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem;">' + errorMessage + '</div>');
+
+        // Focus on field
+        field.focus();
+    }
+
+    // Helper function to clear error
+    function clearError(fieldSelector) {
+        var field = form.find(fieldSelector);
+        field.removeClass('is-invalid');
+        field.next('.invalid-feedback').remove();
+    }
+
+    // Clear all previous errors
+    form.find('.invalid-feedback').remove();
+    form.find('.is-invalid').removeClass('is-invalid');
+
+    // 1. Check Bank Account
+    if (!bankAccountId || bankAccountId === '') {
+        showError('select[name="bank_account"]', 'Please choose a bank account.');
+        return false;
+    }
+
+    // 2. Check Transaction Type
+    if (!transactionType || transactionType === '' || transactionType === '---------') {
+        showError('select[name="transaction_type"]', 'Type is required.');
+        return false;
+    }
+
+    // 3. Check Reference Number
+    if (!referenceNumber.trim()) {
+        showError('input[name="reference_number"]', 'Ref is required.');
+        return false;
+    }
+
+    // 4. Check Payee (check visible field)
+    if (!payeeDisplayValue.trim()) {
+        showError('#id_payee_text', 'Payee is required.');
+        return false;
+    }
+
+    // 5. Check Amount
+    if (!amountDisplayValue.trim() || amount <= 0) {
+        showError('#id_amount_display', 'Amount is required and must be greater than zero.');
+        return false;
+    }
+
+    // 6. Check Description
+    if (!description.trim()) {
+        showError('textarea[name="description"]', 'Description is required.');
+        return false;
+    }
+
+    // 7. Check Check Memo
+    if (!checkMemo.trim()) {
+        showError('textarea[name="check_memo"]', 'Check Memo is required.');
+        return false;
+    }
+
+    // NOTE: Client and Case are OPTIONAL in dynamic mode (from /bank-accounts/transactions/)
+    // They are only required/locked in case_context mode (from /clients/cases/1/)
+
+    var formData = form.serialize();
+    var actionUrl = form.attr('action');
+
+    console.log('Form action:', actionUrl);
+    console.log('Form data:', formData);
+
+    // Disable submit button to prevent double submission
+    $('button[onclick="submitTransactionForm()"]').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+
+    $.ajax({
+        url: actionUrl || '{% url "bank_accounts:bank_transaction_create" %}',
+        type: 'POST',
+        data: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(response) {
+            console.log('Success response:', response);
+            if (response.success) {
+                $('#transactionModal').modal('hide');
+                // Store success message in sessionStorage to show after reload
+                var successMessage = response.message || 'Transaction saved successfully';
+                sessionStorage.setItem('transactionSuccessMessage', successMessage);
+                location.reload(); // Refresh the page to show new transaction
+            } else {
+                // Re-enable button
+                $('button[onclick="submitTransactionForm()"]').prop('disabled', false).html('<i class="fas fa-save"></i> Save Transaction');
+
+                if (response.form_html) {
+                    $('#transactionModalContent').html(response.form_html);
+                } else {
+                    alert('Error: ' + (response.message || 'Please check the form for errors.'));
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error submitting form:', error);
+            console.error('XHR status:', xhr.status);
+            console.error('XHR response:', xhr.responseText);
+
+            // Re-enable button
+            $('button[onclick="submitTransactionForm()"]').prop('disabled', false).html('<i class="fas fa-save"></i> Save Transaction');
+
+            alert('Error creating transaction: ' + error);
+        }
+    });
+}
+
+// Initialize transaction form functionality after AJAX load
+function initializeTransactionForm() {
+    console.log('Initializing transaction form...');
+    // Initialize payee autocomplete functionality
+    initializePayeeAutocomplete();
+
+    // Toggle cleared date field
+    $('#id_is_cleared').change(function() {
+        if (this.checked) {
+            $('#clearedDateDiv').show();
+            if (!$('#id_cleared_date').val()) {
+                $('#id_cleared_date').val(new Date().toISOString().split('T')[0]);
+            }
+        } else {
+            $('#clearedDateDiv').hide();
+            $('#id_cleared_date').val('');
+        }
+    });
+
+    // Handle client selection change to filter cases
+    $('#id_client').change(function() {
+        var clientId = $(this).val();
+        var caseField = $('#id_case');
+
+        // Clear current case selection
+        caseField.val('');
+        updateAvailableFunds(null);
+
+        if (clientId) {
+            // Load cases for selected client
+            $.ajax({
+                url: '/clients/ajax/cases-for-client/?client_id=' + clientId,
+                method: 'GET',
+                success: function(data) {
+                    // Clear existing options except the first one
+                    caseField.find('option:not(:first)').remove();
+
+                    // Add cases for selected client
+                    if (data.cases && data.cases.length > 0) {
+                        data.cases.forEach(function(case_obj) {
+                            var option = $('<option></option>')
+                                .attr('value', case_obj.id)
+                                .text(case_obj.case_number + ' - ' + case_obj.case_title);
+                            caseField.append(option);
+                        });
+                    }
+                },
+                error: function() {
+                    // Clear cases on error
+                    caseField.find('option:not(:first)').remove();
+                }
+            });
+        } else {
+            // No client selected - clear cases
+            caseField.find('option:not(:first)').remove();
+        }
+    });
+
+    // Handle case selection change to update available funds
+    $('#id_case').change(function() {
+        var caseId = $(this).val();
+        updateAvailableFunds(caseId);
+    });
+
+    // Always update available funds when form loads
+    var initialCaseId = $('#id_case').val();
+    if (initialCaseId) {
+        console.log('Updating available funds for case:', initialCaseId);
+        updateAvailableFunds(initialCaseId);
+    }
+
+    console.log('Transaction form initialized successfully');
+}
+
+// Initialize payee autocomplete functionality
+function initializePayeeAutocomplete() {
+    var payeeInput = $('#id_payee_name');
+    var suggestionsList = $('#payee-suggestions .dropdown-menu');
+    var debounceTimer;
+
+    payeeInput.on('input', function() {
+        var query = $(this).val().trim();
+        // Clear previous timer
+        clearTimeout(debounceTimer);
+
+        // Hide suggestions if query is too short
+        if (query.length < 2) {
+            $('#payee-suggestions').hide();
+            return;
+        }
+
+        // Debounce the search to avoid too many requests
+        debounceTimer = setTimeout(function() {
+            searchVendors(query);
+        }, 300);
+    });
+
+    // Hide suggestions when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#id_payee_name, #payee-suggestions').length) {
+            $('#payee-suggestions').hide();
+        }
+    });
+}
+
+// Function to update available funds based on case balance
+function updateAvailableFunds(caseId) {
+    if (!caseId) {
+        $('#available_funds').val('$0.00');
+        return;
+    }
+
+    $.ajax({
+        url: '/clients/cases/' + caseId + '/balance/',
+        type: 'GET',
+        dataType: 'json',
+        success: function(data) {
+            var balance = parseFloat(data.balance || 0);
+            var formattedBalance = balance >= 0 ? '$' + balance.toFixed(2) : '$0.00';
+            $('#available_funds').val(formattedBalance);
+        },
+        error: function() {
+            $('#available_funds').val('$0.00');
+        }
+    });
+}
+
+// Vendor search functionality for payee autocomplete
+function searchVendors(query) {
+    $.ajax({
+        url: '/vendors/search/',
+        type: 'GET',
+        data: { q: query },
+        dataType: 'json',
+        success: function(vendors) {
+            var suggestionsList = $('#payee-suggestions .dropdown-menu');
+            suggestionsList.empty();
+
+            if (vendors.length > 0) {
+                vendors.forEach(function(vendor) {
+                    var listItem = $('<li><a class="dropdown-item" href="#" data-vendor-id="' + vendor.id + '">' + vendor.vendor_name + '</a></li>');
+                    suggestionsList.append(listItem);
+                });
+                $('#payee-suggestions').show();
+            } else {
+                $('#payee-suggestions').hide();
+            }
+        },
+        error: function() {
+            $('#payee-suggestions').hide();
+        }
+    });
+}
+
+// Clean up modal on close
+$('#transactionModal').on('hidden.bs.modal', function () {
+    console.log('Transaction modal hidden');
+    $('#transactionModalContent').empty(); // Clear content
+});
+
+</script>
+
+<!-- Transaction Modal -->
+<div class="modal fade" id="transactionModal" aria-labelledby="transactionModalLabel" aria-hidden="true" style="z-index: 1060; padding-left: 0 !important;">
+    <div class="modal-dialog modal-xl" style="margin: 1.75rem auto; max-width: 90vw;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transactionModalLabel">Add New Transaction</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="transactionModalForm" action="{% url 'bank_accounts:bank_transaction_create' %}" method="post">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div id="transactionModalContent">
+                        <!-- Transaction form fields will be loaded here via AJAX -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitTransactionForm()">
+                        <i class="fas fa-save"></i> Save Transaction
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block help_content %}
+<p>The <strong>Bank Transactions</strong> page manages transactions from bank statements for reconciliation purposes.</p>
+<h6><i class="fas fa-university"></i> Bank Transaction Management</h6>
+<p>Bank transactions represent your bank's official record of account activity:</p>
+<ul>
+    <li><strong>Deposits:</strong> Money received into the account</li>
+    <li><strong>Withdrawals:</strong> Money paid out from the account</li>
+    <li><strong>Fees:</strong> Bank charges and service fees</li>
+    <li><strong>Interest:</strong> Interest earned on account balance</li>
+</ul>
+<h6><i class="fas fa-balance-scale"></i> Reconciliation Status</h6>
+<p>Track the matching status of bank bank_accounts:</p>
+<ul>
+    <li><strong>Unmatched:</strong> Not yet matched to internal transactions</li>
+    <li><strong>Matched:</strong> Matched to corresponding internal transaction</li>
+    <li><strong>Reconciled:</strong> Fully reconciled and verified</li>
+</ul>
+<h6><i class="fas fa-search"></i> Search and Filter</h6>
+<p>Use the search and filter options to find specific transactions by description, reference number, check number, or date range.</p>
+{% endblock %}

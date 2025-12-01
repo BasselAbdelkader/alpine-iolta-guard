@@ -1,0 +1,920 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% load accounting_filters %}
+
+{% block title %}{{ client.full_name }} - Client Details{% endblock %}
+
+{% block page_title %}{% if global_law_firm %}{{ global_law_firm.firm_name }}{% else %}Client Details{% endif %}{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/datatables.min.css' %}" rel="stylesheet">
+<!-- Cache bust: {{ 'now'|date:'YmdHis' }} -->
+<style>
+.client-details-table {
+    font-size: 0.7rem !important;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+.client-details-table td {
+    padding: 0.5rem 0.7rem;
+    border: none;
+    border-bottom: 3px solid #333333 !important; /* THICK horizontal lines */
+    font-size: 0.7rem !important; /* Force small font on table cells */
+}
+.client-details-table td:first-child {
+    font-weight: 600;
+    color: #495057;
+    width: 45%;
+}
+.detail-column {
+    border-right: 8px solid #007bff !important; /* THICK blue vertical lines */
+    padding-right: 1.2rem;
+    padding-left: 1rem;
+}
+.detail-column:last-child {
+    border-right: none !important;
+}
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #007bff;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 4px solid #007bff;
+}
+/* Override Bootstrap table styles */
+.client-details-table tbody tr:nth-of-type(odd) {
+    background-color: transparent;
+}
+.client-details-table tbody tr:hover {
+    background-color: transparent;
+}
+/* Force small font size on all table elements */
+.client-details-table, 
+.client-details-table td, 
+.client-details-table th,
+.client-details-table tr,
+.client-details-table * {
+    font-size: 0.7rem !important;
+    line-height: 1.2 !important;
+}
+/* Override any Bootstrap or inherited styles */
+.detail-column .client-details-table * {
+    font-size: 0.7rem !important;
+}
+/* Case filtering styles */
+.case-inactive {
+    opacity: 0.6;
+}
+.case-item[data-case-status="inactive"] {
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Client Details: {{ client.full_name }}</h4>
+                    <div class="btn-group">
+                        <a href="{% url 'clients:index' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Clients
+                        </a>
+                        <button type="button" class="btn btn-primary" onclick="editClient({{ client.pk }})">
+                            <i class="fas fa-edit"></i> Edit Client
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 detail-column">
+                            <table class="client-details-table">
+                                <tr>
+                                    <td>Name:</td>
+                                    <td>{{ client.full_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Phone:</td>
+                                    <td>{{ client.phone|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Email:</td>
+                                    <td>{{ client.email|default:"-" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-4 detail-column">
+                            <table class="client-details-table">
+                                <tr>
+                                    <td>Address:</td>
+                                    <td>{{ client.address|default:'-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td>City:</td>
+                                    <td>{{ client.city|default:'-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td>State:</td>
+                                    <td>{{ client.state|default:'-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Zip Code:</td>
+                                    <td>{{ client.zip_code|default:'-' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-4 detail-column">
+                            <table class="client-details-table">
+                                <tr>
+                                    <td>Status:</td>
+                                    <td>
+                                        {% if client.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Trust Account:</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if client.calculate_trust_account_status == 'ACTIVE_WITH_FUNDS' %}bg-success
+                                            {% elif client.calculate_trust_account_status == 'ACTIVE_ZERO_BALANCE' %}bg-info
+                                            {% elif client.calculate_trust_account_status == 'NEGATIVE_BALANCE' %}bg-danger
+                                            {% elif client.calculate_trust_account_status == 'DORMANT' %}bg-warning
+                                            {% else %}bg-secondary
+                                            {% endif %}">
+                                            {{ client.get_calculated_trust_account_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Created:</td>
+                                    <td>{{ client.created_at|date:"m/d/Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Updated:</td>
+                                    <td>{{ client.updated_at|date:"m/d/Y" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">Cases</h5>
+                                <div class="d-flex gap-3 align-items-center">
+                                    <div>
+                                        <label for="caseFilter" class="form-label mb-1 small">Filter:</label>
+                                        <select id="caseFilter" class="form-select form-select-sm" onchange="filterCases(this.value)">
+                                            <option value="active" {% if selected_case_filter == 'active' %}selected{% endif %}>Active Cases</option>
+                                            <option value="all" {% if selected_case_filter == 'all' %}selected{% endif %}>All Cases</option>
+                                            <option value="inactive" {% if selected_case_filter == 'inactive' %}selected{% endif %}>Inactive Cases</option>
+                                        </select>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-primary" onclick="createCase('{{ client.id }}')">
+                                        <i class="fas fa-plus"></i> Add New Case
+                                    </button>
+                                </div>
+                            </div>
+                            {% if cases %}
+                                <!-- Case list with integrated transaction rows -->
+                                <div class="cases-list">
+                                    <!-- Header row -->
+                                    <div class="row border-bottom bg-light py-2 mb-2 fw-bold">
+                                        <div class="col-1"></div>
+                                        <div class="col-5">Case Title</div>
+                                        <div class="col-2">Current Balance</div>
+                                        <div class="col-2">Status</div>
+                                        <div class="col-2">Actions</div>
+                                    </div>
+                                    
+                                    {% for case in cases %}
+                                    <!-- Case row -->
+                                    <div id="case-row-{{ case.id }}" class="row border-bottom py-2 align-items-center case-item {% if not case.is_active %}case-inactive{% endif %}" data-case-status="{% if case.is_active %}active{% else %}inactive{% endif %}">
+                                        <div class="col-1">
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="toggleCaseTransactions({{ case.id }})" title="Show/Hide Transactions">
+                                                <i class="fas fa-chevron-down" id="expand-icon-{{ case.id }}"></i>
+                                            </button>
+                                        </div>
+                                        <div class="col-5">
+                                            <a href="{% url 'clients:case_detail' case.pk %}" class="text-decoration-none{% if not case.is_active %} text-muted{% endif %}">
+                                                {{ case.case_title }}{% if not case.is_active %} <small>(Inactive)</small>{% endif %}
+                                            </a>
+                                        </div>
+                                        <div class="col-2">
+                                            <span class="{{ case.get_balance_status_class }}">{{ case.get_formatted_balance }}</span>
+                                        </div>
+                                        <div class="col-2">
+                                            <span class="badge 
+                                                {% if case.case_status == 'Open' %}bg-primary
+                                                {% elif case.case_status == 'Pending Settlement' %}bg-warning
+                                                {% elif case.case_status == 'Settled' %}bg-success
+                                                {% elif case.case_status == 'Closed' %}bg-secondary
+                                                {% endif %}">
+                                                {{ case.case_status }}
+                                            </span>
+                                        </div>
+                                        <div class="col-2">
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'clients:case_detail' case.pk %}" class="btn btn-sm btn-outline-primary" title="View Case">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" title="Edit Case" onclick="editCase({{ case.pk }})">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" title="Delete Case" onclick="deleteCase({{ case.pk }}, '{{ case.case_title|escapejs }}', {{ case.get_current_balance }})">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Transaction row immediately after case row -->
+                                    <div id="case-transactions-row-{{ case.id }}" class="row transaction-details" style="display: none;">
+                                        <div class="col-12">
+                                            <div class="bg-light border-start border-end border-bottom ms-5 me-3" style="padding: 1rem;">
+                                                <div id="case-transactions-content-{{ case.id }}">
+                                                    <!-- Transactions will be loaded here via AJAX -->
+                                                    <div class="text-center py-2">
+                                                        <i class="fas fa-spinner fa-spin"></i> Loading transactions...
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                {% if cases.count > 5 %}
+                                <div class="text-center mt-3">
+                                    <a href="{% url 'clients:case_index' %}?client={{ client.id }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-list"></i> View All Cases for {{ client.full_name }}
+                                    </a>
+                                </div>
+                                {% endif %}
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <div class="text-muted mb-3">
+                                        <i class="fas fa-briefcase fa-3x"></i>
+                                    </div>
+                                    <p class="text-muted">No cases found for this client.</p>
+                                    <button type="button" class="btn btn-primary" onclick="createCase('{{ client.id }}')">
+                                        <i class="fas fa-plus"></i> Create First Case
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Case Modal -->
+<div class="modal fade" id="caseModal" tabindex="-1" aria-labelledby="caseModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="caseModalLabel">Create New Case</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="caseModalForm">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div id="caseMessageArea">
+                        <!-- Success/Error messages will appear here -->
+                    </div>
+                    <div id="caseModalContent">
+                        <!-- Form content will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="caseSubmitBtn" onclick="submitCaseForm()">Create Case</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Client Edit Modal -->
+<div class="modal fade" id="clientModal" aria-labelledby="clientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="clientModalLabel">Edit Client</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="clientModalForm" action="" method="post">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div id="clientModalContent">
+                        <!-- Client form fields will be loaded here via AJAX -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitClientForm()">
+                        <i class="fas fa-save"></i> Save Client
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    console.log('Document ready - jQuery version:', $.fn.jquery);
+});
+
+function createCase(clientId) {
+    console.log('createCase function called with clientId:', clientId);
+    
+    // Ensure jQuery is loaded before proceeding
+    if (typeof $ === 'undefined') {
+        console.error('jQuery is not loaded');
+        return;
+    }
+    
+    // Clear any previous content
+    $('#caseModalContent').empty();
+    $('#caseMessageArea').empty();
+    
+    // Reset modal title for creating
+    $('#caseModalLabel').text('Create New Case');
+    
+    // Show modal with explicit configuration
+    $('#caseModal').modal({
+        backdrop: false,
+        keyboard: true,
+        focus: true
+    }).modal('show');
+    
+    // Load form content via AJAX
+    $.ajax({
+        url: '{% url "clients:case_create" %}',
+        data: {
+            'client_id': clientId
+        },
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(data) {
+            console.log('Form loaded successfully', data);
+            if (data.form_html) {
+                $('#caseModalContent').html(data.form_html);
+                $('#caseMessageArea').html(
+                    '<div class="alert alert-info">' +
+                    '<i class="fas fa-info-circle"></i> Please fill out the form below to create a new case.' +
+                    '</div>'
+                );
+            } else {
+                $('#caseMessageArea').html(
+                    '<div class="alert alert-warning">' +
+                    '<i class="fas fa-exclamation-triangle"></i> No form data received. Please try again.' +
+                    '</div>'
+                );
+            }
+        },
+        error: function(xhr, status, error) {
+            console.log('Error loading form:', xhr.status, error);
+            console.log('Response text:', xhr.responseText);
+            $('#caseMessageArea').html(
+                '<div class="alert alert-danger">' +
+                '<i class="fas fa-exclamation-triangle"></i> Error loading form: ' + xhr.status + ' - ' + error +
+                '</div>'
+            );
+        }
+    });
+}
+
+function submitCaseForm() {
+    // Get form data manually
+    var formData = $('#caseModalForm').serialize();
+    console.log('Form data:', formData);
+    
+    // Disable submit button
+    $('#caseSubmitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Creating...');
+    
+    $.ajax({
+        url: '{% url "clients:case_create" %}',
+        method: 'POST',
+        data: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(data) {
+            if (data.success) {
+                $('#caseMessageArea').html(
+                    '<div class="alert alert-success">' +
+                    '<i class="fas fa-check-circle"></i> ' + (data.message || 'Case created successfully!') +
+                    '</div>'
+                );
+                setTimeout(function() {
+                    $('#caseModal').modal('hide');
+                    location.reload();
+                }, 2000);
+            } else {
+                $('#caseMessageArea').html(
+                    '<div class="alert alert-danger">' +
+                    '<i class="fas fa-exclamation-triangle"></i> ' + (data.message || 'Error creating case') +
+                    '</div>'
+                );
+            }
+        },
+        error: function(xhr, status, error) {
+            $('#caseMessageArea').html(
+                '<div class="alert alert-danger">' +
+                '<i class="fas fa-exclamation-triangle"></i> Error: ' + error +
+                '</div>'
+            );
+        },
+        complete: function() {
+            $('#caseSubmitBtn').prop('disabled', false).html('Create Case');
+        }
+    });
+}
+
+$(document).ready(function() {
+    console.log('Document ready, jQuery version:', $.fn.jquery);
+    
+    // Also bind to button click directly
+    $(document).on('click', '#caseSubmitBtn', function(e) {
+        console.log('Submit button clicked directly!');
+    });
+    
+    // Handle case form submission
+    $(document).on('submit', '#caseModalForm', function(e) {
+        e.preventDefault();
+        console.log('Case form submitted');
+        
+        // Disable submit button
+        $('#caseSubmitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Creating...');
+        
+        var formData = $(this).serialize();
+        console.log('Form data:', formData);
+        
+        $.ajax({
+            url: '{% url "clients:case_create" %}',
+            method: 'POST',
+            data: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function(data) {
+                console.log('AJAX success response:', data);
+                if (data.success) {
+                    // Show success message
+                    $('#caseMessageArea').html(
+                        '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+                        '<i class="fas fa-check-circle"></i> ' + (data.message || 'Case created successfully!') +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                        '</div>'
+                    );
+                    
+                    // Close modal after 3 seconds and refresh page
+                    setTimeout(function() {
+                        $('#caseModal').modal('hide');
+                        location.reload();
+                    }, 3000);
+                } else {
+                    // Show error message
+                    var errorMessage = data.message || 'Failed to create case. Please check the form and try again.';
+                    $('#caseMessageArea').html(
+                        '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
+                        '<i class="fas fa-exclamation-triangle"></i> ' + errorMessage +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                        '</div>'
+                    );
+                    
+                    // Update form with validation errors if available
+                    if (data.form_html) {
+                        $('#caseModalContent').html(data.form_html);
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log('AJAX error:', xhr, status, error);
+                console.log('Response text:', xhr.responseText);
+                
+                // Try to parse error response
+                var errorMessage = 'Error creating case: ' + error;
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.message) {
+                        errorMessage = response.message;
+                    }
+                } catch (e) {
+                    // Response is not JSON, use default error message
+                }
+                
+                // Show error message for AJAX failures
+                $('#caseMessageArea').html(
+                    '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
+                    '<i class="fas fa-exclamation-triangle"></i> ' + errorMessage +
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                    '</div>'
+                );
+            },
+            complete: function() {
+                // Re-enable submit button
+                $('#caseSubmitBtn').prop('disabled', false).html('Create Case');
+            }
+        });
+    });
+    
+    // Reset form when modal is hidden
+    $('#caseModal').on('hidden.bs.modal', function() {
+        $('#caseModalContent').empty();
+        $('#caseMessageArea').empty();
+        $('#caseSubmitBtn').prop('disabled', false).html('Create Case').off('click');
+        $('#caseModalLabel').text('Create New Case');
+    });
+});
+
+// Client edit functionality
+function editClient(clientId) {
+    console.log('Loading edit form for client:', clientId);
+    
+    // Clear any previous content
+    $('#clientModalContent').empty();
+    
+    // Show modal with explicit configuration (no backdrop to avoid issues)
+    $('#clientModal').modal({
+        backdrop: false,
+        keyboard: true,
+        focus: true
+    }).modal('show');
+    
+    // Update form action to edit URL
+    $('#clientModalForm').attr('action', '/clients/' + clientId + '/edit/');
+    
+    // Load form content via AJAX
+    $.ajax({
+        url: '/clients/' + clientId + '/edit/',
+        type: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(response) {
+            console.log('Client edit form loaded successfully');
+            if (response.form_html) {
+                $('#clientModalContent').html(response.form_html);
+            } else {
+                $('#clientModalContent').html('<div class="alert alert-danger">Error loading form. Please try again.</div>');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading client edit form:', error);
+            $('#clientModalContent').html('<div class="alert alert-danger">Error loading form: ' + error + '</div>');
+        }
+    });
+}
+
+function submitClientForm() {
+    console.log('submitClientForm called');
+    var form = $('#clientModalForm');
+    
+    if (form.length === 0) {
+        console.error('Client form not found!');
+        return;
+    }
+    
+    var formData = form.serialize();
+    var actionUrl = form.attr('action');
+    
+    console.log('Client form action:', actionUrl);
+    console.log('Client form data:', formData);
+    
+    // Disable submit button to prevent double submission
+    $('button[onclick="submitClientForm()"]').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+    
+    $.ajax({
+        url: actionUrl,
+        type: 'POST',
+        data: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(response) {
+            console.log('Client update success response:', response);
+            if (response.success) {
+                $('#clientModal').modal('hide');
+                location.reload(); // Refresh the page to show updated client data
+            } else {
+                // Re-enable button
+                $('button[onclick="submitClientForm()"]').prop('disabled', false).html('<i class="fas fa-save"></i> Save Client');
+                
+                if (response.form_html) {
+                    $('#clientModalContent').html(response.form_html);
+                } else {
+                    alert('Error: ' + (response.message || 'Please check the form for errors.'));
+                }
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error submitting client form:', error);
+            console.error('XHR status:', xhr.status);
+            console.error('XHR response:', xhr.responseText);
+            
+            // Re-enable button
+            $('button[onclick="submitClientForm()"]').prop('disabled', false).html('<i class="fas fa-save"></i> Save Client');
+            
+            alert('Error updating client: ' + error);
+        }
+    });
+}
+
+// Clean up client modal on close
+$('#clientModal').on('hidden.bs.modal', function () {
+    console.log('Client modal hidden');
+    $('#clientModalContent').empty(); // Clear content
+});
+
+// Case transaction expand/collapse functionality (reused from cases index page)
+function toggleCaseTransactions(caseId) {
+    console.log('Toggling case:', caseId);
+    const transactionRow = $('#case-transactions-row-' + caseId);
+    const expandIcon = $('#expand-icon-' + caseId);
+    const contentDiv = $('#case-transactions-content-' + caseId);
+    
+    console.log('Transaction row found:', transactionRow.length > 0);
+    console.log('Transaction row position:', transactionRow.offset());
+    
+    if (transactionRow.is(':visible')) {
+        // Collapse
+        transactionRow.hide();
+        expandIcon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+    } else {
+        // Expand
+        transactionRow.show();
+        expandIcon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+        
+        // Load transactions if not already loaded
+        if (contentDiv.find('.fa-spinner').length > 0) {
+            loadCaseTransactionsDetail(caseId);
+        }
+    }
+}
+
+// Load transactions for a specific case (reused from cases index page)
+function loadCaseTransactionsDetail(caseId) {
+    const contentDiv = $('#case-transactions-content-' + caseId);
+    
+    $.ajax({
+        url: '/clients/cases/' + caseId + '/transactions/',
+        type: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(response) {
+            if (response.transactions && response.transactions.length > 0) {
+                let transactionsHtml = '<div class="table-responsive">' +
+                    '<table class="table table-sm table-hover mb-0">' +
+                    '<thead class="table-secondary">' +
+                    '<tr>' +
+                    '<th>Date</th>' +
+                    '<th>Type</th>' +
+                    '<th>Payee</th>' +
+                    '<th>Description</th>' +
+                    '<th>Amount</th>' +
+                    '<th>Balance</th>' +
+                    '<th>Status</th>' +
+                    '</tr>' +
+                    '</thead>' +
+                    '<tbody>';
+
+                response.transactions.forEach(function(transaction) {
+                    transactionsHtml += '<tr>' +
+                        '<td>' + transaction.date + '</td>' +
+                        '<td><span class="badge ' + transaction.type_class + '">' + transaction.type + '</span></td>' +
+                        '<td>' + (transaction.payee || '-') + '</td>' +
+                        '<td>' + (transaction.description || '-') + '</td>' +
+                        '<td class="' + transaction.amount_class + '">' + transaction.amount_display + '</td>' +
+                        '<td class="fw-bold">' + transaction.balance_display + '</td>' +
+                        '<td><span class="badge ' + transaction.status_class + '">' + transaction.status + '</span></td>' +
+                        '</tr>';
+                });
+                
+                transactionsHtml += '</tbody></table></div>';
+                contentDiv.html(transactionsHtml);
+            } else {
+                contentDiv.html('<div class="text-center py-3 text-muted">' +
+                    '<i class="fas fa-receipt fa-2x mb-2"></i><br>' +
+                    'No transactions found for this case.' +
+                    '</div>');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading bank_accounts:', error);
+            contentDiv.html('<div class="alert alert-danger">Error loading transactions. Please try again.</div>');
+        }
+    });
+}
+
+// Case filtering functionality
+function filterCases(filterValue) {
+    // Reload page with filter parameter
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('case_filter', filterValue);
+    window.location.href = currentUrl.toString();
+}
+
+// Case edit functionality - using same approach as working case creation
+function editCase(caseId) {
+    console.log('editCase function called with caseId:', caseId);
+    
+    // Ensure jQuery is loaded
+    if (typeof $ === 'undefined') {
+        console.error('jQuery is not loaded');
+        return;
+    }
+    
+    // Clear any previous content
+    $('#caseModalContent').empty();
+    $('#caseMessageArea').empty();
+    
+    // Update modal title for editing
+    $('#caseModalLabel').text('Edit Case');
+    
+    // Show modal (same as working createCase function)
+    $('#caseModal').modal({
+        backdrop: false,
+        keyboard: true,
+        focus: true
+    }).modal('show');
+    
+    // Load form content via AJAX (same pattern as working createCase)
+    $.ajax({
+        url: '{% url "clients:case_edit" 0 %}'.replace('0', caseId),
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(data) {
+            console.log('Edit form loaded successfully', data);
+            if (data.form_html) {
+                $('#caseModalContent').html(data.form_html);
+                $('#caseSubmitBtn').text('Update Case').off('click').on('click', function(e) {
+                    e.preventDefault();
+                    submitCaseEdit(caseId);
+                });
+                console.log('Form content inserted, length:', data.form_html.length);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading edit form:', status, error);
+            $('#caseMessageArea').html(
+                '<div class="alert alert-danger">' +
+                '<i class="fas fa-exclamation-triangle"></i> Error loading case edit form.' +
+                '</div>'
+            );
+        }
+    });
+}
+
+// Case delete functionality with smart logic
+function deleteCase(caseId, caseTitle, currentBalance) {
+    const hasBalance = Math.abs(currentBalance) > 0.01;
+    
+    if (hasBalance) {
+        // Case has balance - offer to make inactive
+        if (confirm(`Case "${caseTitle}" has a current balance of $${Math.abs(currentBalance).toFixed(2)}.\n\nDo you want to make this case inactive instead of deleting it?\n\n(Inactive cases will be hidden from the default view but data will be preserved)`)) {
+            makeInactiveCase(caseId, caseTitle);
+        }
+    } else {
+        // Case has no balance - offer to delete permanently
+        if (confirm(`Are you sure you want to permanently delete case "${caseTitle}"?\n\nThis case has no balance and can be safely deleted.\n\nThis action cannot be undone.`)) {
+            permanentlyDeleteCase(caseId);
+        }
+    }
+}
+
+// Make case inactive
+function makeInactiveCase(caseId, caseTitle) {
+    $.ajax({
+        url: '/clients/cases/' + caseId + '/deactivate/',
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+        },
+        success: function(response) {
+            if (response.success) {
+                alert(`Case "${caseTitle}" has been made inactive and will no longer appear in the active cases list.`);
+                location.reload();
+            } else {
+                alert('Error: ' + (response.message || 'Failed to make case inactive'));
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error making case inactive:', error);
+            alert('Error making case inactive: ' + error);
+        }
+    });
+}
+
+// Permanently delete case
+function permanentlyDeleteCase(caseId) {
+    $.ajax({
+        url: '/clients/cases/' + caseId + '/delete/',
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+        },
+        success: function(response) {
+            if (response.success) {
+                alert('Case deleted successfully');
+                location.reload();
+            } else {
+                alert('Error: ' + (response.message || 'Failed to delete case'));
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error deleting case:', error);
+            alert('Error deleting case: ' + error);
+        }
+    });
+}
+
+// Submit case edit form
+function submitCaseEdit(caseId) {
+    // Disable submit button to prevent double submission
+    $('#caseSubmitBtn').prop('disabled', true).html('Updating Case...');
+    
+    // Collect form data
+    var formData = new FormData($('#caseModalForm')[0]);
+    
+    $.ajax({
+        url: '{% url "clients:case_edit" 0 %}'.replace('0', caseId),
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(data) {
+            if (data.success) {
+                $('#caseMessageArea').html(
+                    '<div class="alert alert-success">' +
+                    '<i class="fas fa-check-circle"></i> ' + (data.message || 'Case updated successfully!') +
+                    '</div>'
+                );
+                setTimeout(function() {
+                    $('#caseModal').modal('hide');
+                    location.reload();
+                }, 2000);
+            } else {
+                $('#caseMessageArea').html(
+                    '<div class="alert alert-danger">' +
+                    '<i class="fas fa-exclamation-triangle"></i> ' + (data.message || 'Error updating case') +
+                    '</div>'
+                );
+                $('#caseSubmitBtn').prop('disabled', false).html('Update Case');
+            }
+        },
+        error: function(xhr, status, error) {
+            if (xhr.responseJSON && xhr.responseJSON.success === false) {
+                // If the response is JSON with form errors
+                if (xhr.responseJSON.form_html) {
+                    $('#caseModalContent').html(xhr.responseJSON.form_html);
+                    $('#caseMessageArea').html(
+                        '<div class="alert alert-warning alert-dismissible fade show" role="alert">' +
+                        '<i class="fas fa-exclamation-triangle"></i> Please correct the errors below.' +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                        '</div>'
+                    );
+                }
+            } else {
+                console.error('Error updating case:', error);
+                var errorMessage = 'Failed to update case. Please check the form and try again.';
+                $('#caseMessageArea').html(
+                    '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
+                    '<i class="fas fa-exclamation-triangle"></i> ' + errorMessage +
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                    '</div>'
+                );
+            }
+            $('#caseSubmitBtn').prop('disabled', false).html('Update Case');
+        }
+    });
+}
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/datatables.min.js' %}"></script>
+{% endblock %}

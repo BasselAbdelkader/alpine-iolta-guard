@@ -1,0 +1,578 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load accounting_filters %}
+
+{% block title %}Dashboard - Trust Account Management{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block help_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Row 1: Trust Balance, Bank Register Balance, Clients with Funds, Next Reconciliation -->
+<div class="row mb-4">
+    <!-- Trust Balance (Sum of Client Balances) -->
+    <div class="col-md-3">
+        <div class="card text-white" style="background: linear-gradient(135deg, #0891b2, #06b6d4); min-height: 120px;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center h-100">
+                    <div>
+                        <h6 class="card-title mb-2"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            style="cursor: help;"
+                            data-bs-title="Sum of all client balances (excludes voided)">
+                            Trust Balance
+                        </h6>
+                        <h3 class="mb-0">{{ trust_balance|format_amount_accounting }}</h3>
+                        <small class="d-block mt-1 opacity-75">Client balances sum</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bank Register Balance (Sum of All Transactions) -->
+    <div class="col-md-3">
+        <div class="card text-white {% if balances_match %}bg-success{% else %}bg-danger{% endif %}" style="min-height: 120px;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center h-100">
+                    <div>
+                        <h6 class="card-title mb-2"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            style="cursor: help;"
+                            data-bs-title="Sum of all transactions (excludes voided) - Must equal Trust Balance">
+                            Bank Register
+                        </h6>
+                        <h3 class="mb-0">{{ bank_register_balance|format_amount_accounting }}</h3>
+                        <small class="d-block mt-1 opacity-75">
+                            {% if balances_match %}
+                                ✓ Matches Trust Balance
+                            {% else %}
+                                ⚠ Diff: ${{ balance_difference|floatformat:2 }}
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-calculator fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clients with Funds -->
+    <div class="col-md-3">
+        <div class="card text-white" style="background: linear-gradient(135deg, var(--success-color), #059669); min-height: 120px;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center h-100">
+                    <div>
+                        <h6 class="card-title mb-2">Clients with Funds</h6>
+                        <h3 class="mb-0"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            data-bs-html="true"
+                            style="cursor: help;"
+                            data-bs-title="<strong>Trust Account Client Status:</strong><br>
+                                           • With Funds: {{ trust_status_counts.ACTIVE_WITH_FUNDS }}<br>
+                                           • Zero Balance: {{ trust_status_counts.ACTIVE_ZERO_BALANCE }}<br>
+                                           • Negative: {{ trust_status_counts.NEGATIVE_BALANCE }}<br>
+                                           • Dormant: {{ trust_status_counts.DORMANT }}<br>
+                                           • Closed: {{ trust_status_counts.CLOSED }}">
+                            {{ active_clients_count }}
+                        </h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Next Reconciliation -->
+    <div class="col-md-3">
+        <div class="card text-white" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa); min-height: 120px;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center h-100">
+                    <div>
+                        <h6 class="card-title mb-2">Next Reconciliation</h6>
+                        <h3 class="mb-0" style="font-size: 1.5rem;">{{ next_reconciliation }}</h3>
+                        <small class="d-block mt-1 opacity-75">
+                            <a href="{% url 'dashboard:uncleared_transactions' %}" class="text-white text-decoration-none" style="border-bottom: 1px dotted white;">
+                                {{ pending_transactions_count }} pending
+                            </a>
+                        </small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-calendar-alt fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 1.5: Trust Health Assessment -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Trust Account Health Assessment</h5>
+                <span class="badge bg-danger">{{ total_health_issues }}</span>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <div class="trust-health-score bg-{{ trust_health_color }} text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 60px; height: 60px; font-size: 1.2rem; font-weight: bold; cursor: help;"
+                                     data-bs-toggle="tooltip" 
+                                     data-bs-placement="top" 
+                                     data-bs-html="true"
+                                     data-bs-title="<strong>Trust Health Score: {{ trust_health_score }}/100</strong><br>
+                                                    • Balance Reconciliation: {{ reconciliation_score }}/40<br>
+                                                    • Negative Balances: {{ negative_balance_score }}/25<br>
+                                                    • Uncleared Transactions: {{ uncleared_score }}/20<br>
+                                                    • Surplus Assessment: {{ surplus_score }}/10<br>
+                                                    • Outstanding Checks: {{ checks_score }}/5">
+                                    {{ trust_health_score }}
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Trust Health</h6>
+                                <span class="badge bg-{{ trust_health_color }} fs-6" 
+                                      data-bs-toggle="tooltip" 
+                                      data-bs-placement="right"
+                                      data-bs-html="true"
+                                      style="cursor: help;"
+                                      data-bs-title="<strong>{{ trust_health_status }}</strong><br>
+                                                     {% if trust_health_status == 'EXCELLENT' %}
+                                                         95-100 points: All metrics healthy
+                                                     {% elif trust_health_status == 'GOOD' %}
+                                                         85-94 points: Minor issues to monitor
+                                                     {% elif trust_health_status == 'FAIR' %}
+                                                         70-84 points: Several issues need attention
+                                                     {% elif trust_health_status == 'POOR' %}
+                                                         50-69 points: Significant problems present
+                                                     {% else %}
+                                                         0-49 points: Critical issues require immediate action
+                                                     {% endif %}">
+                                    {{ trust_health_status }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Vertical divider -->
+                    <div class="col-md-1 d-none d-md-block align-self-stretch">
+                        <div style="width: 2px; background-color: black; margin: 0 auto; height: 100%;"></div>
+                    </div>
+
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-5">
+                                {% if health_issues %}
+                                    <h6 class="text-danger mb-2">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        Issues ({{ health_issues|length }})
+                                    </h6>
+                                    <ul class="list-unstyled mb-0">
+                                        {% for issue in health_issues %}
+                                            <li class="small text-danger mb-2">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span>
+                                                        <i class="fas fa-times me-1"></i>
+                                                        {% if 'uncleared transactions' in issue %}
+                                                            <a href="{% url 'dashboard:uncleared_transactions' %}" class="text-danger text-decoration-none" style="border-bottom: 1px dotted;">
+                                                                {{ issue }}
+                                                            </a>
+                                                        {% else %}
+                                                            {{ issue }}
+                                                        {% endif %}
+                                                    </span>
+                                                    <button class="btn btn-link btn-sm p-0 text-danger"
+                                                            type="button"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#issue-details-{{ forloop.counter }}"
+                                                            aria-expanded="false">
+                                                        <i class="fas fa-chevron-down"></i>
+                                                    </button>
+                                                </div>
+                                                
+                                                <div class="collapse mt-2" id="issue-details-{{ forloop.counter }}">
+                                                    <div class="card card-body bg-light border-danger" style="font-size: 0.75rem;">
+                                                        {% if 'uncleared transactions' in issue %}
+                                                            <strong>Uncleared Transactions ({{ uncleared_transactions_list|length }}):</strong>
+                                                            <div class="table-responsive mt-2">
+                                                                <table class="table table-sm table-striped">
+                                                                    <thead>
+                                                                        <tr><th>Date</th><th>Type</th><th>Amount</th><th>Reference</th><th>Days Old</th></tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {% for txn in uncleared_transactions_list %}
+                                                                        <tr>
+                                                                            <td>{{ txn.date|date:"m/d/Y" }}</td>
+                                                                            <td>{{ txn.type }}</td>
+                                                                            <td>{{ txn.amount|format_amount_accounting }}</td>
+                                                                            <td>{{ txn.reference|default:"--" }}</td>
+                                                                            <td>{{ txn.days_old }} days</td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                            <div class="mt-2">
+                                                                <a href="{% url 'dashboard:uncleared_transactions' %}" class="btn btn-sm btn-outline-primary">
+                                                                    <i class="fas fa-list"></i> View All Uncleared Transactions
+                                                                </a>
+                                                            </div>
+                                                            
+                                                        {% elif 'checks outstanding' in issue %}
+                                                            <strong>Outstanding Checks >90 Days ({{ outstanding_checks_list|length }}):</strong>
+                                                            <div class="table-responsive mt-2">
+                                                                <table class="table table-sm table-striped">
+                                                                    <thead>
+                                                                        <tr><th>Check #</th><th>Date Issued</th><th>Amount</th><th>Payee</th><th>Days Outstanding</th></tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {% for check in outstanding_checks_list %}
+                                                                        <tr>
+                                                                            <td>{{ check.reference }}</td>
+                                                                            <td>{{ check.date|date:"m/d/Y" }}</td>
+                                                                            <td class="text-dark">{{ check.amount|format_withdrawal }}</td>
+                                                                            <td>{{ check.payee }}</td>
+                                                                            <td><span class="badge bg-danger">{{ check.days_outstanding }} days</span></td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                            
+                                                        {% elif 'balance variance' in issue or 'surplus funds' in issue %}
+                                                            <strong>Balance Analysis:</strong>
+                                                            <ul class="mb-0 mt-2">
+                                                                <li>Trust Account Balance: {{ trust_balance|format_amount_accounting }}</li>
+                                                                <li>Total Client Balances: {{ total_client_balance|format_amount_accounting }}</li>
+                                                                <li>Surplus Amount: {{ surplus_amount|format_amount_accounting }}</li>
+                                                                <li>Balance Difference: {{ balance_difference|format_amount_accounting }}</li>
+                                                                <li class="mt-2 text-muted">This indicates unallocated funds requiring investigation.</li>
+                                                            </ul>
+                                                            
+                                                        {% else %}
+                                                            <strong>{{ issue }}</strong>
+                                                            <p class="mb-0 mt-1 text-muted">Detailed analysis for this metric.</p>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Vertical divider between Issues and Warnings -->
+                            <div class="col-md-1 d-none d-md-block px-0 align-self-stretch">
+                                <div style="width: 2px; background-color: black; margin: 0 auto; height: 100%;"></div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                {% if health_warnings %}
+                                    <h6 class="text-warning mb-2">
+                                        <i class="fas fa-exclamation me-1"></i>
+                                        Warnings ({{ health_warnings|length }})
+                                    </h6>
+                                    <ul class="list-unstyled mb-0">
+                                        {% for warning in health_warnings %}
+                                            <li class="small text-warning mb-2">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span>
+                                                        <i class="fas fa-minus me-1"></i>
+                                                        {% if 'uncleared transactions' in warning %}
+                                                            <a href="{% url 'dashboard:uncleared_transactions' %}" class="text-warning text-decoration-none" style="border-bottom: 1px dotted;">
+                                                                {{ warning }}
+                                                            </a>
+                                                        {% else %}
+                                                            {{ warning }}
+                                                        {% endif %}
+                                                    </span>
+                                                    <button class="btn btn-link btn-sm p-0 text-warning"
+                                                            type="button"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#warning-details-{{ forloop.counter }}"
+                                                            aria-expanded="false">
+                                                        <i class="fas fa-chevron-down"></i>
+                                                    </button>
+                                                </div>
+                                                
+                                                <div class="collapse mt-2" id="warning-details-{{ forloop.counter }}">
+                                                    <div class="card card-body bg-light border-warning" style="font-size: 0.75rem;">
+                                                        {% if 'negative balance' in warning %}
+                                                            <strong>Clients with Negative Balances ({{ negative_balance_clients|length }}):</strong>
+                                                            <div class="table-responsive mt-2">
+                                                                <table class="table table-sm table-striped">
+                                                                    <thead>
+                                                                        <tr><th>Client</th><th>Balance</th><th>Contact</th></tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {% for client in negative_balance_clients %}
+                                                                        <tr>
+                                                                            <td>{{ client.name }}</td>
+                                                                            <td class="{{ client.balance|balance_status_class }}">{{ client.balance|format_amount_accounting }}</td>
+                                                                            <td>{{ client.email|default:client.phone|default:"--" }}</td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                            
+                                                        {% elif 'checks outstanding' in warning %}
+                                                            <strong>Outstanding Checks ({{ outstanding_checks_list|length }}):</strong>
+                                                            <div class="table-responsive mt-2">
+                                                                <table class="table table-sm table-striped">
+                                                                    <thead>
+                                                                        <tr><th>Check #</th><th>Date</th><th>Amount</th><th>Payee</th><th>Days</th></tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {% for check in outstanding_checks_list %}
+                                                                        <tr>
+                                                                            <td>{{ check.reference }}</td>
+                                                                            <td>{{ check.date|date:"m/d/Y" }}</td>
+                                                                            <td class="text-dark">{{ check.amount|format_withdrawal }}</td>
+                                                                            <td>{{ check.payee }}</td>
+                                                                            <td>{{ check.days_outstanding }}</td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+
+                                                        {% elif 'uncleared transactions' in warning %}
+                                                            <strong>Uncleared Transactions ({{ uncleared_transactions_list|length }}):</strong>
+                                                            <div class="table-responsive mt-2">
+                                                                <table class="table table-sm table-striped">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Transaction #</th>
+                                                                            <th>Date</th>
+                                                                            <th>Type</th>
+                                                                            <th>Amount</th>
+                                                                            <th>Description</th>
+                                                                            <th>Client</th>
+                                                                            <th>Days Pending</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {% for txn in uncleared_transactions_list %}
+                                                                        <tr>
+                                                                            <td><code class="text-dark">{{ txn.transaction.transaction_number }}</code></td>
+                                                                            <td>{{ txn.transaction.transaction_date|date:"m/d/Y" }}</td>
+                                                                            <td>
+                                                                                {% if txn.transaction.transaction_type == 'DEPOSIT' %}
+                                                                                    <span class="badge bg-success">Deposit</span>
+                                                                                {% else %}
+                                                                                    <span class="badge bg-danger">Withdrawal</span>
+                                                                                {% endif %}
+                                                                            </td>
+                                                                            <td class="text-end">
+                                                                                {% if txn.transaction.transaction_type == 'DEPOSIT' %}
+                                                                                    <span class="text-success">{{ txn.transaction.amount|format_amount_accounting }}</span>
+                                                                                {% else %}
+                                                                                    <span class="text-danger">({{ txn.transaction.amount|format_amount_accounting }})</span>
+                                                                                {% endif %}
+                                                                            </td>
+                                                                            <td>{{ txn.transaction.description|truncatewords:8 }}</td>
+                                                                            <td>
+                                                                                {% if txn.transaction.client %}
+                                                                                    {{ txn.transaction.client.full_name }}
+                                                                                {% else %}
+                                                                                    <span class="text-muted">--</span>
+                                                                                {% endif %}
+                                                                            </td>
+                                                                            <td>
+                                                                                <span class="badge {% if txn.days_old > 30 %}bg-danger{% elif txn.days_old > 7 %}bg-warning text-dark{% else %}bg-info{% endif %}">
+                                                                                    {{ txn.days_old }} days
+                                                                                </span>
+                                                                            </td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+
+                                                        {% else %}
+                                                            <strong>{{ warning }}</strong>
+                                                            <p class="mb-0 mt-1 text-muted">Monitor this metric for changes.</p>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                                
+                                {% if not health_issues and not health_warnings %}
+                                    <div class="text-success">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        <span>All trust account measures are healthy</span>
+                                    </div>
+                                {% endif %}
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 2: Clients with Open Balances -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Top 5 Clients with Open Balances</h5>
+                <span class="badge bg-primary">{{ clients_with_balances|length }}</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Client</th>
+                                <th>Balance</th>
+                                <th>Last Activity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in clients_with_balances %}
+                            <tr>
+                                <td>
+                                    <div>{{ item.client.full_name }}</div>
+                                    {% if item.cases %}
+                                        <small class="text-muted" style="font-size: 0.75rem;">
+                                            {% for case in item.cases %}
+                                                {{ case }}{% if not forloop.last %} <span class="text-primary opacity-75">|</span> {% endif %}
+                                            {% endfor %}
+                                        </small>
+                                    {% else %}
+                                        <small class="text-muted" style="font-size: 0.75rem;">No active cases</small>
+                                    {% endif %}
+                                </td>
+                                <td><span style="font-size: 0.75rem;" class="{{ item.balance|balance_status_class }}">{{ item.balance|format_amount_accounting }}</span></td>
+                                <td>
+                                    {% if item.last_activity %}
+                                        <small style="font-size: 0.75rem;">{{ item.last_activity|date:"m/d/Y" }}</small>
+                                    {% else %}
+                                        <small class="text-muted" style="font-size: 0.75rem;">No activity</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">No clients with open balances</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Open Balances - No Recent Deposits (2+ Years)</h5>
+                <span class="badge bg-warning">{{ stale_clients_count }}</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Client</th>
+                                <th>Balance</th>
+                                <th>Last Deposit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in stale_clients %}
+                            <tr>
+                                <td>{{ item.client.full_name }}</td>
+                                <td><span class="{{ item.balance|balance_status_class }}">{{ item.balance|format_amount_accounting }}</span></td>
+                                <td>{{ item.last_deposit|date:"m/d/Y" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">No stale client balances found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 3: Open Checks Over 90 Days -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Open Checks Over 90 Days</h5>
+                <span class="badge bg-danger">{{ outstanding_checks_count }}</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Check #</th>
+                                <th>Date Issued</th>
+                                <th>Payee</th>
+                                <th>Amount</th>
+                                <th>Days Outstanding</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in outstanding_checks %}
+                            <tr>
+                                <td>{{ item.check.reference_number }}</td>
+                                <td>{{ item.check.transaction_date|date:"m/d/Y" }}</td>
+                                <td>{{ item.payee }}</td>
+                                <td><span class="text-dark">{{ item.check.amount|format_withdrawal }}</span></td>
+                                <td><span class="badge bg-danger">{{ item.days_outstanding }} days</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="reissueCheck({{ item.check.id }}, '{{ item.check.reference_number }}')">
+                                        <i class="bi bi-arrow-repeat"></i> Re-Issue
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="voidCheck({{ item.check.id }}, '{{ item.check.reference_number }}')">
+                                        <i class="bi bi-x-circle"></i> Void
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">No outstanding checks over 90 days</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block help_content %}
+Dashboard provides an overview of your trust account status. Monitor client balances, track reconciliation schedules, and manage outstanding checks. Use the sidebar to navigate to specific functions.
+{% endblock %}

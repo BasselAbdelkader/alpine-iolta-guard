@@ -1,0 +1,784 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% load accounting_filters %}
+
+{% block title %}Clients Management{% endblock %}
+
+{% block page_title %}Clients{% endblock %}
+
+{% block help_title %}Clients{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/datatables.min.css' %}" rel="stylesheet">
+<style>
+.toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    z-index: 10001;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.toast-notification.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast-success {
+    background-color: #28a745;
+}
+
+.toast-error {
+    background-color: #dc3545;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="mb-0">Clients</h4>
+                        <div class="btn-group">
+                            <a href="{% url 'clients:print_clients_with_cases' %}"
+                               class="btn btn-outline-secondary"
+                               target="_blank"
+                               title="Print clients with non-zero balances and cases">
+                                <i class="fas fa-print"></i> Print Clients
+                            </a>
+                            <button type="button" class="btn btn-primary" onclick="addNewClient()">
+                                <i class="fas fa-plus"></i> Add New Client
+                            </button>
+                        </div>
+                    </div>
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="search" class="form-label">Search</label>
+                            <div class="position-relative">
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="search" 
+                                       name="search" 
+                                       value="{{ search_query }}" 
+                                       placeholder="Name, email, or phone (dynamic search)"
+                                       autocomplete="off">
+                                <div id="search-spinner" class="position-absolute top-50 end-0 translate-middle-y me-3" style="display: none;">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Searching...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="balance_filter" class="form-label">Balance Filter</label>
+                            <div class="position-relative">
+                                <select name="balance_filter" class="form-control" id="balance_filter">
+                                    <option value="">All Balances</option>
+                                    <option value="zero" {% if selected_balance_filter == 'zero' %}selected{% endif %}>
+                                        Zero Balance
+                                    </option>
+                                    <option value="non_zero" {% if selected_balance_filter == 'non_zero' %}selected{% endif %}>
+                                        Non-Zero Balance
+                                    </option>
+                                </select>
+                                <div class="position-absolute top-50 end-0 translate-middle-y me-3" style="pointer-events: none;">
+                                    <i class="fas fa-chevron-down text-muted"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="status_filter" class="form-label">Status Filter</label>
+                            <div class="position-relative">
+                                <select name="status_filter" class="form-control" id="status_filter">
+                                    <option value="active" {% if selected_status_filter == 'active' or not selected_status_filter %}selected{% endif %}>Active</option>
+                                    <option value="all" {% if selected_status_filter == 'all' %}selected{% endif %}>All</option>
+                                    <option value="inactive" {% if selected_status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                                </select>
+                                <div class="position-absolute top-50 end-0 translate-middle-y me-3" style="pointer-events: none;">
+                                    <i class="fas fa-chevron-down text-muted"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">Filter</button>
+                                <a href="{% url 'clients:index' %}?balance_filter=non_zero&status_filter=" class="btn btn-secondary">Clear</a>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Total Trust Balance</label>
+                            <div class="h5 mb-0 
+                                {% if total_trust_balance < 0 %}text-danger fw-bold
+                                {% elif total_trust_balance == 0 %}text-muted
+                                {% else %}text-success
+                                {% endif %}">
+                                {% if total_trust_balance < 0 %}
+                                    ({{ total_trust_balance|floatformat:2|cut:"-"|intcomma }})
+                                {% else %}
+                                    {{ total_trust_balance|floatformat:2|intcomma }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="clientsTable" class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th ondblclick="sortTable('name')" style="cursor: pointer; user-select: none;" title="Double-click to sort">
+                                        Name <span id="name-sort-icon" class="text-muted"></span>
+                                    </th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th ondblclick="sortTable('balance')" style="cursor: pointer; user-select: none;" title="Double-click to sort">
+                                        Current Balance <span id="balance-sort-icon" class="text-muted"></span>
+                                    </th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for client in clients %}
+                                <tr class="client-row">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if client.cases.exists %}
+                                                <button class="btn btn-sm btn-outline-secondary me-2 toggle-cases" data-client-id="{{ client.pk }}" title="Show/Hide Cases" style="width: 30px; height: 30px; padding: 0;">
+                                                    <i class="fas fa-chevron-down" id="expand-icon-{{ client.pk }}"></i>
+                                                </button>
+                                            {% else %}
+                                                <div style="width: 30px; height: 30px; margin-right: 0.5rem;"></div>
+                                            {% endif %}
+                                            <a href="{% url 'clients:detail' client.pk %}" class="text-decoration-none">
+                                                {{ client.full_name }}
+                                            </a>
+                                        </div>
+                                    </td>
+                                    <td>{{ client.email|default:'-' }}</td>
+                                    <td>
+                                        {% if client.phone %}
+                                            {% load custom_filters %}
+                                            {{ client.phone|format_phone_us }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="{{ client.get_balance_status_class }}">{{ client.get_formatted_balance }}</td>
+                                    <td>
+                                        {% if client.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'clients:detail' client.pk %}" 
+                                               class="btn btn-sm btn-outline-primary" 
+                                               title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-secondary" 
+                                                    title="Edit Client"
+                                                    onclick="editClient({{ client.pk }})">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-success" 
+                                                    title="Add Case"
+                                                    onclick="addCase({{ client.pk }})">
+                                                <i class="fas fa-briefcase"></i>
+                                            </button>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-danger" 
+                                                    title="Delete Client"
+                                                    onclick="smartDeleteClient({{ client.pk }}, '{{ client.full_name|escapejs }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% if client.cases.exists %}
+                                {% for case in client.cases.all %}
+                                <tr class="cases-row cases-{{ client.pk }}" style="display: none;">
+                                    <td class="ps-5">
+                                        <a href="{% url 'clients:case_detail' case.pk %}" class="text-decoration-none text-muted">
+                                            <i class="fas fa-level-up-alt fa-rotate-90 me-2"></i>{{ case.case_title }}
+                                        </a>
+                                    </td>
+                                    <td class="text-muted">{{ case.case_description|default:'-'|truncatechars:50 }}</td>
+                                    <td></td>
+                                    <td class="{{ case.get_balance_status_class }}">{{ case.get_formatted_balance }}</td>
+                                    <td>
+                                        {% if case.case_status == 'Open' %}
+                                            <span class="badge bg-primary">{{ case.case_status }}</span>
+                                        {% elif case.case_status == 'Pending Settlement' %}
+                                            <span class="badge bg-warning">{{ case.case_status }}</span>
+                                        {% elif case.case_status == 'Settled' %}
+                                            <span class="badge bg-success">{{ case.case_status }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ case.case_status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                {% endfor %}
+                                {% endif %}
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No clients found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Client Modal -->
+<div id="clientModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; background-color: rgba(0,0,0,0.5);">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 1000px; max-height: 90%; overflow-y: auto; background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+        <div style="padding: 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
+            <h5 id="clientModalLabel" style="margin: 0;">New Client</h5>
+            <button type="button" onclick="closeClientModal()" style="background: none; border: none; font-size: 20px; cursor: pointer; padding: 5px 10px;">&times;</button>
+        </div>
+        <form id="clientForm" style="margin: 0;">
+            <div style="padding: 20px;">
+                {% csrf_token %}
+                <div id="clientFormContent">
+                    <!-- Form content will be loaded here -->
+                </div>
+            </div>
+            <div style="padding: 20px; border-top: 1px solid #ddd; text-align: right;">
+                <button type="button" class="btn btn-secondary" onclick="closeClientModal()" style="margin-right: 10px;">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="clientSubmitBtn">Save Client</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Case Create Modal -->
+<div class="modal fade" id="caseModal" tabindex="-1" aria-labelledby="caseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="caseModalLabel">Add New Case</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="caseForm">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div id="caseFormContent">
+                        <!-- Form content will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="caseSubmitBtn">Save Case</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete client <strong id="clientName"></strong>?</p>
+                <p class="text-muted">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/datatables.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // Commented out DataTable initialization due to dynamic case rows
+    // var clientsTable = $('#clientsTable').DataTable({
+    //     "pageLength": 25,
+    //     "order": [[ 0, "asc" ]],
+    //     "searching": false,  // Disable DataTables search box
+    //     "lengthChange": false,  // Disable "Show X entries" dropdown
+    //     "paging": false,  // Disable DataTables pagination
+    //     "info": true     // Keep "Showing 1 to X of Y entries" info
+    // });
+    
+    // Toggle cases visibility
+    $(document).on('click', '.toggle-cases', function(e) {
+        e.preventDefault();
+        const clientId = $(this).data('client-id');
+        const casesRows = $(`.cases-${clientId}`);
+        const icon = $(this).find('i');
+        
+        if (casesRows.is(':visible')) {
+            casesRows.hide();
+            icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+        } else {
+            casesRows.show();
+            icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+        }
+    });
+    
+    // Dynamic Search Implementation
+    let searchTimeout;
+    const searchInput = $('#search');
+    const searchSpinner = $('#search-spinner');
+    const clientsTableBody = $('#clientsTable tbody');
+    
+    searchInput.on('input', function() {
+        const query = $(this).val().trim();
+        
+        // Clear previous timeout
+        clearTimeout(searchTimeout);
+        
+        // If query is empty, reload page with default non-zero balance filter
+        if (query.length === 0) {
+            window.location.href = '{% url "clients:index" %}?balance_filter=non_zero&status_filter=';
+            return;
+        }
+        
+        // If query is less than 2 characters, reload with default filters
+        if (query.length < 2) {
+            if (query.length === 0) {
+                // Empty search - reload with non-zero balance default
+                window.location.href = '{% url "clients:index" %}?balance_filter=non_zero&status_filter=';
+            }
+            return;
+        }
+        
+        // Show loading spinner
+        searchSpinner.show();
+        
+        // Debounce search requests by 300ms
+        searchTimeout = setTimeout(function() {
+            performSearch(query);
+        }, 300);
+    });
+    
+    function performSearch(query) {
+        $.ajax({
+            url: '{% url "clients:ajax_search_clients" %}',
+            type: 'GET',
+            data: {
+                'q': query,
+                'limit': 50
+            },
+            success: function(response) {
+                updateTable(response.clients);
+                searchSpinner.hide();
+            },
+            error: function(xhr, status, error) {
+                console.error('Search error:', error);
+                searchSpinner.hide();
+                // Show error message
+                clientsTableBody.html(
+                    '<tr><td colspan="6" class="text-center text-danger">' +
+                    '<i class="fas fa-exclamation-triangle"></i> Search error. Please try again.' +
+                    '</td></tr>'
+                );
+            }
+        });
+    }
+    
+    function updateTable(clients) {
+        // Clear existing table data
+        clientsTableBody.empty();
+        
+        if (clients.length === 0) {
+            clientsTableBody.html(
+                '<tr><td colspan="6" class="text-center">No clients found matching your search</td></tr>'
+            );
+            return;
+        }
+        
+        // Add new rows
+        clients.forEach(function(client) {
+            var statusBadge = client.is_active ? 
+                '<span class="badge bg-success">Active</span>' : 
+                '<span class="badge bg-secondary">Inactive</span>';
+                
+            var expandButton = client.has_cases ? 
+                '<button class="btn btn-sm btn-outline-secondary me-2 toggle-cases" data-client-id="' + client.id + '" title="Show/Hide Cases" style="width: 30px; height: 30px; padding: 0;">' +
+                '<i class="fas fa-chevron-down" id="expand-icon-' + client.id + '"></i></button>' :
+                '<div style="width: 30px; height: 30px; margin-right: 0.5rem;"></div>';
+                
+            var actionsHtml = 
+                '<div class="btn-group">' +
+                '<a href="/clients/' + client.id + '/" class="btn btn-sm btn-outline-primary" title="View Details">' +
+                '<i class="fas fa-eye"></i></a>' +
+                '<button type="button" class="btn btn-sm btn-outline-secondary" title="Edit Client" onclick="editClient(' + client.id + ')">' +
+                '<i class="fas fa-edit"></i></button>' +
+                '<button type="button" class="btn btn-sm btn-outline-success" title="Add Case" onclick="addCase(' + client.id + ')">' +
+                '<i class="fas fa-briefcase"></i></button>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger" title="Delete Client" onclick="smartDeleteClient(' + client.id + ', \'' + client.full_name.replace(/'/g, "\\'") + '\')">' +
+                '<i class="fas fa-trash"></i></button>' +
+                '</div>';
+            
+            var rowHtml = 
+                '<tr class="client-row">' +
+                '<td><div class="d-flex align-items-center">' + expandButton +
+                '<a href="/clients/' + client.id + '/" class="text-decoration-none">' + client.full_name + '</a></div></td>' +
+                '<td>' + (client.email || '-') + '</td>' +
+                '<td>' + (client.phone || '-') + '</td>' +
+                '<td class="' + client.balance_class + '">' + client.current_balance + '</td>' +
+                '<td>' + statusBadge + '</td>' +
+                '<td>' + actionsHtml + '</td>' +
+                '</tr>';
+            
+            clientsTableBody.append(rowHtml);
+        });
+    }
+});
+
+// Sorting functionality
+let currentSort = { column: null, direction: 'asc' };
+
+function sortTable(column) {
+    // Toggle sort direction or set to asc if different column
+    if (currentSort.column === column) {
+        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+        currentSort.column = column;
+        currentSort.direction = 'asc';
+    }
+    
+    // Update visual indicators
+    updateSortIcons(column, currentSort.direction);
+    
+    // Get current filters
+    const urlParams = new URLSearchParams(window.location.search);
+    const search = urlParams.get('search') || '';
+    const balanceFilter = urlParams.get('balance_filter') || 'non_zero';
+    const statusFilter = urlParams.get('status_filter') || '';
+    
+    // Reload with sorting
+    let url = `{% url 'clients:index' %}?balance_filter=${balanceFilter}&status_filter=${statusFilter}&sort=${column}&direction=${currentSort.direction}`;
+    if (search) {
+        url += `&search=${search}`;
+    }
+    
+    window.location.href = url;
+}
+
+function updateSortIcons(activeColumn, direction) {
+    // Clear all icons
+    document.getElementById('name-sort-icon').innerHTML = '';
+    document.getElementById('balance-sort-icon').innerHTML = '';
+    
+    // Set active icon
+    const icon = direction === 'asc' ? '<i class="fas fa-chevron-up"></i>' : '<i class="fas fa-chevron-down"></i>';
+    document.getElementById(activeColumn + '-sort-icon').innerHTML = icon;
+}
+
+// Initialize sort icons based on URL parameters
+$(document).ready(function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sortColumn = urlParams.get('sort');
+    const sortDirection = urlParams.get('direction') || 'asc';
+    
+    if (sortColumn) {
+        currentSort.column = sortColumn;
+        currentSort.direction = sortDirection;
+        updateSortIcons(sortColumn, sortDirection);
+    }
+});
+
+function confirmDelete(clientId, clientName) {
+    document.getElementById('clientName').textContent = clientName;
+    document.getElementById('deleteForm').action = "{% url 'clients:delete' 0 %}".replace('0', clientId);
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+function closeClientModal() {
+    document.getElementById('clientModal').style.display = 'none';
+}
+
+
+// Client Modal Functions
+function addNewClient() {
+    console.log('Add new client clicked');
+    const modal = document.getElementById('clientModal');
+    const title = document.getElementById('clientModalLabel');
+    const submitBtn = document.getElementById('clientSubmitBtn');
+    
+    title.textContent = 'New Client';
+    submitBtn.textContent = 'Save Client';
+    
+    // Move modal to body to avoid z-index issues with sidebar
+    if (modal.parentNode !== document.body) {
+        document.body.appendChild(modal);
+    }
+    
+    modal.style.display = 'block';
+    console.log('Modal should be visible now');
+    
+    loadClientForm();
+}
+
+function editClient(clientId) {
+    console.log('Edit client clicked:', clientId);
+    const modal = document.getElementById('clientModal');
+    const title = document.getElementById('clientModalLabel');
+    const submitBtn = document.getElementById('clientSubmitBtn');
+    
+    title.textContent = 'Edit Client';
+    submitBtn.textContent = 'Update Client';
+    
+    // Move modal to body to avoid z-index issues with sidebar
+    if (modal.parentNode !== document.body) {
+        document.body.appendChild(modal);
+    }
+    
+    modal.style.display = 'block';
+    console.log('Edit modal should be visible now');
+    
+    loadClientForm(clientId);
+}
+
+function openClientModal(clientId = null) {
+    // This function is no longer needed but keeping for compatibility
+}
+
+function loadClientForm(clientId = null) {
+    const url = clientId ? `/clients/${clientId}/edit/` : '/clients/create/';
+    console.log('Loading form from:', url);
+    
+    // Show loading state
+    document.getElementById('clientFormContent').innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+    
+    fetch(url, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            throw new Error('Network response was not ok: ' + response.status);
+        }
+        // Try to parse as JSON first, then fall back to text
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            return response.text();
+        }
+    })
+    .then(data => {
+        console.log('Form loaded successfully:', data);
+        if (typeof data === 'object' && data.form_html) {
+            // JSON response with form_html (edit form)
+            document.getElementById('clientFormContent').innerHTML = data.form_html;
+        } else {
+            // Plain HTML response (create form)
+            document.getElementById('clientFormContent').innerHTML = data;
+        }
+        console.log('Form content updated');
+    })
+    .catch(error => {
+        console.error('Error loading form:', error);
+        document.getElementById('clientFormContent').innerHTML = '<div class="alert alert-danger">Error loading form: ' + error.message + '</div>';
+    });
+}
+
+// Client Form Submission
+document.getElementById('clientForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const clientId = formData.get('client_id');
+    const url = clientId ? `/clients/${clientId}/edit/` : '/clients/create/';
+    
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Refresh the page to show updated data
+        } else {
+            // Show form errors
+            document.getElementById('clientFormContent').innerHTML = data.form_html;
+        }
+    })
+    .catch(error => {
+        console.error('Error submitting form:', error);
+    });
+});
+
+// Case Modal Functions
+function addCase(clientId) {
+    const modal = document.getElementById('caseModal');
+    const title = document.getElementById('caseModalLabel');
+    
+    title.textContent = 'Add New Case';
+    
+    // Move modal to body to avoid z-index issues with sidebar
+    if (modal.parentNode !== document.body) {
+        document.body.appendChild(modal);
+    }
+    
+    loadCaseForm(clientId);
+    new bootstrap.Modal(modal).show();
+}
+
+function loadCaseForm(clientId) {
+    const url = `/clients/${clientId}/cases/create/`;
+    
+    fetch(url, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('caseFormContent').innerHTML = data.form_html;
+    })
+    .catch(error => {
+        console.error('Error loading case form:', error);
+        document.getElementById('caseFormContent').innerHTML = '<div class="alert alert-danger">Error loading form. Please try again.</div>';
+    });
+}
+
+// Case Form Submission
+document.getElementById('caseForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const clientId = formData.get('client');
+    const url = `/clients/${clientId}/cases/create/`;
+    
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('caseModal')).hide();
+            // Optionally show success message
+            location.reload();
+        } else {
+            // Show form errors
+            document.getElementById('caseFormContent').innerHTML = data.form_html;
+        }
+    })
+    .catch(error => {
+        console.error('Error submitting case form:', error);
+    });
+});
+
+// Smart delete client function
+function smartDeleteClient(clientId, clientName) {
+    // Ask for confirmation
+    if (!confirm("Are you sure you want to delete '" + clientName + "'?")) {
+        return;
+    }
+
+    $.ajax({
+        url: '/clients/' + clientId + '/smart-delete/',
+        type: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+        },
+        success: function(response) {
+            if (response.success) {
+                // Show toast notification
+                showToast('Client deleted successfully');
+
+                // Refresh page after short delay
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+            } else {
+                showToast('Error: ' + response.message, 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error deleting client:', error);
+            showToast('Error deleting client', 'error');
+        }
+    });
+}
+
+// Toast notification function
+function showToast(message, type = 'success') {
+    // Create toast element
+    var toast = $('<div class="toast-notification"></div>')
+        .addClass(type === 'error' ? 'toast-error' : 'toast-success')
+        .text(message);
+
+    // Append to body
+    $('body').append(toast);
+
+    // Show toast with animation
+    setTimeout(function() {
+        toast.addClass('show');
+    }, 100);
+
+    // Hide and remove after 3 seconds
+    setTimeout(function() {
+        toast.removeClass('show');
+        setTimeout(function() {
+            toast.remove();
+        }, 300);
+    }, 3000);
+}
+
+</script>
+{% endblock %}
+
+{% block help_content %}
+<p>The <strong>Clients</strong> page allows you to manage all your clients and their trust account information.</p>
+<h6><i class="fas fa-plus-circle"></i> Adding Clients</h6>
+<p>Click the "Add New Client" button to create a new client record. Fill in the required information including name, contact details, and address.</p>
+<h6><i class="fas fa-list"></i> Client List</h6>
+<p>View all clients with their current trust account balances, status, and creation date. Use the search and filter options to find specific clients.</p>
+<h6><i class="fas fa-tools"></i> Actions</h6>
+<ul>
+    <li><i class="fas fa-eye"></i> <strong>View:</strong> See detailed client information and case history</li>
+    <li><i class="fas fa-edit"></i> <strong>Edit:</strong> Update client information</li>
+    <li><i class="fas fa-trash"></i> <strong>Delete:</strong> Remove client (only if no active transactions)</li>
+</ul>
+{% endblock %}

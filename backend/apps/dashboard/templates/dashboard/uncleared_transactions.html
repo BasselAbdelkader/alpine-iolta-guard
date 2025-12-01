@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load accounting_filters %}
+
+{% block title %}Uncleared Transactions - Trust Account Management{% endblock %}
+{% block page_title %}Uncleared Transactions{% endblock %}
+
+{% block content %}
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total Uncleared</h6>
+                        <h3 class="mb-0">{{ total_count }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Pending Deposits</h6>
+                        <h3 class="mb-0">{{ total_deposits|format_amount_accounting }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-arrow-down fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Pending Withdrawals</h6>
+                        <h3 class="mb-0">{{ total_withdrawals|format_amount_accounting }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-arrow-up fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white {% if net_amount >= 0 %}bg-info{% else %}bg-warning{% endif %}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Net Amount</h6>
+                        <h3 class="mb-0">{{ net_amount|format_amount_accounting }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-balance-scale fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Age Groups Tabs -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="ageGroupTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="recent-tab" data-bs-toggle="tab" data-bs-target="#recent" type="button" role="tab">
+                            Recent (0-7 days) <span class="badge bg-success ms-1">{{ recent_count }}</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="moderate-tab" data-bs-toggle="tab" data-bs-target="#moderate" type="button" role="tab">
+                            Moderate (8-30 days) <span class="badge bg-warning ms-1">{{ moderate_count }}</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="old-tab" data-bs-toggle="tab" data-bs-target="#old" type="button" role="tab">
+                            Old (31-90 days) <span class="badge bg-danger ms-1">{{ old_count }}</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="very-old-tab" data-bs-toggle="tab" data-bs-target="#very-old" type="button" role="tab">
+                            Very Old (90+ days) <span class="badge bg-dark ms-1">{{ very_old_count }}</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card-body">
+                <div class="tab-content" id="ageGroupTabsContent">
+                    <!-- Recent Transactions Tab -->
+                    <div class="tab-pane fade show active" id="recent" role="tabpanel">
+                        {% include 'dashboard/uncleared_transactions_table.html' with transactions=age_groups.recent badge_class='bg-success' %}
+                    </div>
+
+                    <!-- Moderate Transactions Tab -->
+                    <div class="tab-pane fade" id="moderate" role="tabpanel">
+                        {% include 'dashboard/uncleared_transactions_table.html' with transactions=age_groups.moderate badge_class='bg-warning' %}
+                    </div>
+
+                    <!-- Old Transactions Tab -->
+                    <div class="tab-pane fade" id="old" role="tabpanel">
+                        {% include 'dashboard/uncleared_transactions_table.html' with transactions=age_groups.old badge_class='bg-danger' %}
+                    </div>
+
+                    <!-- Very Old Transactions Tab -->
+                    <div class="tab-pane fade" id="very-old" role="tabpanel">
+                        {% include 'dashboard/uncleared_transactions_table.html' with transactions=age_groups.very_old badge_class='bg-dark' %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Back to Dashboard Button -->
+<div class="row mt-4">
+    <div class="col-12">
+        <a href="{% url 'dashboard:index' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block help_title %}Uncleared Transactions{% endblock %}
+
+{% block help_content %}
+<p>The <strong>Uncleared Transactions</strong> page shows all transactions that have not yet been marked as cleared.</p>
+<h6><i class="fas fa-clock"></i> Transaction Aging</h6>
+<p>Transactions are grouped by age to help prioritize clearing activities:</p>
+<ul>
+    <li><strong>Recent (0-7 days):</strong> Normal processing time</li>
+    <li><strong>Moderate (8-30 days):</strong> May need follow-up</li>
+    <li><strong>Old (31-90 days):</strong> Requires attention</li>
+    <li><strong>Very Old (90+ days):</strong> Critical - needs immediate action</li>
+</ul>
+<h6><i class="fas fa-check-circle"></i> Clearing Transactions</h6>
+<p>Use the transaction edit function to mark transactions as cleared when they appear on bank statements.</p>
+{% endblock %}

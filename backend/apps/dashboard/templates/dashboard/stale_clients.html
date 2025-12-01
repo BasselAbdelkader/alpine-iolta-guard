@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load accounting_filters %}
+
+{% block title %}Stale Clients (Dormant) - Trust Account Management{% endblock %}
+{% block page_title %}Stale Clients (Dormant){% endblock %}
+
+{% block content %}
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total Stale Clients</h6>
+                        <h3 class="mb-0">{{ count }}</h3>
+                        <p class="card-text mt-2 small">Clients with open balances but no deposits for over 2 years.</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-user-clock fa-3x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stale Clients List -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Dormant Accounts List</h5>
+            </div>
+            <div class="card-body">
+                {% if stale_clients %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Client Name</th>
+                                <th>Balance</th>
+                                <th>Last Deposit</th>
+                                <th>Days Since Deposit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in stale_clients %}
+                            <tr style="cursor: pointer;" onclick="handleRowClick(event, '/clients/{{ item.client.id }}/')">
+                                <td>
+                                    <a href="/clients/{{ item.client.id }}/" class="text-decoration-none fw-bold">
+                                        {{ item.client.full_name }}
+                                    </a>
+                                </td>
+                                <td class="fw-bold text-warning">{{ item.balance|format_amount_accounting }}</td>
+                                <td>
+                                    {% if item.last_activity %}
+                                        {{ item.last_activity|date:"m/d/Y" }}
+                                    {% else %}
+                                        <span class="text-muted">No recent deposits</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.days_dormant %}
+                                        {{ item.days_dormant|intcomma }} days
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h5>No stale clients found!</h5>
+                    <p class="text-muted">All clients with balances have had deposits within the last 2 years.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Back to Dashboard Button -->
+<div class="row mt-4">
+    <div class="col-12">
+        <a href="{% url 'dashboard:index' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<script>
+function handleRowClick(event, url) {
+    // If the clicked element is a link or inside a link, do nothing (let the link handle it)
+    if (event.target.tagName === 'A' || event.target.closest('a')) {
+        return;
+    }
+    // Otherwise, navigate
+    window.location.href = url;
+}
+</script>
+{% endblock %}
+
+{% block help_title %}Stale Clients{% endblock %}
+
+{% block help_content %}
+<p>The <strong>Stale Clients</strong> page lists all clients who currently hold a balance in the trust account but have not had any <strong>deposit</strong> activity for over <strong>2 years</strong>.</p>
+<h6><i class="fas fa-exclamation-triangle"></i> Why is this important?</h6>
+<ul>
+    <li><strong>Escheatment Laws:</strong> Many jurisdictions require unclaimed property (like dormant trust funds) to be reported and remitted to the state after a certain period (often 3-5 years) of no activity.</li>
+    <li><strong>Compliance:</strong> Maintaining balances for inactive clients is a compliance risk.</li>
+</ul>
+<h6><i class="fas fa-tools"></i> Recommended Actions</h6>
+<ul>
+    <li>Review the client's file to determine why funds are still held.</li>
+    <li>Contact the client to return funds if the case is closed.</li>
+    <li>If the client cannot be located, follow your state's unclaimed property procedures.</li>
+</ul>
+{% endblock %}

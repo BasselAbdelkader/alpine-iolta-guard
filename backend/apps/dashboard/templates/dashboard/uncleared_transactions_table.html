@@ -1,0 +1,51 @@
+{% load humanize %}
+{% load accounting_filters %}
+
+{% if transactions %}
+<div class="table-responsive">
+    <table class="table table-hover table-sm">
+        <thead class="table-light">
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Reference</th>
+                <th class="text-end">Amount</th>
+                <th>Description</th>
+                <th>Client</th>
+                <th>Case</th>
+                <th class="text-center">Days Pending</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for txn in transactions %}
+            <tr>
+                <td><small>{{ txn.transaction_date|date:"m/d/Y" }}</small></td>
+                <td>
+                    {% if txn.transaction_type == 'DEPOSIT' %}
+                        <span class="badge bg-success">Deposit</span>
+                    {% else %}
+                        <span class="badge bg-danger">Withdrawal</span>
+                    {% endif %}
+                </td>
+                <td><small>{{ txn.reference_number|default:"--" }}</small></td>
+                <td class="text-end"><small>{{ txn.amount|format_amount_accounting }}</small></td>
+                <td><small>{{ txn.description|truncatewords:8 }}</small></td>
+                <td><small>{% if txn.client %}{{ txn.client.full_name }}{% else %}--{% endif %}</small></td>
+                <td><small>{% if txn.case %}{{ txn.case.case_number }}{% else %}--{% endif %}</small></td>
+                <td class="text-center">
+                    {% with days_old=txn.transaction_date|timesince|split:','|first %}
+                        <span class="badge {{ badge_class }}">
+                            {{ txn.transaction_date|timesince|split:','|first }}
+                        </span>
+                    {% endwith %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> No transactions in this age group.
+</div>
+{% endif %}

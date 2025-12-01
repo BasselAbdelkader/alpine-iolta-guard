@@ -1,0 +1,499 @@
+/**
+ * Two-Person Approval Workflow Styles
+ *
+ * COMPLIANCE CONTROL #3: Two-Person Approval
+ * Styles for approval badge, widget, and dashboard
+ */
+
+/* ===================================================================
+   HEADER BADGE NOTIFICATION
+   =================================================================== */
+
+/* Badge positioning and sizing */
+#approvalBadge {
+    font-size: 0.75rem;
+    padding: 0.25em 0.5em;
+    min-width: 1.5em;
+    text-align: center;
+}
+
+/* Badge pulse animation for new approvals */
+@keyframes badge-pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+}
+
+.badge-pulse {
+    animation: badge-pulse 0.5s ease-in-out 2;
+}
+
+/* Approval badge link states */
+#approvalBadgeLink {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+#approvalBadgeLink.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #000;
+    font-weight: 500;
+}
+
+#approvalBadgeLink.btn-warning:hover {
+    background-color: #ffb000;
+    border-color: #ffb000;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+#approvalBadgeLink.btn-outline-secondary {
+    color: #6c757d;
+    border-color: #6c757d;
+}
+
+/* ===================================================================
+   DASHBOARD WIDGET
+   =================================================================== */
+
+/* Widget card styling */
+.approval-widget-card {
+    border-width: 2px;
+    transition: all 0.3s ease;
+}
+
+.approval-widget-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(255, 193, 7, 0.2);
+}
+
+/* Approval item styling */
+.approval-item {
+    padding: 0.75rem 0;
+    transition: background-color 0.2s ease;
+}
+
+.approval-item:last-child {
+    border-bottom: none !important;
+    padding-bottom: 0;
+}
+
+.approval-item:hover {
+    background-color: rgba(255, 193, 7, 0.05);
+    border-radius: 4px;
+}
+
+/* Widget badge count */
+#widgetPendingCount {
+    font-size: 1rem;
+    padding: 0.4em 0.65em;
+    min-width: 2em;
+}
+
+/* ===================================================================
+   APPROVAL DASHBOARD PAGE
+   =================================================================== */
+
+/* Page header */
+.approval-page-header {
+    border-bottom: 3px solid #ffc107;
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+}
+
+/* Tab styling */
+#approvalTabs .nav-link {
+    color: #495057;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+#approvalTabs .nav-link:hover {
+    color: #ffc107;
+    border-color: #ffc107;
+}
+
+#approvalTabs .nav-link.active {
+    color: #000;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+    font-weight: 600;
+}
+
+#approvalTabs .badge {
+    font-size: 0.75em;
+    vertical-align: middle;
+}
+
+/* Approval card urgency states */
+.approval-card {
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+}
+
+.approval-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Urgency borders */
+.approval-card.urgency-normal {
+    border-left: 4px solid #28a745;
+}
+
+.approval-card.urgency-warning {
+    border-left: 4px solid #ffc107;
+}
+
+.approval-card.urgency-danger {
+    border-left: 4px solid #dc3545;
+    background-color: rgba(220, 53, 69, 0.02);
+}
+
+/* Approval status badges */
+.approval-status-pending {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.approval-status-approved {
+    background-color: #28a745;
+}
+
+.approval-status-rejected {
+    background-color: #dc3545;
+}
+
+/* Days pending badges */
+.days-pending-badge {
+    font-size: 0.9rem;
+    padding: 0.4em 0.7em;
+    font-weight: 600;
+}
+
+.days-pending-normal {
+    background-color: #28a745;
+}
+
+.days-pending-warning {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.days-pending-danger {
+    background-color: #dc3545;
+    animation: badge-pulse-slow 2s ease-in-out infinite;
+}
+
+@keyframes badge-pulse-slow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Action buttons */
+.approval-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.approval-actions .btn {
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.approval-actions .btn:hover {
+    transform: translateX(4px);
+}
+
+/* Approval detail section */
+.approval-detail-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.approval-detail-section h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 0.5rem;
+}
+
+/* Notes display */
+.approval-notes {
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    font-style: italic;
+    color: #495057;
+}
+
+.approval-notes:empty::before {
+    content: "No notes provided";
+    color: #adb5bd;
+}
+
+/* Modal styling */
+.approval-modal .modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 3px solid #ffc107;
+}
+
+.approval-modal .modal-title {
+    color: #495057;
+    font-weight: 600;
+}
+
+.approval-modal .table {
+    font-size: 0.9rem;
+}
+
+.approval-modal .table th {
+    width: 35%;
+    color: #6c757d;
+    font-weight: 600;
+}
+
+.approval-modal .table td {
+    color: #212529;
+}
+
+/* History grouping */
+.history-date-header {
+    background-color: #f8f9fa;
+    border-left: 4px solid #ffc107;
+    padding: 0.75rem 1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.history-item {
+    transition: all 0.2s ease;
+}
+
+.history-item:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: 4px;
+}
+
+/* Loading states */
+.approval-loading {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6c757d;
+}
+
+.approval-loading i {
+    font-size: 3rem;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Empty states */
+.approval-empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.approval-empty-state i {
+    font-size: 4rem;
+    color: #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.approval-empty-state h5 {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.approval-empty-state p {
+    color: #adb5bd;
+}
+
+/* Pagination */
+.approval-pagination {
+    margin-top: 2rem;
+}
+
+.approval-pagination .page-link {
+    color: #495057;
+    border-color: #dee2e6;
+}
+
+.approval-pagination .page-link:hover {
+    color: #ffc107;
+    background-color: rgba(255, 193, 7, 0.1);
+    border-color: #ffc107;
+}
+
+.approval-pagination .page-item.active .page-link {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #000;
+}
+
+/* ===================================================================
+   RESPONSIVE DESIGN
+   =================================================================== */
+
+@media (max-width: 768px) {
+    /* Stack action buttons on mobile */
+    .approval-actions {
+        width: 100%;
+    }
+
+    /* Full width cards on mobile */
+    .approval-card .row {
+        flex-direction: column;
+    }
+
+    /* Adjust badge positioning */
+    #approvalBadge {
+        position: static;
+        margin-left: 0.5rem;
+    }
+
+    /* Smaller padding on mobile */
+    .approval-detail-section {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    /* Smaller font sizes on very small screens */
+    .approval-card h5 {
+        font-size: 1rem;
+    }
+
+    .approval-card .card-text {
+        font-size: 0.875rem;
+    }
+
+    /* Stack table rows */
+    .approval-modal .table th,
+    .approval-modal .table td {
+        display: block;
+        width: 100%;
+    }
+
+    .approval-modal .table th {
+        background-color: #f8f9fa;
+        padding-top: 0.75rem;
+    }
+
+    .approval-modal .table td {
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+}
+
+/* ===================================================================
+   ACCESSIBILITY
+   =================================================================== */
+
+/* Focus states */
+.approval-actions .btn:focus,
+#approvalBadgeLink:focus {
+    outline: 2px solid #ffc107;
+    outline-offset: 2px;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .approval-card {
+        border: 2px solid currentColor;
+    }
+
+    .badge {
+        font-weight: 700;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .badge-pulse,
+    .days-pending-danger,
+    .approval-actions .btn:hover,
+    .approval-card:hover {
+        animation: none;
+        transform: none;
+        transition: none;
+    }
+}
+
+/* ===================================================================
+   PRINT STYLES
+   =================================================================== */
+
+@media print {
+    /* Hide action buttons when printing */
+    .approval-actions,
+    .approval-pagination,
+    #approvalTabs {
+        display: none;
+    }
+
+    /* Expand all cards */
+    .approval-card {
+        page-break-inside: avoid;
+        border: 1px solid #000;
+        box-shadow: none;
+    }
+
+    /* Black and white mode */
+    .badge,
+    .approval-status-pending,
+    .approval-status-approved,
+    .approval-status-rejected {
+        background-color: #fff !important;
+        color: #000 !important;
+        border: 1px solid #000;
+    }
+}
+
+/* ===================================================================
+   UTILITY CLASSES
+   =================================================================== */
+
+.text-amount {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.approval-icon {
+    margin-right: 0.5rem;
+    vertical-align: middle;
+}
+
+.approval-timestamp {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.approval-user {
+    font-weight: 500;
+    color: #495057;
+}
+
+.approval-divider {
+    border-top: 2px solid #dee2e6;
+    margin: 1.5rem 0;
+}

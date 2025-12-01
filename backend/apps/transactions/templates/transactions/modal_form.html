@@ -1,0 +1,186 @@
+<!-- Transaction modal form template -->
+{% if form.non_field_errors %}
+    <div class="alert alert-danger">
+        {{ form.non_field_errors }}
+    </div>
+{% endif %}
+
+<!-- Hidden fields for client_id and case_id to preserve context during form submission -->
+{% if request.GET.client_id %}
+    <input type="hidden" name="client_id" value="{{ request.GET.client_id }}">
+{% endif %}
+{% if request.GET.case_id %}
+    <input type="hidden" name="case_id" value="{{ request.GET.case_id }}">
+{% endif %}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label for="{{ form.bank_account.id_for_label }}" class="form-label">
+                Bank Account <span class="text-danger">*</span>
+            </label>
+            {{ form.bank_account }}
+            {% if form.bank_account.errors %}
+                <div class="text-danger">{{ form.bank_account.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="mb-3">
+            <label for="{{ form.transaction_type.id_for_label }}" class="form-label">
+                Transaction Type <span class="text-danger">*</span>
+            </label>
+            {{ form.transaction_type }}
+            {% if form.transaction_type.errors %}
+                <div class="text-danger">{{ form.transaction_type.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="mb-3">
+            <label for="{{ form.transaction_date.id_for_label }}" class="form-label">
+                Transaction Date <span class="text-danger">*</span>
+            </label>
+            {{ form.transaction_date }}
+            {% if form.transaction_date.errors %}
+                <div class="text-danger">{{ form.transaction_date.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="mb-3">
+            <label for="{{ form.amount.id_for_label }}" class="form-label">
+                Amount <span class="text-danger">*</span>
+            </label>
+            {{ form.amount }}
+            {% if form.amount.errors %}
+                <div class="text-danger">{{ form.amount.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="mb-3">
+            <label for="{{ form.reference_number.id_for_label }}" class="form-label">Reference Number</label>
+            {{ form.reference_number }}
+            {% if form.reference_number.errors %}
+                <div class="text-danger">{{ form.reference_number.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="mb-3">
+            <label class="form-label">&nbsp;</label>
+            <div class="form-check" style="padding-left: 2rem;">
+                {{ form.check_is_printed }}
+                <label class="form-check-label" for="{{ form.check_is_printed.id_for_label }}">
+                    Check is Printed
+                </label>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="mb-3">
+            <label class="form-label">&nbsp;</label>
+            <div class="form-check">
+                {{ form.is_cleared }}
+                <label class="form-check-label" for="{{ form.is_cleared.id_for_label }}">
+                    Transaction is Cleared
+                </label>
+            </div>
+            {% if form.is_cleared.errors %}
+                <div class="text-danger">{{ form.is_cleared.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="mb-3">
+            <label for="{{ form.memo.id_for_label }}" class="form-label">Memo</label>
+            {{ form.memo }}
+            {% if form.memo.errors %}
+                <div class="text-danger">{{ form.memo.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="mb-3">
+            <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+            {{ form.description }}
+            {% if form.description.errors %}
+                <div class="text-danger">{{ form.description.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="mb-3" id="clearedDateDiv" style="{% if not form.is_cleared.value %}display: none;{% endif %}">
+            <label for="{{ form.cleared_date.id_for_label }}" class="form-label">Cleared Date</label>
+            {{ form.cleared_date }}
+            {% if form.cleared_date.errors %}
+                <div class="text-danger">{{ form.cleared_date.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<hr>
+
+<!-- Transaction Item Details -->
+<h6 class="mb-3">Transaction Details</h6>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="mb-3">
+            <label for="{{ form.client.id_for_label }}" class="form-label">
+                Client <span class="text-danger">*</span>
+            </label>
+            {{ form.client }}
+            {% if form.client.errors %}
+                <div class="text-danger">{{ form.client.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="mb-3">
+            <label for="{{ form.case.id_for_label }}" class="form-label">
+                Case <span class="text-danger">*</span>
+            </label>
+            {{ form.case }}
+            {% if form.case.errors %}
+                <div class="text-danger">{{ form.case.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="mb-3">
+            <label class="form-label">Available Funds</label>
+            <input type="text" class="form-control" id="available_funds" readonly style="background-color: #f8f9fa; color: #6c757d;" value="$0.00">
+            <small class="text-muted">Case balance available</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="mb-3">
+            <label for="{{ form.payee_name.id_for_label }}" class="form-label">Payee</label>
+            <div class="position-relative">
+                {{ form.payee_name }}
+                <div class="dropdown" id="payee-suggestions" style="display: none;">
+                    <ul class="dropdown-menu" style="display: block; position: absolute; top: 100%; left: 0; right: 0; z-index: 1000; max-height: 200px; overflow-y: auto;">
+                        <!-- Autocomplete suggestions will appear here -->
+                    </ul>
+                </div>
+            </div>
+            {% if form.payee_name.errors %}
+                <div class="text-danger">{{ form.payee_name.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript functionality is now handled in the main page after AJAX load -->

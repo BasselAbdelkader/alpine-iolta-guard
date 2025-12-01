@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ form_title }}{% endblock %}
+
+{% block page_title %}{{ form_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.formset-row {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: #f8f9fa;
+}
+.formset-row.empty-form {
+    display: none;
+}
+.delete-row {
+    background-color: #f8d7da !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">{{ form_title }}</h4>
+                    <a href="{% url 'transactions:index' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Transactions
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="transactionForm">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.bank_account.id_for_label }}" class="form-label">
+                                        Bank Account <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.bank_account }}
+                                    {% if form.bank_account.errors %}
+                                        <div class="text-danger">{{ form.bank_account.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="{{ form.transaction_type.id_for_label }}" class="form-label">
+                                        Transaction Type <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.transaction_type }}
+                                    {% if form.transaction_type.errors %}
+                                        <div class="text-danger">{{ form.transaction_type.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="{{ form.transaction_date.id_for_label }}" class="form-label">
+                                        Transaction Date <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.transaction_date }}
+                                    {% if form.transaction_date.errors %}
+                                        <div class="text-danger">{{ form.transaction_date.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.amount.id_for_label }}" class="form-label">
+                                        Amount <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.amount }}
+                                    </div>
+                                    {% if form.amount.errors %}
+                                        <div class="text-danger">{{ form.amount.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.reference_number.id_for_label }}" class="form-label">Reference Number</label>
+                                    {{ form.reference_number }}
+                                    {% if form.reference_number.errors %}
+                                        <div class="text-danger">{{ form.reference_number.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <div class="form-check mt-4">
+                                        {{ form.is_cleared }}
+                                        <label class="form-check-label" for="{{ form.is_cleared.id_for_label }}">
+                                            Transaction is Cleared
+                                        </label>
+                                    </div>
+                                    {% if form.is_cleared.errors %}
+                                        <div class="text-danger">{{ form.is_cleared.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                        <div class="text-danger">{{ form.description.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3" id="clearedDateDiv" style="{% if not form.is_cleared.value %}display: none;{% endif %}">
+                                    <label for="{{ form.cleared_date.id_for_label }}" class="form-label">Cleared Date</label>
+                                    {{ form.cleared_date }}
+                                    {% if form.cleared_date.errors %}
+                                        <div class="text-danger">{{ form.cleared_date.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Transaction Item Details -->
+                        <h5 class="mb-3">Transaction Details</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="{{ form.item_type.id_for_label }}" class="form-label">
+                                        Item Type <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.item_type }}
+                                    {% if form.item_type.errors %}
+                                        <div class="text-danger">{{ form.item_type.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="{{ form.client.id_for_label }}" class="form-label">Client</label>
+                                    {{ form.client }}
+                                    {% if form.client.errors %}
+                                        <div class="text-danger">{{ form.client.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="{{ form.case.id_for_label }}" class="form-label">Case</label>
+                                    {{ form.case }}
+                                    {% if form.case.errors %}
+                                        <div class="text-danger">{{ form.case.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="{{ form.vendor.id_for_label }}" class="form-label">Payee</label>
+                                    {{ form.vendor }}
+                                    {% if form.vendor.errors %}
+                                        <div class="text-danger">{{ form.vendor.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'transactions:index' %}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Transaction
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Toggle cleared date field
+    $('#id_is_cleared').change(function() {
+        if (this.checked) {
+            $('#clearedDateDiv').show();
+            if (!$('#id_cleared_date').val()) {
+                $('#id_cleared_date').val(new Date().toISOString().split('T')[0]);
+            }
+        } else {
+            $('#clearedDateDiv').hide();
+            $('#id_cleared_date').val('');
+        }
+    });
+    
+    // Handle client selection change to filter cases
+    $('#id_client').change(function() {
+        var clientId = $(this).val();
+        var caseSelect = $('#id_case');
+        
+        // Clear current case selection
+        caseSelect.empty();
+        caseSelect.append('<option value="">Select Case</option>');
+        
+        if (clientId) {
+            // Show loading indicator
+            caseSelect.append('<option value="">Loading cases...</option>');
+            caseSelect.prop('disabled', true);
+            
+            // Make AJAX call to get cases for selected client
+            $.ajax({
+                url: '{% url "transactions:get_client_cases" %}',
+                data: {
+                    'client_id': clientId
+                },
+                dataType: 'json',
+                success: function(data) {
+                    // Remove loading indicator
+                    caseSelect.empty();
+                    caseSelect.append('<option value="">Select Case</option>');
+                    
+                    // Add cases to dropdown
+                    if (data.cases && data.cases.length > 0) {
+                        $.each(data.cases, function(index, caseObj) {
+                            var displayText = caseObj.case_number;
+                            caseSelect.append(
+                                '<option value="' + caseObj.id + '">' + 
+                                displayText + '</option>'
+                            );
+                        });
+                    } else {
+                        caseSelect.append('<option value="">No cases found for this client</option>');
+                    }
+                    
+                    caseSelect.prop('disabled', false);
+                },
+                error: function() {
+                    // Handle error
+                    caseSelect.empty();
+                    caseSelect.append('<option value="">Error loading cases</option>');
+                    caseSelect.prop('disabled', false);
+                }
+            });
+        } else {
+            // No client selected, disable case dropdown
+            caseSelect.prop('disabled', false);
+        }
+    });
+});
+</script>
+{% endblock %}

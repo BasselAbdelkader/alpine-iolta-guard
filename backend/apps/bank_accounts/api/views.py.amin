@@ -1,0 +1,1185 @@
+from rest_framework import viewsets, filters, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Sum, Count, Q
+
+from ..models import BankAccount, BankTransaction, BankReconciliation, TransactionApproval
+from .serializers import (
+    BankAccountSerializer, BankAccountListSerializer,
+    BankTransactionSerializer, BankReconciliationSerializer,
+    TransactionApprovalSerializer, TransactionApprovalListSerializer
+)
+from apps.api.permissions import IsTrustAccountUser
+from apps.api.pagination import StandardResultsSetPagination
+from apps.settings.permissions import HasFinancialAccess, CanReconcileAccounts, CanApproveTransactions, require_role, require_permission
+from .throttles import (
+    FinancialTransactionThrottle,
+    WithdrawalThrottle,
+    TransactionApprovalThrottle,
+    BulkOperationThrottle
+)
+
+
+class BankAccountViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for BankAccount CRUD operations with balance calculations
+    """
+    queryset = BankAccount.objects.all()
+    serializer_class = BankAccountSerializer
+    permission_classes = [IsAuthenticated, HasFinancialAccess]  # Block System Admins
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    
+    search_fields = ['account_name', 'account_number', 'bank_name', 'routing_number']
+    filterset_fields = ['account_type', 'is_active']
+    ordering_fields = ['bank_name', 'account_name', 'created_at']
+    ordering = ['bank_name', 'account_name']
+    
+    def get_serializer_class(self):
+        """Use different serializers for different actions"""
+        if self.action == 'list':
+            return BankAccountListSerializer
+        return BankAccountSerializer
+    
+    def list(self, request, *args, **kwargs):
+        """Enhanced list view with summary statistics"""
+        response = super().list(request, *args, **kwargs)
+        
+        # Add summary metadata
+        if hasattr(response, 'data') and 'results' in response.data:
+            accounts = BankAccount.objects.all()
+            
+            # Calculate totals (trust balance = register balance = ALL non-voided transactions)
+            total_trust_balance = sum(account.get_current_balance() for account in accounts)
+            active_accounts = accounts.filter(is_active=True).count()
+
+            # Group by account type
+            type_summary = {}
+            for account in accounts:
+                acc_type = account.account_type
+                if acc_type not in type_summary:
+                    type_summary[acc_type] = {
+                        'count': 0,
+                        'trust_balance': 0,
+                        'pending_count': 0
+                    }
+                type_summary[acc_type]['count'] += 1
+                type_summary[acc_type]['trust_balance'] += account.get_current_balance()
+                type_summary[acc_type]['pending_count'] += account.get_pending_transactions_count()
+
+            response.data['summary'] = {
+                'total_accounts': accounts.count(),
+                'active_accounts': active_accounts,
+                'inactive_accounts': accounts.count() - active_accounts,
+                'total_trust_balance': str(total_trust_balance),
+                'account_types': {
+                    acc_type: {
+                        'count': data['count'],
+                        'trust_balance': str(data['trust_balance']),
+                        'pending_count': data['pending_count']
+                    }
+                    for acc_type, data in type_summary.items()
+                }
+            }
+        
+        return response
+
+    def update(self, request, *args, **kwargs):
+        """Override update to allow next_check_number updates"""
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+
+        # Special handling for next_check_number updates
+        if 'next_check_number' in request.data:
+            # Update next_check_number directly bypassing serializer
+            new_check_number = request.data.get('next_check_number')
+            instance.next_check_number = new_check_number
+            instance.save(update_fields=['next_check_number', 'updated_at'])
+
+            # Return updated serializer data
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+
+        # For all other updates, use default behavior (will raise ValueError)
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+
+    def perform_update(self, serializer):
+        """Default perform_update for non-check_number updates"""
+        serializer.save()
+
+    @require_role(['managing_attorney'])
+    def destroy(self, request, *args, **kwargs):
+        """
+        COMPLIANCE CONTROL #2: RBAC - Only Managing Attorney can delete bank accounts
+        """
+        return super().destroy(request, *args, **kwargs)
+
+    @action(detail=True, methods=['get'])
+    def transactions(self, request, pk=None):
+        """Get all transactions for a specific bank account"""
+        account = self.get_object()
+        
+        # Get transaction parameters
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        transaction_type = request.query_params.get('type')
+        
+        # Build queryset using consolidated bank_transactions table
+        transactions = BankTransaction.objects.filter(
+            bank_account=account
+        ).exclude(status='voided').order_by('-transaction_date')
+
+        if start_date:
+            transactions = transactions.filter(transaction_date__gte=start_date)
+        if end_date:
+            transactions = transactions.filter(transaction_date__lte=end_date)
+        if transaction_type:
+            transactions = transactions.filter(transaction_type=transaction_type)
+
+        # Calculate summary
+        summary = transactions.aggregate(
+            total_amount=Sum('amount'),
+            total_count=Count('id'),
+            deposits=Sum('amount', filter=Q(transaction_type='DEPOSIT')),
+            withdrawals=Sum('amount', filter=Q(transaction_type='WITHDRAWAL')),
+            cleared_amount=Sum('amount', filter=Q(status='cleared'))
+        )
+
+        # Serialize transactions using bank transaction serializer
+        serializer = BankTransactionSerializer(transactions[:50], many=True)  # Limit to 50 for performance
+        
+        return Response({
+            'account_id': account.id,
+            'account_name': account.account_name,
+            'account_number': account.account_number,
+            'current_balance': str(account.get_current_balance()),
+            'transactions': serializer.data,
+            'summary': {
+                'total_count': summary['total_count'] or 0,
+                'total_amount': str(summary['total_amount'] or 0),
+                'deposits': str(summary['deposits'] or 0),
+                'withdrawals': str(summary['withdrawals'] or 0),
+                'cleared_amount': str(summary['cleared_amount'] or 0)
+            }
+        })
+    
+    @action(detail=True, methods=['get'])
+    def balance_history(self, request, pk=None):
+        """Get balance history for a bank account"""
+        account = self.get_object()
+        
+        transactions = BankTransaction.objects.filter(
+            bank_account=account
+        ).exclude(status='voided').order_by('transaction_date', 'id')
+        
+        balance_history = []
+        running_balance = account.opening_balance
+        
+        # Add opening balance entry
+        balance_history.append({
+            'date': account.created_at.date(),
+            'description': 'Opening Balance',
+            'type': 'OPENING',
+            'amount': str(account.opening_balance),
+            'running_balance': str(running_balance)
+        })
+        
+        # Add each transaction
+        for transaction in transactions:
+            if transaction.transaction_type == 'DEPOSIT':
+                running_balance += transaction.amount
+            else:
+                running_balance -= transaction.amount
+            
+            balance_history.append({
+                'date': transaction.transaction_date,
+                'description': transaction.description,
+                'transaction_number': transaction.transaction_number,
+                'type': transaction.transaction_type,
+                'amount': str(transaction.amount),
+                'running_balance': str(running_balance),
+                'status': transaction.status == 'cleared'
+            })
+        
+        return Response({
+            'account_id': account.id,
+            'account_name': account.account_name,
+            'opening_balance': str(account.opening_balance),
+            'current_balance': str(account.get_current_balance()),
+            'balance_history': balance_history
+        })
+    
+    @action(detail=False, methods=['get'])
+    def summary(self, request):
+        """Get comprehensive summary of all bank accounts"""
+        accounts = BankAccount.objects.all()
+        
+        summary = {
+            'total_accounts': accounts.count(),
+            'active_accounts': accounts.filter(is_active=True).count(),
+            'account_details': []
+        }
+        
+        total_system_balance = 0
+        
+        for account in accounts:
+            current_balance = account.get_current_balance()
+            total_system_balance += current_balance
+            
+            summary['account_details'].append({
+                'id': account.id,
+                'account_name': account.account_name,
+                'account_number': account.account_number,
+                'account_type': account.account_type,
+                'bank_name': account.bank_name,
+                'opening_balance': str(account.opening_balance),
+                'current_balance': str(current_balance),
+                'balance_difference': str(current_balance - account.opening_balance),
+                'is_active': account.is_active
+            })
+        
+        summary['total_system_balance'] = str(total_system_balance)
+        return Response(summary)
+
+
+class BankTransactionViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for BankTransaction operations (for reconciliation)
+
+    SECURITY CONTROLS:
+    - Rate limiting: 10 transactions/hour (general), 5 withdrawals/hour (strict)
+    - Permission: Financial access required (blocks system admins)
+    - Authentication: Required for all operations
+    """
+    queryset = BankTransaction.objects.all()
+    serializer_class = BankTransactionSerializer
+    permission_classes = [IsAuthenticated, HasFinancialAccess]  # Block System Admins
+    # SECURITY: Rate limiting to prevent automated fraud
+    throttle_classes = []  # Will be set per-action in get_throttles()
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+
+    search_fields = ['description', 'reference_number', 'check_number', 'bank_reference']
+    filterset_fields = ['bank_account', 'transaction_type', 'status']
+    ordering_fields = ['transaction_date', 'post_date', 'amount']
+    ordering = ['-transaction_date', '-created_at']
+
+    def get_queryset(self):
+        """Optimize queryset and add filters"""
+        queryset = BankTransaction.objects.select_related('bank_account', 'client', 'case', 'vendor')
+
+        # Date filters
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+
+        if start_date:
+            queryset = queryset.filter(transaction_date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(transaction_date__lte=end_date)
+
+        return queryset
+
+    def get_throttles(self):
+        """
+        Apply different rate limits based on operation type
+
+        Security Controls:
+        - Withdrawals: Strict 5/hour limit (fraud prevention)
+        - Other transactions: General 10/hour limit
+        - Read operations: No throttling (already protected by global limits)
+
+        Rationale: Withdrawal operations have higher fraud risk and require
+        stricter rate limiting per ABA trust account security guidelines.
+        """
+        if self.action in ['create', 'update', 'partial_update']:
+            # Check if this is a withdrawal (will be in request.data)
+            if self.request.method in ['POST', 'PUT', 'PATCH']:
+                transaction_type = self.request.data.get('transaction_type', '').upper()
+                if transaction_type in ['WITHDRAWAL', 'TRANSFER_OUT']:
+                    # Strict limit for withdrawals (5/hour)
+                    return [WithdrawalThrottle()]
+
+            # General limit for other transactions (10/hour)
+            return [FinancialTransactionThrottle()]
+
+        # No additional throttling for read operations (list, retrieve)
+        # Already protected by global REST_FRAMEWORK throttle settings
+        return super().get_throttles()
+
+    def create(self, request, *args, **kwargs):
+        """Override create to pass audit parameters"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # Get IP address
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip_address = x_forwarded_for.split(',')[0]
+        else:
+            ip_address = request.META.get('REMOTE_ADDR', '127.0.0.1')
+
+        # Save with audit parameters
+        # Get username from authenticated user
+        username = request.user.username if request.user and request.user.is_authenticated else 'system'
+
+        instance = serializer.save(
+            audit_user=username,
+            audit_reason='Transaction created via API',
+            audit_ip=ip_address
+        )
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def update(self, request, *args, **kwargs):
+        """Override update to pass audit parameters"""
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+
+        # Get IP address
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip_address = x_forwarded_for.split(',')[0]
+        else:
+            ip_address = request.META.get('REMOTE_ADDR', '127.0.0.1')
+
+        # Save with audit parameters
+        # Get username from authenticated user
+        username = request.user.username if request.user and request.user.is_authenticated else 'system'
+
+        # Special handling for BankAccount updates - only allow next_check_number
+        if isinstance(instance, BankAccount) and 'next_check_number' in serializer.validated_data:
+            instance.next_check_number = serializer.validated_data['next_check_number']
+            instance.save(update_fields=['next_check_number', 'updated_at'])
+            serializer = self.get_serializer(instance)
+        else:
+            instance = serializer.save(
+                audit_user=username,
+                audit_reason='Transaction updated via API',
+                audit_ip=ip_address
+            )
+
+        return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        """Handle PATCH requests with partial updates"""
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
+
+    @require_role(['managing_attorney'])
+    def destroy(self, request, *args, **kwargs):
+        """
+        COMPLIANCE CONTROL #2: RBAC - Only Managing Attorney can delete transactions
+        """
+        return super().destroy(request, *args, **kwargs)
+
+    @action(detail=False, methods=['get'])
+    def unmatched(self, request):
+        """Get unmatched bank transactions for reconciliation"""
+        unmatched = BankTransaction.objects.filter(status='UNMATCHED').select_related('bank_account')
+        serializer = self.get_serializer(unmatched, many=True)
+
+        return Response({
+            'unmatched_transactions': serializer.data,
+            'count': unmatched.count()
+        })
+
+    @require_role(['managing_attorney', 'staff_attorney'])
+    @action(detail=True, methods=['post'])
+    def void(self, request, pk=None):
+        """
+        COMPLIANCE CONTROL #2: RBAC - Only Managing/Staff Attorneys can void transactions
+        Void a bank transaction
+        """
+        transaction = self.get_object()
+
+        # Check if already voided
+        if transaction.status == 'voided':
+            return Response({
+                'success': False,
+                'message': 'Transaction is already voided.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if cleared
+        if transaction.status == 'cleared':
+            return Response({
+                'success': False,
+                'message': 'Cannot void cleared transactions.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get void reason
+        void_reason = request.data.get('void_reason', '').strip()
+        if not void_reason:
+            return Response({
+                'success': False,
+                'message': 'Void reason is required.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get IP address
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip_address = x_forwarded_for.split(',')[0]
+        else:
+            ip_address = request.META.get('REMOTE_ADDR', '127.0.0.1')
+
+        # Void the transaction
+        # Get username from authenticated user
+        username = request.user.username if request.user and request.user.is_authenticated else 'system'
+
+        try:
+            transaction.void_transaction(
+                void_reason=void_reason,
+                voided_by=username,
+                ip_address=ip_address
+            )
+
+            return Response({
+                'success': True,
+                'message': f'Transaction {transaction.transaction_number} has been voided successfully.'
+            })
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': f'Error voiding transaction: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @require_role(['managing_attorney', 'staff_attorney'])
+    @action(detail=True, methods=['post'])
+    def reissue(self, request, pk=None):
+        """
+        COMPLIANCE CONTROL #2: RBAC - Only Managing/Staff Attorneys can reissue checks
+        REQUIREMENT: Reissue a check (for checks that are not cleared and not reconciled)
+
+        3-TRANSACTION LOGIC:
+        1. VOID the original transaction (removes from balance, preserves audit trail with original date)
+        2. Create reversal deposit (CLEARED status - dated today, reverses the voided withdrawal)
+        3. Create new check transaction (PENDING status - dated today, until printed)
+
+        Original transaction keeps its original date. New transactions dated today (reissue date).
+        """
+        from datetime import date
+        from django.db import transaction as db_transaction
+
+        original_txn = self.get_object()
+
+        # REQUIREMENT: Cannot reissue if status is Cleared or Reconciled
+        if original_txn.status in ['cleared', 'reconciled']:
+            return Response({
+                'success': False,
+                'message': f'Cannot reissue {original_txn.get_status_display()} transactions.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Only allow reissuing withdrawals (checks)
+        if original_txn.transaction_type != 'WITHDRAWAL':
+            return Response({
+                'success': False,
+                'message': 'Only withdrawal transactions (checks) can be reissued.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get IP address
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip_address = x_forwarded_for.split(',')[0]
+        else:
+            ip_address = request.META.get('REMOTE_ADDR', '127.0.0.1')
+
+        username = request.user.username if request.user and request.user.is_authenticated else 'system'
+        reissue_date = date.today()  # Use today's date for all reissue operations
+
+        try:
+            with db_transaction.atomic():
+                # Store original check info for reference
+                original_check_number = original_txn.reference_number or original_txn.check_number
+                original_description = original_txn.description
+                original_amount = original_txn.amount
+
+                # REQUIREMENT: Reference number logic
+                # If original reference was "TO PRINT":
+                #   - Reversal deposit gets blank reference
+                #   - New withdrawal gets "TO PRINT" (so it can be printed with new check number)
+                # If original reference was actual check number, keep it for all transactions
+                if original_txn.reference_number == 'TO PRINT':
+                    reference_for_reversal = ''
+                    check_number_for_reversal = ''
+                    reference_for_new_check = 'TO PRINT'
+                    check_number_for_new_check = ''
+                else:
+                    reference_for_reversal = original_txn.reference_number
+                    check_number_for_reversal = original_txn.check_number
+                    reference_for_new_check = original_txn.reference_number
+                    check_number_for_new_check = original_txn.check_number
+
+                # STEP 1: VOID the original transaction
+                # This removes it from balance calculation but keeps it for audit trail
+                # IMPORTANT: Keep original transaction_date - do NOT update it
+                original_txn.status = 'voided'
+                original_txn.description = f"VOIDED - Reissued on {reissue_date.strftime('%Y-%m-%d')}: {original_description}"
+                # NOTE: transaction_date is NOT updated - keeps original date for audit trail
+                original_txn.save(
+                    audit_user=username,
+                    audit_reason=f'Check reissued by {username} - original voided',
+                    audit_ip=ip_address
+                )
+
+                # STEP 2: Create reversal deposit (CLEARED)
+                # This reverses the voided withdrawal - deposit of same amount
+                reversal_txn = BankTransaction.objects.create(
+                    bank_account=original_txn.bank_account,
+                    transaction_date=reissue_date,  # Today's date
+                    transaction_type='DEPOSIT',
+                    amount=original_amount,  # Same amount as original
+                    description=f"Reversal - Reissue of check #{original_check_number}: {original_description}",
+                    client=original_txn.client,
+                    case=original_txn.case,
+                    reference_number=reference_for_reversal,  # Blank if original was TO PRINT
+                    check_number=check_number_for_reversal,  # Blank if original was TO PRINT
+                    status='cleared',  # CLEARED status
+                )
+
+                # STEP 3: Create new check transaction (PENDING)
+                new_check = BankTransaction.objects.create(
+                    bank_account=original_txn.bank_account,
+                    transaction_date=reissue_date,  # Today's date
+                    transaction_type='WITHDRAWAL',
+                    amount=original_amount,  # Same amount as original
+                    description=f"Reissue of check #{original_check_number}: {original_description}",
+                    client=original_txn.client,
+                    case=original_txn.case,
+                    vendor=original_txn.vendor,
+                    payee=original_txn.payee,
+                    reference_number=reference_for_new_check,  # "TO PRINT" if original was TO PRINT
+                    check_number=check_number_for_new_check,  # Blank if original was TO PRINT
+                    check_memo=original_txn.check_memo,
+                    item_type=original_txn.item_type,
+                    status='pending',  # PENDING until printed and cleared by bank
+                )
+
+                return Response({
+                    'success': True,
+                    'message': f'Check {original_check_number} reissued successfully.',
+                    'original_transaction_id': original_txn.id,
+                    'reversal_transaction_id': reversal_txn.id,
+                    'new_check_transaction_id': new_check.id,
+                    'original_transaction_number': original_txn.transaction_number,
+                    'reversal_transaction_number': reversal_txn.transaction_number,
+                    'new_check_transaction_number': new_check.transaction_number,
+                    'reissue_date': reissue_date.isoformat()
+                })
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'message': f'Error reissuing check: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['get'])
+    def audit_history(self, request, pk=None):
+        """Get audit history for a transaction"""
+        transaction = self.get_object()
+
+        from ..models import BankTransactionAudit
+
+        # Get all audit logs for this transaction
+        audit_logs = BankTransactionAudit.objects.filter(
+            transaction=transaction
+        ).order_by('-action_date')
+
+        logs_data = []
+        for log in audit_logs:
+            logs_data.append({
+                'id': log.id,
+                'action': log.action,
+                'action_date': log.action_date.strftime('%m/%d/%Y %I:%M %p'),
+                'action_by': log.action_by,
+                'old_amount': str(log.old_amount) if log.old_amount is not None else None,
+                'new_amount': str(log.new_amount) if log.new_amount is not None else None,
+                'old_status': log.old_status,
+                'new_status': log.new_status,
+                'change_reason': log.change_reason,
+                'changes_summary': log.get_changes_summary(),
+                'ip_address': str(log.ip_address) if log.ip_address else None,
+            })
+
+        return Response({
+            'success': True,
+            'transaction': {
+                'id': transaction.id,
+                'transaction_number': transaction.transaction_number,
+                'transaction_date': transaction.transaction_date.strftime('%m/%d/%Y'),
+                'transaction_type': transaction.transaction_type,
+                'transaction_type_display': transaction.get_transaction_type_display(),
+                'amount': str(transaction.amount),
+                'description': transaction.description or '',
+                'status': transaction.status,
+                'status_display': transaction.get_status_display(),
+                'payee': transaction.payee or '-',
+                'client_name': transaction.client.full_name if transaction.client else None,
+                'case_number': transaction.case.case_number if transaction.case else None,
+                'case_title': transaction.case.case_title if transaction.case else None,
+                'vendor_name': transaction.vendor.vendor_name if transaction.vendor else None,
+                'reference_number': transaction.reference_number or '',
+            },
+            'audit_logs': logs_data,
+            'count': len(logs_data)
+        })
+
+    @action(detail=True, methods=['get'], url_path='audit_history_pdf')
+    def audit_history_pdf(self, request, pk=None):
+        """Generate PDF of audit history"""
+        from django.http import HttpResponse
+        from django.template.loader import render_to_string
+        from weasyprint import HTML
+        import tempfile
+
+        transaction = self.get_object()
+        from ..models import BankTransactionAudit
+        from apps.settings.models import LawFirm
+
+        # Get audit logs
+        audit_logs = BankTransactionAudit.objects.filter(
+            transaction=transaction
+        ).order_by('-action_date')
+
+        # Get law firm info
+        law_firm = LawFirm.objects.first()
+
+        # Prepare context
+        context = {
+            'transaction': transaction,
+            'audit_logs': audit_logs,
+            'law_firm': law_firm,
+        }
+
+        # Render HTML template
+        html_string = render_to_string('audit_trail_pdf.html', context)
+
+        # Generate PDF
+        html = HTML(string=html_string, base_url=request.build_absolute_uri('/'))
+        pdf_file = html.write_pdf()
+
+        # Return PDF response
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="audit_trail_{transaction.transaction_number}.pdf"'
+
+        return response
+
+    @action(detail=False, methods=['get'])
+    def summary(self, request):
+        """Get summary statistics for all transactions"""
+        transactions = self.get_queryset()
+
+        summary = transactions.aggregate(
+            total_deposits=Sum('amount', filter=Q(transaction_type='DEPOSIT') & ~Q(status='voided')),
+            total_withdrawals=Sum('amount', filter=Q(transaction_type='WITHDRAWAL') & ~Q(status='voided')),
+            deposits_count=Count('id', filter=Q(transaction_type='DEPOSIT') & ~Q(status='voided')),
+            withdrawals_count=Count('id', filter=Q(transaction_type='WITHDRAWAL') & ~Q(status='voided')),
+            matched_count=Count('id', filter=Q(status='cleared')),
+            matched_amount=Sum('amount', filter=Q(status='cleared')),
+            unmatched_count=Count('id', filter=Q(status='pending')),
+            unmatched_amount=Sum('amount', filter=Q(status='pending'))
+        )
+
+        return Response({
+            'deposits': {
+                'count': summary['deposits_count'] or 0,
+                'total': str(summary['total_deposits'] or 0)
+            },
+            'withdrawals': {
+                'count': summary['withdrawals_count'] or 0,
+                'total': str(summary['total_withdrawals'] or 0)
+            },
+            'matched': {
+                'count': summary['matched_count'] or 0,
+                'amount': str(summary['matched_amount'] or 0)
+            },
+            'unmatched': {
+                'count': summary['unmatched_count'] or 0,
+                'amount': str(summary['unmatched_amount'] or 0)
+            }
+        })
+
+    @action(detail=False, methods=['get'])
+    def missing(self, request):
+        """Get missing/outstanding transactions (reference_number='TO PRINT' or status='pending')"""
+        missing_transactions = BankTransaction.objects.filter(
+            Q(reference_number='TO PRINT') | Q(status='pending')
+        ).exclude(status='voided').select_related('bank_account', 'client', 'case', 'vendor').order_by('-transaction_date')
+
+        serializer = self.get_serializer(missing_transactions, many=True)
+
+        total_amount = missing_transactions.aggregate(total=Sum('amount'))['total'] or 0
+
+        return Response({
+            'missing_checks': serializer.data,
+            'missing_checks_count': missing_transactions.count(),
+            'missing_checks_amount': str(total_amount)
+        })
+
+
+class BankReconciliationViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for BankReconciliation operations
+    """
+    queryset = BankReconciliation.objects.all()
+    serializer_class = BankReconciliationSerializer
+    permission_classes = [IsAuthenticated, CanReconcileAccounts]  # Only Managing Attorney & Bookkeeper
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    
+    filterset_fields = ['bank_account', 'is_reconciled']
+    ordering_fields = ['reconciliation_date', 'created_at']
+    ordering = ['-reconciliation_date']
+    
+    def get_queryset(self):
+        return BankReconciliation.objects.select_related('bank_account')
+
+
+# ===================================================================
+# COMPLIANCE CONTROL #3: TWO-PERSON APPROVAL WORKFLOW API
+# ===================================================================
+
+class TransactionApprovalViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for TransactionApproval operations.
+
+    COMPLIANCE CONTROL #3: Two-Person Approval Workflow
+    - Provides approval/rejection endpoints
+    - Enforces maker-checker pattern
+    - Permission-based access control
+    - Complete audit trail
+
+    Endpoints:
+    - GET /approvals/ - List all approvals (paginated)
+    - GET /approvals/pending/ - List pending approvals only
+    - GET /approvals/{id}/ - Get approval details
+    - POST /approvals/{id}/approve/ - Approve transaction
+    - POST /approvals/{id}/reject/ - Reject transaction
+    - GET /approvals/my-requests/ - Creator's approval requests
+    - GET /approvals/history/ - Approval history (approved/rejected)
+    - GET /approvals/pending-count/ - Quick count of pending approvals
+    """
+
+    queryset = TransactionApproval.objects.all()
+    serializer_class = TransactionApprovalSerializer
+    permission_classes = [IsAuthenticated, HasFinancialAccess]
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+
+    filterset_fields = ['status', 'created_by', 'reviewed_by']
+    ordering_fields = ['created_at', 'reviewed_at']
+    ordering = ['-created_at']
+
+    def get_permissions(self):
+        """
+        Apply different permissions based on action.
+
+        - List, retrieve, my_requests, pending_count: Anyone with financial access
+        - Approve, reject: Only users with CanApproveTransactions permission
+        """
+        if self.action in ['approve', 'reject']:
+            # COMPLIANCE CONTROL #2: RBAC - Only managing attorneys can approve
+            return [IsAuthenticated(), HasFinancialAccess(), CanApproveTransactions()]
+        return super().get_permissions()
+
+    def get_queryset(self):
+        """Optimize queryset with select_related"""
+        return TransactionApproval.objects.select_related(
+            'transaction',
+            'transaction__bank_account',
+            'transaction__client',
+            'transaction__case',
+            'transaction__vendor',
+            'created_by',
+            'reviewed_by'
+        )
+
+    def get_serializer_class(self):
+        """Use lightweight serializer for list views"""
+        if self.action in ['list', 'pending', 'my_requests', 'history']:
+            return TransactionApprovalListSerializer
+        return TransactionApprovalSerializer
+
+    @action(detail=False, methods=['get'])
+    def pending(self, request):
+        """
+        GET /api/v1/approvals/pending/
+
+        List all pending approval requests.
+        Ordered by oldest first (FIFO - first in, first out).
+
+        Response:
+        {
+            "count": 5,
+            "results": [
+                {
+                    "id": 1,
+                    "transaction_id": 1234,
+                    "transaction_number": "TXN-2025-001",
+                    "transaction_amount": "50000.00",
+                    "transaction_type": "WITHDRAWAL",
+                    "client_name": "John Doe",
+                    "case_number": "CASE-000123",
+                    "created_by_name": "sarah",
+                    "created_at": "2025-11-15T10:00:00Z",
+                    "status": "pending",
+                    "request_notes": "High-value transaction...",
+                    "days_pending": 2,
+                    "can_approve": true
+                },
+                ...
+            ]
+        }
+        """
+        pending_approvals = self.get_queryset().filter(status='pending').order_by('created_at')
+
+        page = self.paginate_queryset(pending_approvals)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(pending_approvals, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def pending_count(self, request):
+        """
+        GET /api/v1/approvals/pending-count/
+
+        Quick count of pending approvals (for header badge).
+
+        Response:
+        {
+            "pending_count": 5
+        }
+        """
+        count = self.get_queryset().filter(status='pending').count()
+        return Response({'pending_count': count})
+
+    @action(detail=False, methods=['get'])
+    def my_requests(self, request):
+        """
+        GET /api/v1/approvals/my-requests/
+
+        List approval requests created by the current user.
+        Shows all statuses (pending, approved, rejected).
+
+        Response: Same structure as /pending/
+        """
+        my_approvals = self.get_queryset().filter(
+            created_by=request.user
+        ).order_by('-created_at')
+
+        page = self.paginate_queryset(my_approvals)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(my_approvals, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def history(self, request):
+        """
+        GET /api/v1/approvals/history/
+
+        List all approved/rejected approval requests.
+        Excludes pending approvals.
+
+        Query Parameters:
+        - status: Filter by 'approved' or 'rejected'
+
+        Response: Same structure as /pending/
+        """
+        history = self.get_queryset().filter(
+            status__in=['approved', 'rejected']
+        ).order_by('-reviewed_at')
+
+        # Optional status filter
+        status_filter = request.query_params.get('status')
+        if status_filter in ['approved', 'rejected']:
+            history = history.filter(status=status_filter)
+
+        page = self.paginate_queryset(history)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(history, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        """
+        POST /api/v1/approvals/{id}/approve/
+
+        Approve a transaction.
+
+        Permission Required: 'bank_accounts.can_approve_transactions'
+
+        Request Body:
+        {
+            "review_notes": "Verified settlement agreement dated 11/10/2025"
+        }
+
+        Response (Success - 200):
+        {
+            "status": "success",
+            "message": "Transaction approved successfully",
+            "approval": {
+                "id": 1,
+                "status": "approved",
+                "reviewed_by": {...},
+                "reviewed_at": "2025-11-15T14:30:00Z",
+                ...
+            }
+        }
+
+        Response (Error - 400):
+        {
+            "status": "error",
+            "message": "Cannot approve your own transaction (maker-checker rule)"
+        }
+
+        Response (Error - 404):
+        {
+            "status": "error",
+            "message": "Approval request not found"
+        }
+        """
+        # Check permission
+        if not request.user.has_perm('bank_accounts.can_approve_transactions'):
+            return Response({
+                'status': 'error',
+                'message': 'Permission denied. You do not have approval permissions.'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        approval = self.get_object()
+
+        # COMPLIANCE CONTROL #5: Segregation of Duties
+        # Validate: Cannot approve own transaction (maker-checker)
+        if approval.created_by == request.user:
+            # Log SOD violation attempt
+            from apps.audit.utils import log_user_action
+            log_user_action(
+                action_type='SOD_VIOLATION_ATTEMPTED',
+                username=request.user.username,
+                user=request.user,
+                request=request,
+                details={
+                    'violation_type': 'self_approval_attempt',
+                    'transaction_id': approval.transaction.id,
+                    'transaction_number': approval.transaction.transaction_number,
+                    'transaction_amount': str(approval.transaction.amount),
+                    'approval_id': approval.id,
+                },
+                reason='User attempted to approve their own transaction'
+            )
+
+            return Response({
+                'status': 'error',
+                'error': 'Segregation of Duties Violation',
+                'message': 'You cannot approve a transaction you created. A different attorney must approve this transaction.',
+                'violation_type': 'self_approval_prevented',
+                'created_by': approval.created_by.username,
+                'attempted_approver': request.user.username,
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        # Validate: Must be pending
+        if approval.status != 'pending':
+            return Response({
+                'status': 'error',
+                'message': f'Cannot approve {approval.get_status_display()} transaction'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get review notes
+        review_notes = request.data.get('review_notes', '')
+
+        # Get client IP
+        ip_address = self._get_client_ip(request)
+
+        # Approve the transaction
+        try:
+            approval.approve(
+                user=request.user,
+                notes=review_notes,
+                ip_address=ip_address
+            )
+
+            # Log successful approval
+            from apps.audit.utils import log_user_action
+            log_user_action(
+                action_type='TRANSACTION_APPROVED',
+                username=request.user.username,
+                user=request.user,
+                request=request,
+                details={
+                    'transaction_id': approval.transaction.id,
+                    'transaction_number': approval.transaction.transaction_number,
+                    'transaction_amount': str(approval.transaction.amount),
+                    'transaction_type': approval.transaction.transaction_type,
+                    'created_by': approval.created_by.username,
+                    'approval_id': approval.id,
+                },
+                reason=review_notes or 'Transaction approved'
+            )
+
+            # Return success response with updated approval
+            serializer = TransactionApprovalSerializer(approval, context={'request': request})
+            return Response({
+                'status': 'success',
+                'message': 'Transaction approved successfully',
+                'approval': serializer.data
+            }, status=status.HTTP_200_OK)
+
+        except ValueError as e:
+            return Response({
+                'status': 'error',
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        """
+        POST /api/v1/approvals/{id}/reject/
+
+        Reject a transaction (voids the underlying transaction).
+
+        Permission Required: 'bank_accounts.can_approve_transactions'
+
+        Request Body:
+        {
+            "review_notes": "Vendor not verified, need proof of settlement"
+        }
+
+        Response (Success - 200):
+        {
+            "status": "success",
+            "message": "Transaction rejected and voided",
+            "approval": {
+                "id": 1,
+                "status": "rejected",
+                "reviewed_by": {...},
+                "reviewed_at": "2025-11-15T14:35:00Z",
+                ...
+            }
+        }
+
+        Response (Error - 400):
+        {
+            "status": "error",
+            "message": "Rejection reason is required"
+        }
+        """
+        # Check permission
+        if not request.user.has_perm('bank_accounts.can_approve_transactions'):
+            return Response({
+                'status': 'error',
+                'message': 'Permission denied. You do not have approval permissions.'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        approval = self.get_object()
+
+        # COMPLIANCE CONTROL #5: Segregation of Duties
+        # Note: Self-rejection is typically allowed in most SOD implementations
+        # (user can cancel their own request), but we'll keep the same rule for consistency
+        if approval.created_by == request.user:
+            # Log SOD violation attempt
+            from apps.audit.utils import log_user_action
+            log_user_action(
+                action_type='SOD_VIOLATION_ATTEMPTED',
+                username=request.user.username,
+                user=request.user,
+                request=request,
+                details={
+                    'violation_type': 'self_rejection_attempt',
+                    'transaction_id': approval.transaction.id,
+                    'transaction_number': approval.transaction.transaction_number,
+                    'transaction_amount': str(approval.transaction.amount),
+                    'approval_id': approval.id,
+                },
+                reason='User attempted to reject their own transaction'
+            )
+
+            return Response({
+                'status': 'error',
+                'error': 'Segregation of Duties Violation',
+                'message': 'You cannot reject a transaction you created. A different attorney must review this transaction.',
+                'violation_type': 'self_rejection_prevented',
+                'created_by': approval.created_by.username,
+                'attempted_reviewer': request.user.username,
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        # Validate: Must be pending
+        if approval.status != 'pending':
+            return Response({
+                'status': 'error',
+                'message': f'Cannot reject {approval.get_status_display()} transaction'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get review notes (required for rejection)
+        review_notes = request.data.get('review_notes', '').strip()
+        if not review_notes:
+            return Response({
+                'status': 'error',
+                'message': 'Rejection reason is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get client IP
+        ip_address = self._get_client_ip(request)
+
+        # Reject the transaction
+        try:
+            approval.reject(
+                user=request.user,
+                reason=review_notes,
+                ip_address=ip_address
+            )
+
+            # Log successful rejection
+            from apps.audit.utils import log_user_action
+            log_user_action(
+                action_type='TRANSACTION_REJECTED',
+                username=request.user.username,
+                user=request.user,
+                request=request,
+                details={
+                    'transaction_id': approval.transaction.id,
+                    'transaction_number': approval.transaction.transaction_number,
+                    'transaction_amount': str(approval.transaction.amount),
+                    'transaction_type': approval.transaction.transaction_type,
+                    'created_by': approval.created_by.username,
+                    'approval_id': approval.id,
+                    'rejection_reason': review_notes,
+                },
+                reason=review_notes
+            )
+
+            # Return success response with updated approval
+            serializer = TransactionApprovalSerializer(approval, context={'request': request})
+            return Response({
+                'status': 'success',
+                'message': 'Transaction rejected and voided',
+                'approval': serializer.data
+            }, status=status.HTTP_200_OK)
+
+        except ValueError as e:
+            return Response({
+                'status': 'error',
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    def _get_client_ip(self, request):
+        """Extract client IP address from request"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
